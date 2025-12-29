@@ -1,0 +1,38 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "target": "es2022",
+    "alwaysStrict": true,
+    "declaration": false,
+    "sourceMap": false,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./gen",
+    "rootDir": "./",
+    "skipLibCheck": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "types": [
+      "node", "mocha"
+    ],
+    "strict": false,
+    "allowJs": true,
+    "paths": {
+      "#cds-models/*": [
+        "./@cds-models/*"
+      ]
+    }
+  },
+  "include": [
+    "./srv/**/*.ts",
+    "./cds-plugin.ts",
+    "./index.cds"
+  ],
+  "exclude": [
+    "./node_modules/"
+  ]
+}

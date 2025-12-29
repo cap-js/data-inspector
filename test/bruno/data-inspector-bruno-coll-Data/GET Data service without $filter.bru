@@ -1,0 +1,15 @@
+meta {
+  name: GET Data service without $filter
+  type: http
+  seq: 15
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data
+  body: none
+  auth: basic
+}
+
+auth:basic {
+  username: alice
+}

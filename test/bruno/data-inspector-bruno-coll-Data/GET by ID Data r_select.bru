@@ -1,0 +1,19 @@
+meta {
+  name: GET by ID Data r_select
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data(entityName='datainspector.test.db.Product',recordKey='ID=prod8')?r_select=productName,description
+  body: none
+  auth: basic
+}
+
+params:query {
+  r_select: productName,description
+}
+
+auth:basic {
+  username: alice
+}

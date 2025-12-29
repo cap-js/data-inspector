@@ -1,0 +1,20 @@
+meta {
+  name: GET EntityDefinitions orderby name desc
+  type: http
+  seq: 25
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/EntityDefinition?$orderby=name desc&$count=true
+  body: none
+  auth: basic
+}
+
+params:query {
+  $orderby: name desc
+  $count: true
+}
+
+auth:basic {
+  username: alice
+}

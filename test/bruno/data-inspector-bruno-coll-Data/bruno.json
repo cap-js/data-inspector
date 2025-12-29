@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "data-inspector-bruno-coll-Data",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

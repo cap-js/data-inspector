@@ -1,0 +1,20 @@
+meta {
+  name: GET Data service sensitive data access
+  type: http
+  seq: 23
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data?$filter=entityName eq 'OrderService.Order'&$count=true
+  body: none
+  auth: basic
+}
+
+params:query {
+  $filter: entityName eq 'OrderService.Order'
+  $count: true
+}
+
+auth:basic {
+  username: alice
+}

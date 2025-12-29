@@ -1,0 +1,21 @@
+meta {
+  name: GET Data db r_orderby asc
+  type: http
+  seq: 27
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data?$filter=entityName eq 'datainspector.test.db.Product'&r_select=productName&r_orderby=productName asc
+  body: none
+  auth: basic
+}
+
+params:query {
+  $filter: entityName eq 'datainspector.test.db.Product'
+  r_select: productName
+  r_orderby: productName asc
+}
+
+auth:basic {
+  username: alice
+}

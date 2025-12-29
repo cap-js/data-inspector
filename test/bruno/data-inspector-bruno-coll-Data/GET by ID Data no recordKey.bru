@@ -1,0 +1,15 @@
+meta {
+  name: GET by ID Data no recordKey
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data(entityName='datainspector.test.db.Product')
+  body: none
+  auth: basic
+}
+
+auth:basic {
+  username: alice
+}

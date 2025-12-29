@@ -1,0 +1,20 @@
+meta {
+  name: GET Data service r_select
+  type: http
+  seq: 16
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data?$filter=entityName eq 'datainspector.test.srv.ProductService.Product'&r_select=description,productName
+  body: none
+  auth: basic
+}
+
+params:query {
+  $filter: entityName eq 'datainspector.test.srv.ProductService.Product'
+  r_select: description,productName
+}
+
+auth:basic {
+  username: alice
+}

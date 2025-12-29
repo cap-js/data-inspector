@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "data-inspector-bruno-coll-EntityDefinition",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

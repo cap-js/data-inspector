@@ -1,0 +1,21 @@
+meta {
+  name: GET EntityDefinitions $filter contains elements
+  type: http
+  seq: 23
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/EntityDefinition?$filter=contains(elements, 'ID')&$select=name&$count=true
+  body: none
+  auth: basic
+}
+
+params:query {
+  $filter: contains(elements, 'ID')
+  $select: name
+  $count: true
+}
+
+auth:basic {
+  username: alice
+}

@@ -1,0 +1,19 @@
+meta {
+  name: GET by ID EntityDefinition $select title
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/EntityDefinition('datainspector.test.db.Product')?$select=title
+  body: none
+  auth: basic
+}
+
+params:query {
+  $select: title
+}
+
+auth:basic {
+  username: alice
+}

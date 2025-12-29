@@ -1,60 +1,72 @@
 {
-  "name": "@cap-js/REPO-NAME",
+  "name": "@cap-js/data-inspector",
   "version": "1.0.0",
-  "description": "CAP cds-plugin REPO-DESCRIPTION",
-  "license": "Apache-2.0",
-  "author": "AUTHOR",
-  "homepage": "https://cap.cloud.sap/",
+  "description": "CAP Node.js plugin to view data content of CDS entities defined in a CAP Node.js application.",
+  "author": "SAP SE (https://www.sap.com)",
+  "repository": "https://github.tools.sap/erp4sme/cap-db-inspector-nodejs.git",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
   "main": "cds-plugin.js",
   "scripts": {
-    "lint": "npx eslint .",
-    "test": "npx jest --silent",
-    "test:hybrid": "cds bind --exec -- npx jest",
-    "prettier": "npx -y prettier@3 --write .",
-    "prettier:check": "npx -y prettier@3 --check .",
-    "watch:sample": "cd tests/bookshop && cds watch"
-  },
-  "files": [
-    "index.cds",
-    "lib",
-    "db",
-    "srv"
-  ],
-  "license": "Apache-2.0",
-  "devDependencies": {
-    "@cap-js/cds-test": ">=0",
-    "@cap-js/sqlite": "^2"
+    "dev": "cds watch test/ --include .. --open data-inspector-ui",
+    "prebuild": "rimraf gen && rimraf @cds-models",
+    "build": "npm run generate-types && tsc && npm run copy:cds && npm run copy:package.json",
+    "generate-types": "npx @cap-js/cds-typer \"*\"",
+    "copy:cds": "node -e \"require('fs').copyFileSync('srv/DataInspectorService.cds', 'gen/srv/DataInspectorService.cds')\" && node -e \"require('fs').copyFileSync('srv/DataInspectorServiceAnnotations.cds', 'gen/srv/DataInspectorServiceAnnotations.cds')\" && node -e \"require('fs').copyFileSync('srv/index.cds', 'gen/srv/index.cds')\" && node -e \"require('fs').copyFileSync('index.cds', 'gen/index.cds')\"",
+    "copy:package.json": "node -e \"require('fs').copyFileSync('package.json', 'gen/package.json')\"",
+    "copy:i18n": "node -e \"require('fs').cpSync('_i18n', 'gen/_i18n', { recursive: true })\"",
+    "postbuild": "npm run build:ui && npm run copy:ui && npm run copy:i18n",
+    "build:ui": "cd app/data-inspector-ui && npm install && npm run build:cf",
+    "copy:ui": "node -e \"require('fs').cpSync('app/data-inspector-ui/dist', 'gen/app/data-inspector-ui', { recursive: true })\"",
+    "tar": "npm run build && cd gen && npm pack",
+    "watch-data-inspector-ui": "cds watch --open data-inspector-ui/webapp/index.html?sap-ui-xx-viewCache=false",
+    "test": "cross-env CDS_TYPESCRIPT=true mocha",
+    "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
   "peerDependencies": {
-    "@sap/cds": ">=8"
+    "@sap/cds": "^9"
   },
-  "engines": {
-    "node": ">=20.0.0"
+  "devDependencies": {
+    "@cap-js/audit-logging": "^1.1.1",
+    "@cap-js/cds-test": "^0.4.1",
+    "@cap-js/cds-typer": "^0.38.0",
+    "@cap-js/cds-types": "^0.15.0",
+    "@cap-js/sqlite": "^2.0.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.10.1",
+    "c8": "^10.1.3",
+    "chai": "^4.5.0",
+    "cross-env": "^10.1.0",
+    "mocha": "^11.7.5",
+    "rimraf": "^6.1.0",
+    "sinon": "^21.0.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   },
-  "workspaces": [
-    "tests/bookshop/"
+  "files": [
+    "@cds-models",
+    "srv",
+    "app",
+    "cds-plugin.js",
+    "index.cds",
+    "package.json",
+    "_i18n"
+  ],
+  "sapux": [
+    "app/data-inspector-ui"
   ],
   "cds": {
     "requires": {
-      "emojis": {
-        "[development]": {
-          "kind": "emojis-local"
-        },
-        "[hybrid]": {
-          "kind": "emojis-prod"
-        },
-        "[production]": {
-          "kind": "emojis-prod"
-        }
-      },
-      "kinds": {
-        "emojis-local": {
-          "impl": "@cap-js/REPO-NAME/srv/basic"
-        },
-        "emojis-prod": {
-          "impl": "@cap-js/REPO-NAME/srv/prod"
-        }
+      "@cap-js/data-inspector": {
+        "model": "@cap-js/data-inspector"
       }
     }
-  }
+  },
+  "imports": {
+    "#cds-models/*": "./@cds-models/*/index.js"
+  },
+  "workspaces": [
+    "test"
+  ]
 }

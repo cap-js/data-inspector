@@ -1,0 +1,13 @@
+<mvc:View controllerName="sap.cap.datainspector.datainspectorui.controller.App"
+    displayBlock="true"
+    height="100%"
+    xmlns="sap.f"
+    xmlns:mvc="sap.ui.core.mvc">
+
+    <!-- 3 column flexible column layout -->
+    <FlexibleColumnLayout
+        id="flexibleColumnLayout"
+        backgroundDesign="Solid"
+        layout="{/layout}"/>
+        
+</mvc:View>

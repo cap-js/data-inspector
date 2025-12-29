@@ -1,0 +1,19 @@
+meta {
+  name: GET by ID Data $select
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:4004/odata/v4/data-inspector/Data(entityName='datainspector.test.db.Product',recordKey='ID=prod8')?$select=record
+  body: none
+  auth: basic
+}
+
+params:query {
+  $select: record
+}
+
+auth:basic {
+  username: alice
+}
