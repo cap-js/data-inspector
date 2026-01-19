@@ -1,0 +1,18 @@
+specVersion: "3.1"
+metadata:
+  name: sap.cap.datainspector.datainspectorui
+type: application
+resources:
+  configuration:
+    propertiesFileSourceEncoding: UTF-8
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+  customTasks:
+    - name: ui5-task-zipper
+      afterTask: generateCachebusterInfo
+      configuration:
+        archiveName: datainspectorapp
+        additionalFiles:
+          - xs-app.json

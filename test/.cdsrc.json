@@ -1,0 +1,29 @@
+{
+  "requires": {
+    "auth": {
+      "kind": "mocked",
+      "users": {
+        "alice": {
+          "roles": [
+            "admin",
+            "capDataInspectorReadonly"
+          ]
+        },
+        "test": {
+          "password": "12345",
+          "roles": ["capDataInspectorReadonly"]
+        },
+        "test-no-auth": {
+          "password": "12345",
+          "roles": []
+        }
+      }
+    },
+    "db": {
+      "kind": "sql",
+      "credentials": {
+        "url": "db/testservice.db"
+      }
+    }
+  }
+}

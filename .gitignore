@@ -1,4 +1,40 @@
-.DS_Store
-node_modules/
+_out
+*.db*
+*.sqlite
+connection.properties
+default-*.json
+.cdsrc-private.json
 gen/
-package-lock.json
+node_modules/
+target/
+dist/
+resources/
+
+# Web IDE, App Studio
+.che/
+.gen/
+
+# MTA
+*_mta_build_tmp
+*.mtar
+mta_archives/
+
+# Other
+.DS_Store
+*.orig
+*.log
+
+*.iml
+*.flattened-pom.xml
+
+**/secrets/**/*.*
+# IDEs
+# .vscode
+# .idea
+
+@cds-models
+
+# Tests
+coverage/
+TEST-mocha.xml
+.nyc_output/

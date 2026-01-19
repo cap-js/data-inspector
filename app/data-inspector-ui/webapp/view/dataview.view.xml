@@ -1,0 +1,66 @@
+<mvc:View
+	controllerName="sap.cap.datainspector.datainspectorui.controller.dataview"
+	xmlns="sap.f"
+	xmlns:m="sap.m"
+	xmlns:mvc="sap.ui.core.mvc">
+	<DynamicPage >
+		<title>
+			<DynamicPageTitle >
+				<navigationActions>
+					<m:Button type="Transparent" icon="sap-icon://full-screen" press=".handleFullScreen" tooltip="{i18n>enterFullScreenMode}" visible="{= ${/actionButtonsInfo/endColumn/fullScreen} !== null }"/>
+					<m:Button type="Transparent" icon="sap-icon://exit-full-screen" press=".handleExitFullScreen" tooltip="{i18n>exitFullScreenMode}" visible="{= ${/actionButtonsInfo/endColumn/exitFullScreen} !== null }"/>
+					<m:Button type="Transparent" icon="sap-icon://decline" press=".handleClose" tooltip="{i18n>closeColumn}" visible="{= ${/actionButtonsInfo/endColumn/closeColumn} !== null }"/>
+				</navigationActions>
+				<heading>
+					<m:Title text="{view>/name}" level="H1"/>
+				</heading>
+			</DynamicPageTitle>
+		</title>
+
+		<content>
+			<m:VBox>
+				<m:MessageStrip
+        			text="{i18n>alertToShowElementsDetails}"
+        			type="Information"
+					showIcon="true"
+		    		showCloseButton="true"
+    				class="sapUiSmallMarginBottom"/>
+				<m:OverflowToolbar class="sapFDynamicPageAlignContent">
+					<m:Title text="{i18n>data} ({view>/rowCount})"/>
+					
+					<m:ToolbarSpacer/>
+					<m:Button text="{i18n>advanceFilter}"
+                        type="Transparent"
+                        press=".onAdvancedFilterPress"/>
+					<m:ToolbarSeparator />
+				</m:OverflowToolbar>
+				<m:Table
+					id="dataTable"
+					inset="false"
+					class="sapFDynamicPageAlignContent"
+					width="auto">
+					<m:infoToolbar>
+						<m:Toolbar
+							active="true"
+							visible="{view>/advancedFilterVisible}"
+							press=".onAdvancedFilterPress">
+							<m:Text text="{i18n>filteredBy} {view>/filterString}"/>
+							
+						</m:Toolbar>
+					</m:infoToolbar>
+				</m:Table>
+				<m:HBox justifyContent="Center" class="sapUiTinyMarginTop">
+					<m:Button 
+						text="{i18n>more}"
+						type="Transparent"
+						press=".onMorePress"
+						visible="{= ${view>/rowCount} !== ${view>/loadedRowsCount} }"/>
+				</m:HBox>
+				<m:HBox justifyContent="Center">
+					<m:Text text="[ {= ${view>/loadedRowsCount} + ' / ' + ${view>/rowCount}} ]"
+					visible="{= ${view>/rowCount} !== ${view>/loadedRowsCount} }"/>
+				</m:HBox>
+			</m:VBox>
+		</content>
+	</DynamicPage>
+</mvc:View>

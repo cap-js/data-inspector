@@ -1,0 +1,31 @@
+<core:FragmentDefinition
+    id="valueHelpDialog"
+	xmlns="sap.ui.comp.valuehelpdialog"
+	xmlns:m="sap.m"
+	xmlns:fb="sap.ui.comp.filterbar"
+	xmlns:core="sap.ui.core">
+	<ValueHelpDialog
+		title="{i18n>Define Conditions}"
+		ok=".onValueHelpOkPress"
+		cancel=".onValueHelpCancelPress"
+		afterClose=".onValueHelpAfterClose"
+        supportRanges="true"
+		supportRangesOnly="true">
+        <filterBar>
+        <fb:FilterBar
+        id="valueHelpFilterBar"
+        advancedMode="true">
+        <fb:filterGroupItems>
+            <fb:FilterGroupItem
+                groupName="valueHelpGroup"
+                name="columnName"
+                label="columnName">
+                <fb:control>
+					<m:Input name="columnName" />
+				</fb:control>
+            </fb:FilterGroupItem>
+        </fb:filterGroupItems>
+    </fb:FilterBar>
+    </filterBar>
+	</ValueHelpDialog>
+</core:FragmentDefinition>

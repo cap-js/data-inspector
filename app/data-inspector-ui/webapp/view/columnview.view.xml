@@ -1,0 +1,103 @@
+<mvc:View xmlns:table="sap.ui.table"
+    controllerName="sap.cap.datainspector.datainspectorui.controller.columnview"
+	xmlns="sap.f"
+	xmlns:m="sap.m"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:menu="sap.m.table.columnmenu"
+	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+	<DynamicPage >
+		<title>
+			<DynamicPageTitle>
+				<navigationActions>
+					<m:Button type="Transparent" icon="sap-icon://full-screen" press=".handleFullScreen" tooltip="{i18n>enterFullScreenMode}" visible="{= ${/actionButtonsInfo/midColumn/fullScreen} !== null }"/>
+					<m:Button type="Transparent" icon="sap-icon://exit-full-screen" press=".handleExitFullScreen" tooltip="{i18n>exitFullScreenMode}" visible="{= ${/actionButtonsInfo/midColumn/exitFullScreen} !== null }"/>
+					<m:Button type="Transparent" icon="sap-icon://decline" press=".handleClose" tooltip="{i18n>closeColumn}" visible="{= ${/actionButtonsInfo/midColumn/closeColumn} !== null }"/>
+				</navigationActions>
+				<heading>
+					<m:Title text="{view>/name}" level="H1"/>
+					
+				</heading>
+			</DynamicPageTitle>
+		</title>
+
+		<dependents>
+			<menu:Menu id="menu" beforeOpen="onBeforeOpenColumnMenu">
+                    <menu:QuickSort change="onSort">
+                        <menu:items>
+                            <menu:QuickSortItem></menu:QuickSortItem>
+                        </menu:items>
+                    </menu:QuickSort>
+                </menu:Menu>
+		</dependents>
+		
+		<content>
+			<m:VBox>
+				<m:MessageStrip
+        			text="{i18n>alertToSelectColumns}"
+        			type="Information"
+					showIcon="true"
+		    		showCloseButton="true"
+    				class="sapUiSmallMarginBottom"/>
+				<m:OverflowToolbar class="sapFDynamicPageAlignContent">
+					<m:Title text="{i18n>elements} ({= ${EntityColumnList>/elements}.length })"/>
+					<!-- how to change above text -->
+					<m:ToolbarSpacer/>
+					<m:SearchField search=".onSearch" width="17.5rem"/>
+					<m:Button text="{i18n>showData}"
+                        type="Transparent"
+						enabled="{view>/showDataEnabled}"
+                        press=".onShowDataPress"/>
+					<m:ToolbarSeparator />
+				</m:OverflowToolbar>
+				<m:Table
+					id="columnTable"
+					inset="false"
+					mode="MultiSelect"
+					selectionChange="onColumnTableSelectionChange"
+					items="{
+						path: 'EntityColumnList>/elements'	
+					}"
+					class="sapFDynamicPageAlignContent"
+					width="auto">
+					<m:columns>
+						<m:Column headerMenu="menu" app:p13nKey="name">
+							<m:Text text="{i18n>elementName}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="type">
+							<m:Text text="{i18n>type}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="isKey">
+							<m:Text text="{i18n>isKey}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="defaultValue">
+							<m:Text text="{i18n>defaultValue}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="isNotNull">
+							<m:Text text="{i18n>isNotNull}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="isSensitive">
+							<m:Text text="{i18n>isSensitive}"/>
+						</m:Column>
+						<m:Column headerMenu="menu" app:p13nKey="isVirtual">
+							<m:Text text="{i18n>isVirtual}"/>
+						</m:Column>
+					</m:columns>
+					<m:items>
+						<m:ColumnListItem >
+							<m:cells>
+								<m:Text text="{EntityColumnList>name}"/>
+								<m:Text text="{= ${EntityColumnList>length} ? ${EntityColumnList>type} + '(' + ${EntityColumnList>length} + ')' : ${EntityColumnList>type} }"/>
+								<m:Text text="{EntityColumnList>isKey}"/>
+								<m:Text text="{EntityColumnList>defaultValue}"/>
+								<m:Text text="{EntityColumnList>isNotNull}"/>
+								<m:Text text="{EntityColumnList>isSensitive}"/>
+								<m:Text text="{EntityColumnList>isVirtual}"/>
+								
+							</m:cells>
+						</m:ColumnListItem>
+					</m:items>
+				</m:Table>
+			</m:VBox>
+		</content>
+	</DynamicPage>
+</mvc:View>

@@ -1,0 +1,7 @@
+{
+  "spec": "test/**/*.test.ts",
+  "recursive": true,
+  "timeout": 600000,
+  "require": ["ts-node/register/transpile-only"],
+  "exit": true
+}

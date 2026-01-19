@@ -4,16 +4,168 @@
 
 ## About this project
 
-_Insert a short description of your project here..._
+`@cap-js/data-inspector` is a CAP Node.js plugin to view data content of CDS [`Entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a CAP Node.js application. It comes with a UI5 app consumable out-of-the-box.
+
+### Features
+
+- Provided `xsuaa` scope for access control
+- Exclude entities and elements from the UI5 app display
+- Automatic audit logging of access to personal sensitive data (via [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme))
 
 ## Requirements and Setup
 
-_Insert a short description what is required to get your project running..._
+### Prerequisites
+
+1. Ensure your project uses `@sap/cds` version 9.
+2. Set up the `xsuaa` BTP service for authorization.
+3. (Optional) Add [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) and the `auditlog` BTP service for audit logging.
+
+### Installation
+
+*Internal npm registry detail to be added until publishing at npmjs.com*
+
+```sh
+npm install @cap-js/data-inspector
+```
+
+### UI5 App Configuration for Local Run (Optional)
+
+To run and test locally, add the UI5 app to your Fiori Launchpad sandbox configuration `app/flpSandbox.html`.
+
+**In `ClientSideTargetResolution.adapter.config.inbounds`:**
+```js
+CAPDataInspectorDisplay: {
+  semanticObject: "datainspectorui",
+  action: "display",
+  signature: {
+    parameters: {},
+    additionalParameters: "ignored"
+  },
+  resolutionResult: {
+    additionalInformation: "sap.cap.datainspector.datainspectorui",
+    applicationType: "URL",
+    url: "/data-inspector-ui"
+  }
+}
+```
+
+**In `LaunchPage.adapter.config.groups`:**
+```js
+{
+  id: "Supportability",
+  title: "Support Tools",
+  isPreset: true,
+  isVisible: true,
+  isGroupLocked: false,
+  tiles: [
+    {
+      id: "CAPDataInspector",
+      tileType: "sap.ushell.ui.tile.StaticTile",
+      properties: {
+        title: "Data Inspector",
+        targetURL: "#datainspectorui-display",
+        icon: "sap-icon://database"
+      }
+    }
+  ]
+}
+```
+
+### UI5 App Configuration for Deployment to BTP using Cloud Portal Service
+
+#### Cloud Portal Service Configuration
+
+Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataModel.json`:
+
+**In `payload.catalogs.payload.viz`:**
+```json
+{
+  "appId": "sap.cap.datainspector.datainspectorui",
+  "vizId": "datainspectorui-display"
+}
+```
+
+**In `payload.groups.payload.viz`:**
+```json
+{
+  "id": "sap.cap.datainspector.datainspectorui",
+  "appId": "sap.cap.datainspector.datainspectorui",
+  "vizId": "datainspectorui-display"
+}
+```
+
+#### MTA Configuration
+
+Add the UI5 app to your MTA archive for deployment to the BTP HTML5 Repository service just like any UI5 app native to your CAP application. Place the prebuilt UI5 app archive `capdatainspectorapp.zip` available under `node_modules/@capdata-inspector/app/data-inspector-ui` at a suitable directory of your choice in your project workspace and reference it in your `mta.yaml` configuration while building your MTA archive as usual.
+
+Example configuration:
+
+**In `modules` of your `mta.yaml`:**
+```yaml
+- name: capdatainspectorapp
+  type: html5
+  path: node_modules/@cap-js/data-inspector/app/data-inspector-ui # Adapt according to your file location
+
+- name: app-content # The UI content module of your CAP application, 'name: app-content' is an example and would be different from your configuration
+  type: com.sap.application.content
+  path: .
+  build-parameters:
+    build-result: resources
+    requires:
+      - artifacts:
+          - capdbinspectorapp.zip
+          name: capdatainspectorapp
+          target-path: resources/
+```
+
+### UI5 App Configuration for Deployment to BTP using Workzone
+
+*To be added*
+
+### Authorization
+
+Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` to grant read access to the UI5 app and the underlying OData service.
+
+`@cap-js/data-inspector` reads data only through the available CDS services, exposing data based on `xsuaa` scopes granted to the entities and the user. It does not implement own access control. It does not perform any direct SQL queries.
+
+### Excluding Entities and Elements
+
+To hide entities or elements from Data Inspector, annotate them with `@HideFromDataInspector` in your CDS definitions.
+
+Example: Using `@HideFromDataInspector` annotation in the CDS entity definitions:
+
+```cds
+entity Foo {
+    id   : String;
+    name : String @HideFromDataInspector;
+}
+```
+
+The element `name` of entity `Foo` will not be revealed by `@cap-js/data-inspector`.
+
+```cds
+@HideFromDataInspector
+entity Bar {
+    id   : String;
+    name : String;
+}
+```
+
+The entity `Bar` will not be revealed by `@cap-js/data-inspector`.
+
+### Audit Logging
+
+If your CAP application uses [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme), `@cap-js/data-inspector` will automatically emit audit logs for read access to sensitive data elements annotated with `@PersonalData.IsPotentiallySensitive`. Refer [Capire](https://cap.cloud.sap/docs/guides/data-privacy/annotations) for audit logging in CAP.
 
 ## Tests
 
-In `tests/bookshop/` you can find a sample application that is used to demonstrate how to use the plugin and to run tests against it.
+To directly test the plugin, a test workspace is included.
 
+- Clone the repository: `git clone <repository>`
+- Install dependencies: `npm i`
+- Run the test server: `npm run dev` the UI5 app will be launched in a web browser
+- Supply credentials: Username: `alice`; Password: keep empty
+<!-- 
 ### Local Testing
 
 To execute local tests, simply run:
@@ -40,7 +192,7 @@ The hybrid integration tests can be run via:
 
 ```bash
 npm run test:hybrid
-```
+``` -->
 
 #### CI
 

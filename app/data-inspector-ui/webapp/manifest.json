@@ -1,0 +1,154 @@
+{
+  "_version": "1.65.0",
+  "sap.app": {
+    "id": "sap.cap.datainspector.datainspectorui",
+    "type": "application",
+    "i18n": {
+      "bundleUrl": "i18n/i18n.properties",
+      "supportedLocales": ["", "en"],
+      "fallbackLocale": "en"
+    },
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.18.4",
+      "toolsId": "2de3ce8e-a92f-499a-b66b-7668d7b1d7b2"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/data-inspector/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "4.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "datainspectorui-display": {
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          },
+          "semanticObject": "datainspectorui",
+          "action": "display",
+          "title": "{{appTitle}}",
+          "icon": "sap-icon://database"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "config": { 
+      "fullWidth": true 
+    },
+    "dependencies": {
+      "minUI5Version": "1.139.0",
+      "libs": {
+        "sap.f": {},
+        "sap.m": {},
+        "sap.ui.core": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "sap.cap.datainspector.datainspectorui.i18n.i18n"
+        }
+      },
+      "ODataModel": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.f.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "flexibleColumnLayout",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "sap.cap.datainspector.datainspectorui.view",
+        "async": true,
+        "viewPath": "sap.cap.datainspector.datainspectorui.view"
+      },
+      "routes": [
+        {
+          "name": "entityDefinitionList",
+          "pattern": ":?query:",
+          "target": ["entityDefinitionList"]
+        },
+        {
+          "pattern": "entityColumnList/{name}/{layout}",
+          "name": "entityColumnList",
+          "target": ["entityDefinitionList", "entityColumnList"]
+        },
+        {
+          "pattern": "entityDataList/{name}/{selectedColumns}/{layout}/{flag}",
+          "name": "entityDataList",
+          "target": [
+            "entityDefinitionList",
+            "entityColumnList",
+            "entityDataList"
+          ]
+        }
+      ],
+      "targets": {
+        "entityDefinitionList": {
+          "id": "listview",
+          "name": "listview",
+          "controlAggregation": "beginColumnPages"
+        },
+        "entityColumnList": {
+          "id": "columnview",
+          "name": "columnview",
+          "controlAggregation": "midColumnPages"
+        },
+        "entityDataList": {
+          "id": "dataview",
+          "name": "dataview",
+          "controlAggregation": "endColumnPages"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "sap.cap.datainspector.datainspectorui.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  }
+}

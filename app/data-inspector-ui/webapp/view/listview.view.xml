@@ -1,0 +1,72 @@
+<mvc:View controllerName="sap.cap.datainspector.datainspectorui.controller.listview"
+	xmlns="sap.f"
+    xmlns:m="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns:l="sap.ui.layout">
+    <DynamicPage id="dynamicPageId" toggleHeaderOnTitleClick="false">
+		<!-- DynamicPage Header -->
+		<header>
+            <DynamicPageHeader>
+                <content>
+                    <m:FlexBox alignItems="End" justifyContent="Start" wrap="Wrap">
+                        <m:items>
+                            <m:VBox class="sapUiSmallMarginEnd">
+                                <m:Label text="{i18n>entityName}" labelFor="entityNameInput"/>
+                                <m:Input 
+                                    id="entityNameInput" 
+                                    width="18rem" 
+                                    placeholder="{i18n>entityNamePlaceholder}"
+                                    submit=".onGoPress"/>
+                            </m:VBox>
+                            <m:VBox class="sapUiSmallMarginEnd">
+                                <m:Label text="{i18n>dataSource}" labelFor="dataSourceSelect"/>
+                                <m:ComboBox
+                                    id="dataSourceSelect"
+                                    width="18rem"
+                                    placeholder="{i18n>dataSourcePlaceholder}"
+                                    selectedKey="db">
+                                    <m:items>
+                                        <core:Item key="db" text="{i18n>selectionDatabase}"/>
+                                        <core:Item key="service" text="{i18n>selectionService}"/>
+                                    </m:items>
+                                </m:ComboBox>
+                            </m:VBox>
+                            <m:ToolbarSpacer>
+                                <m:layoutData>
+                                    <m:FlexItemData growFactor="1" />
+                                </m:layoutData>
+                            </m:ToolbarSpacer>
+                            <m:Button text="{i18n>goButton}" type="Emphasized" press="onGoPress"/>
+                        </m:items>
+                    </m:FlexBox>
+                </content>
+            </DynamicPageHeader>
+		</header>
+
+		<!-- DynamicPage Content -->
+		<content>
+			<m:VBox id= "ListViewVbox" fitContainer="true">
+				<m:OverflowToolbar id="ListViewOverflowToolbar" class="sapFDynamicPageAlignContent">
+					<m:Title id="ListViewTitle"  text="{i18n>entities} "/>
+					<m:ToolbarSpacer/>
+				</m:OverflowToolbar>
+				<m:Table
+					id="entitiesTable"
+					itemPress="onListItemPress"
+					growing="true"
+					inset="false"
+					class="sapFDynamicPageAlignContent"
+					mode="SingleSelectMaster"
+					width="auto">
+					<m:columns>
+						<m:Column width="12em">
+							<m:Text text="{i18n>entityName}"/>
+						</m:Column>
+					</m:columns>
+				</m:Table>
+			</m:VBox>
+		</content>
+
+	</DynamicPage>
+</mvc:View>

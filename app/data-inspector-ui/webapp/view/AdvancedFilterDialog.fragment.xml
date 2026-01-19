@@ -1,0 +1,62 @@
+<m:Dialog
+    title="{i18n>advanceFilter}"
+    id="advancedFilterDialog"
+	contentWidth="600px"
+    xmlns="sap.m"
+    xmlns:m="sap.m"
+    xmlns:core="sap.ui.core">
+    <m:OverflowToolbar class="sapFDynamicPageAlignContent">
+		<m:Title text="{i18n>filters}({view>/filterRowCount})"/>
+		<m:ToolbarSpacer/>
+		<m:Button text="{i18n>add}"
+            type="Transparent"
+            press=".onAddPress"/>
+		<m:ToolbarSeparator />
+	</m:OverflowToolbar>
+	<m:Table
+		id="AdvancedFilterTable"
+		inset="false"
+        class="sapFDynamicPageAlignContent"
+		width="auto">
+		<m:columns>
+			<m:Column>
+				<m:Text text="{i18n>field}"/>
+	        </m:Column>
+			<m:Column>
+				<m:Text text="{i18n>value}"/>
+			</m:Column>
+			<m:Column>
+			</m:Column>
+		</m:columns>
+		<m:items>
+			<m:ColumnListItem >
+				<m:cells>
+					<m:Select id="columnSelect" items="{
+                        path: 'view>/selectedColumns'
+                    }">
+                    <m:items>
+                        <core:Item key="{view>}" text="{view>}" />
+                    </m:items>
+                    </m:Select>
+					<m:MultiInput 
+                        id="multiInput" 
+                        placeholder="{i18n>enterFilterValues}" 
+                        valueHelpRequest="onValueHelpRequest"/>
+					<Button
+								id="removeFilterBtn"
+								type="Transparent"
+								icon="sap-icon://decline"
+								press=".onRemovePress"
+								tooltip="{i18n>removeFilter}"
+							/>
+				</m:cells>
+			</m:ColumnListItem>
+		</m:items>
+	</m:Table>
+    <beginButton>
+        <m:Button text="{i18n>apply}" press=".onApplyAdvancedFilter"/>
+    </beginButton>
+    <endButton>
+        <m:Button text="{i18n>cancel}" press=".onCancelAdvancedFilter"/>
+    </endButton>
+</m:Dialog>
