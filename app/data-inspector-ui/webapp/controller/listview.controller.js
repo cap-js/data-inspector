@@ -14,20 +14,13 @@ sap.ui.define([
 			let oODataModel = this.getOwnerComponent().getModel("ODataModel");
 			this.oView.setModel(oODataModel, "entityDefinition");
 
-			this.oRouter.getRoute("entityDefinitionList").attachPatternMatched(this.onRouteMatched, this);
-		},
-
-		/**
-		 * 
-		 * Event handler for route matched event. Sets the layout to 'OneColumn' when navigating to the list view and calls the onGoPress method to load the Entity List.
-		 */
-		onRouteMatched: function () {
-        		this.onGoPress();
+			this.oRouter.getRoute("entityDefinitionList").attachPatternMatched(this.onGoPress, this);
 		},
 
 		/**
 		 * 
 		 * Handler for the Go button press event. Loads entitity line items based on the selected data source and entity name entered in the filter.
+		 * Also called on route matched and data source change.
 		 */
 		onGoPress: function() {
 			var sSelectedDatasourceKey = this.byId("dataSourceSelect").getSelectedKey();
@@ -36,8 +29,6 @@ sap.ui.define([
 
 			// Clear previous selection
 			this.oEntitiesTable.removeSelections();
-			// Unbind previous items
-			this.oEntitiesTable.unbindItems();
 
 			aFilters.push(new sap.ui.model.Filter("dataSource", "EQ", sSelectedDatasourceKey));
 
@@ -45,24 +36,8 @@ sap.ui.define([
 				aFilters.push(new sap.ui.model.Filter("name", "Contains", sEntityName));
 			}
 
-			// Bind table items using OData V4 model
-			this.oEntitiesTable.bindItems({
-				path: "entityDefinition>/EntityDefinition",
-				parameters: {
-					$count: true,
-					$select: "name,title"
-				},
-				template: new sap.m.ColumnListItem({
-					type: "Navigation",
-					cells: [
-						new sap.m.ObjectIdentifier({
-							title: "{entityDefinition>name}",
-							text: "{entityDefinition>title}"
-						})
-					]
-				}),
-				filters: aFilters
-			});
+			// Make the oData request with filters
+			this.oEntitiesTable.getBinding("items").filter(aFilters);
 		},
 
 		/**

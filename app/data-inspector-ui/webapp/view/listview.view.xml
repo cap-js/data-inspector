@@ -2,8 +2,7 @@
 	xmlns="sap.f"
     xmlns:m="sap.m"
 	xmlns:core="sap.ui.core"
-	xmlns:mvc="sap.ui.core.mvc"
-	xmlns:l="sap.ui.layout">
+	xmlns:mvc="sap.ui.core.mvc">
     <DynamicPage id="dynamicPageId" toggleHeaderOnTitleClick="false">
 		<!-- DynamicPage Header -->
 		<header>
@@ -23,6 +22,7 @@
                                 <m:Label text="{i18n>dataSource}" labelFor="dataSourceSelect"/>
                                 <m:ComboBox
                                     id="dataSourceSelect"
+                                    change="onGoPress"
                                     width="18rem"
                                     placeholder="{i18n>dataSourcePlaceholder}"
                                     selectedKey="db">
@@ -58,12 +58,28 @@
 					inset="false"
 					class="sapFDynamicPageAlignContent"
 					mode="SingleSelectMaster"
-					width="auto">
+					width="auto"
+                    items="{ 
+                        path: 'entityDefinition>/EntityDefinition',
+                        parameters: {
+                            $count: 'true',
+                            $select: 'name,title'
+                            }
+                        }">
 					<m:columns>
-						<m:Column width="12em">
+						<m:Column>
 							<m:Text text="{i18n>entityName}"/>
 						</m:Column>
 					</m:columns>
+                    <m:items>
+                        <m:ColumnListItem type="Active">
+                            <m:cells>
+                                <m:ObjectIdentifier
+                                    title="{entityDefinition>name}"
+							        text="{entityDefinition>title}"/>
+                            </m:cells>
+                        </m:ColumnListItem>
+                    </m:items>
 				</m:Table>
 			</m:VBox>
 		</content>
