@@ -24,13 +24,15 @@
 
 *Internal npm registry detail to be added until publishing at npmjs.com*
 
+Install the plugin in your CAP Node.js project.
+
 ```sh
 npm install @cap-js/data-inspector
 ```
 
 ### UI5 App Configuration for Local Run (Optional)
 
-To run and test locally, add the UI5 app to your Fiori Launchpad sandbox configuration `app/flpSandbox.html`.
+To run and test locally, add the UI5 app to your Fiori Launchpad sandbox configuration `app/flpSandbox.html` of your local CAP Node.js project.
 
 **In `ClientSideTargetResolution.adapter.config.inbounds`:**
 ```js
@@ -157,9 +159,9 @@ The entity `Bar` will not be revealed by `@cap-js/data-inspector`.
 
 If your CAP application uses [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme), `@cap-js/data-inspector` will automatically emit audit logs for read access to sensitive data elements annotated with `@PersonalData.IsPotentiallySensitive`. Refer [Capire](https://cap.cloud.sap/docs/guides/data-privacy/annotations) for audit logging in CAP.
 
-## Tests
+## Test the Plugin Directly
 
-To directly test the plugin, a test workspace is included.
+To quickly test the plugin directly in your local machine, use the NPM test workspace included in this repository.
 
 - Clone the repository: `git clone <repository>`
 - Install dependencies: `npm i`
