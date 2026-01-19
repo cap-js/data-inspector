@@ -27,6 +27,9 @@ sap.ui.define([
 			if(!this._previousEntityName || this._previousEntityName !== this._name) {
 				this.getOwnerComponent()._aSelectedColumnKeys = [];
 				this._previousEntityName = this._name;
+				this._isNavigatingFromEntityList = true;// Flag to indicate navigation from entity list
+			} else {
+				this._isNavigatingFromEntityList = false;
 			}
 			// Enable/disable the Show Data button initially based on existing selection
 			if (this.getOwnerComponent()._aSelectedColumnKeys && this.getOwnerComponent()._aSelectedColumnKeys.length > 0) {
@@ -38,13 +41,8 @@ sap.ui.define([
 			
 			this.getView().setModel(oViewModel, "view");
 
-			/**  
-			* Logic to maintain the selected columns even after navigation to third page and back
-			* Only restore selection if navigating from other pages, not from entity list to avoid confusion
-			* as entity change will clear the selection above
-			*/
-			var sPrevRoute = this.getOwnerComponent()._previousRouteName;
-			if (sPrevRoute !== "entityDefinitionList") {
+			// Restore previous selection if not navigating from entity list
+			if (!this._isNavigatingFromEntityList) {
 			
 				var oTable = this.byId("columnTable");
 				var aSelectedKeys = this.getOwnerComponent()._aSelectedColumnKeys || [];
@@ -175,7 +173,7 @@ sap.ui.define([
 		onShowDataPress: function () {
 			// Navigate to the next page with selected data
 			this.getOwnerComponent().getHelper().then(function (oHelper) {
-				var oNextUIState = oHelper.getNextUIState(2);
+				var oNextUIState = oHelper.getNextUIState(3);
 				this.oRouter.navTo("entityDataList", {
 					layout: oNextUIState.layout,
 					name: this._name,

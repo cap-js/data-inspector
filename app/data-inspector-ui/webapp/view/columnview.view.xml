@@ -1,4 +1,4 @@
-<mvc:View xmlns:table="sap.ui.table"
+<mvc:View
     controllerName="sap.cap.datainspector.datainspectorui.controller.columnview"
 	xmlns="sap.f"
 	xmlns:m="sap.m"

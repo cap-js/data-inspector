@@ -26,12 +26,6 @@ sap.ui.define([
             this.setModel(oModel);
 
             oRouter = this.getRouter();
-            // Stores previous route name to be used in columnview.controller.js
-            oRouter.attachRouteMatched(function(oEvent) {
-                this._previousRouteName = this._lastRouteName; // store previous route name
-				this._lastRouteName = oEvent.getParameter("name");
-			}, this);
-
             oRouter.attachBeforeRouteMatched(this._onBeforeRouteMatched, this);
             oRouter.initialize();
 
