@@ -1,5 +1,7 @@
 _out
-*.db*
+*.db
+*.db-shm
+*.db-wal
 *.sqlite
 connection.properties
 default-*.json
