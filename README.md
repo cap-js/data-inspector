@@ -163,7 +163,7 @@ If your CAP application uses [`@cap-js/audit-logging`](https://github.com/cap-js
 
 To quickly test the plugin directly in your local machine, use the NPM test workspace included in this repository.
 
-- Clone the repository: `git clone <repository>`
+- Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
 - Install dependencies: `npm i`
 - Run the test server: `npm run dev` the UI5 app will be launched in a web browser
 - Supply credentials: Username: `alice`; Password: keep empty
