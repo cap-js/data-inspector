@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "CAP Node.js plugin to view data content of CDS entities defined in a CAP Node.js application.",
   "author": "SAP SE (https://www.sap.com)",
-  "repository": "https://github.tools.sap/erp4sme/cap-db-inspector-nodejs.git",
+  "repository": "https://github.com/cap-js/data-inspector.git",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "main": "cds-plugin.js",
