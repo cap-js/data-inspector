@@ -1,0 +1,12 @@
+ID,totalAmount,status,date,phoneNumber,address,createdAt,createdBy,modifiedAt,modifiedBy
+ord1,1249.98,Delivered,2023-02-01T14:30:00Z,+1-555-0123,Main St Apt 4B New York NY 10001,2023-02-01T14:30:00Z,customer1,2023-02-03T10:15:00Z,system
+ord2,89.99,Processing,2023-02-02T09:15:00Z,+1-555-0234,Oak Avenue Los Angeles CA 90210,2023-02-02T09:15:00Z,customer2,2023-02-02T09:15:00Z,customer2
+ord3,42.98,Shipped,2023-02-03T16:45:00Z,+1-555-0345,Pine Road Chicago IL 60601,2023-02-03T16:45:00Z,customer3,2023-02-04T08:30:00Z,system
+ord4,199.99,Delivered,2023-02-04T11:20:00Z,+1-555-0456,Elm Street Houston TX 77001,2023-02-04T11:20:00Z,customer4,2023-02-06T14:20:00Z,system
+ord5,79.99,Processing,2023-02-05T13:10:00Z,+1-555-0567,Maple Drive Phoenix AZ 85001,2023-02-05T13:10:00Z,customer5,2023-02-05T13:10:00Z,customer5
+ord6,149.99,Cancelled,2023-02-06T10:30:00Z,+1-555-0678,Cedar Lane Philadelphia PA 19101,2023-02-06T10:30:00Z,customer6,2023-02-06T15:45:00Z,customer6
+ord7,24.99,Delivered,2023-02-07T15:25:00Z,+1-555-0789,Birch Boulevard San Antonio TX 78201,2023-02-07T15:25:00Z,customer7,2023-02-09T11:30:00Z,system
+ord8,59.98,Shipped,2023-02-08T08:45:00Z,+1-555-0890,Willow Way San Diego CA 92101,2023-02-08T08:45:00Z,customer8,2023-02-09T16:20:00Z,system
+ord9,19.99,Processing,2023-02-09T12:15:00Z,+1-555-0901,Spruce Street Dallas TX 75201,2023-02-09T12:15:00Z,customer9,2023-02-09T12:15:00Z,customer9
+ord10,899.99,Delivered,2023-02-10T17:30:00Z,+1-555-1012,Ash Avenue San Jose CA 95101,2023-02-10T17:30:00Z,customer10,2023-02-12T13:45:00Z,system
+ord11,125.97,Processing,2023-02-11T14:20:00Z,+1-555-1123,Fir Road Austin TX 73301,2023-02-11T14:20:00Z,customer11,2023-02-11T14:20:00Z,customer11

@@ -163,10 +163,15 @@ If your CAP application uses [`@cap-js/audit-logging`](https://github.com/cap-js
 
 To quickly test the plugin directly in your local machine, use the NPM test workspace included in this repository.
 
-- Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
-- Install dependencies: `npm i`
-- Run the test server: `npm run dev` the UI5 app will be launched in a web browser
-- Supply credentials: Username: `alice`; Password: keep empty
+1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
+2. Install dependencies: `npm i`
+3. Generate CDS model types by saving any .cds file from VS Code. Refer [CDS Typer documentation](https://cap.cloud.sap/docs/tools/cds-typer) for more details.
+4. Create the test sqlite db: 
+   1. `cd test`
+   2. `cds deploy -2 sqlite:db/testservice.db`
+   3. `cd ..`
+5. Run the test server: `npm run dev` the UI5 app will be launched in a web browser
+6. Supply credentials: Username: `alice`; Password: keep empty
 <!-- 
 ### Local Testing
 

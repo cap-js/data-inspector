@@ -1,0 +1,13 @@
+ID,productName,description,quantity,mrp,category_ID,createdAt,createdBy,modifiedAt,modifiedBy
+prod1,iPhone 14,Latest Apple smartphone with advanced features,50,999.99,cat1,2023-01-15T10:30:00Z,admin,2023-01-15T10:30:00Z,admin
+prod2,Samsung Galaxy S23,High-performance Android smartphone,35,899.99,cat1,2023-01-16T09:15:00Z,admin,2023-01-16T09:15:00Z,admin
+prod3,The Great Gatsby,Classic American novel by F. Scott Fitzgerald,100,12.99,cat2,2023-01-17T14:20:00Z,user1,2023-01-17T14:20:00Z,user1
+prod4,Nike Air Max,Comfortable running shoes for athletes,75,149.99,cat3,2023-01-18T11:45:00Z,admin,2023-01-18T11:45:00Z,admin
+prod5,Coffee Maker,Automatic drip coffee maker with timer,25,79.99,cat4,2023-01-19T08:30:00Z,user2,2023-01-19T08:30:00Z,user2
+prod6,Yoga Mat,Non-slip exercise mat for yoga and fitness,60,29.99,cat5,2023-01-20T16:10:00Z,admin,2023-01-20T16:10:00Z,admin
+prod7,Face Moisturizer,Anti-aging moisturizer with SPF protection,40,24.99,cat6,2023-01-21T13:25:00Z,user1,2023-01-21T13:25:00Z,user1
+prod8,LEGO Castle Set,Medieval castle building set with 500 pieces,30,89.99,cat7,2023-01-22T10:55:00Z,admin,2023-01-22T10:55:00Z,admin
+prod9,Car Phone Mount,Universal smartphone holder for vehicles,80,19.99,cat8,2023-01-23T15:40:00Z,user2,2023-01-23T15:40:00Z,user2
+prod10,Organic Green Tea,Premium loose leaf green tea blend,120,15.99,cat9,2023-01-24T12:15:00Z,admin,2023-01-24T12:15:00Z,admin
+prod11,Wireless Mouse,Ergonomic wireless mouse with USB receiver,45,39.99,cat10,2023-01-25T09:30:00Z,user1,2023-01-25T09:30:00Z,user1
+prod12,Bluetooth Headphones,Noise-cancelling over-ear headphones,20,199.99,cat1,2023-01-26T14:45:00Z,admin,2023-01-26T14:45:00Z,admin

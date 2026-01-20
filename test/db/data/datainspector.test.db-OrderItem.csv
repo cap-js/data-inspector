@@ -1,0 +1,16 @@
+ID,itemName,quantity,itemPrice,order_ID,product_ID,createdAt,createdBy,modifiedAt,modifiedBy
+item1,iPhone 14,1,999.99,ord1,prod1,2023-02-01T14:30:00Z,customer1,2023-02-01T14:30:00Z,customer1
+item2,Nike Air Max,1,149.99,ord1,prod4,2023-02-01T14:30:00Z,customer1,2023-02-01T14:30:00Z,customer1
+item3,LEGO Castle Set,1,89.99,ord2,prod8,2023-02-02T09:15:00Z,customer2,2023-02-02T09:15:00Z,customer2
+item4,Yoga Mat,1,29.99,ord3,prod6,2023-02-03T16:45:00Z,customer3,2023-02-03T16:45:00Z,customer3
+item5,The Great Gatsby,1,12.99,ord3,prod3,2023-02-03T16:45:00Z,customer3,2023-02-03T16:45:00Z,customer3
+item6,Bluetooth Headphones,1,199.99,ord4,prod12,2023-02-04T11:20:00Z,customer4,2023-02-04T11:20:00Z,customer4
+item7,Coffee Maker,1,79.99,ord5,prod5,2023-02-05T13:10:00Z,customer5,2023-02-05T13:10:00Z,customer5
+item8,Nike Air Max,1,149.99,ord6,prod4,2023-02-06T10:30:00Z,customer6,2023-02-06T10:30:00Z,customer6
+item9,Face Moisturizer,1,24.99,ord7,prod7,2023-02-07T15:25:00Z,customer7,2023-02-07T15:25:00Z,customer7
+item10,Yoga Mat,2,29.99,ord8,prod6,2023-02-08T08:45:00Z,customer8,2023-02-08T08:45:00Z,customer8
+item11,Car Phone Mount,1,19.99,ord9,prod9,2023-02-09T12:15:00Z,customer9,2023-02-09T12:15:00Z,customer9
+item12,Samsung Galaxy S23,1,899.99,ord10,prod2,2023-02-10T17:30:00Z,customer10,2023-02-10T17:30:00Z,customer10
+item13,Wireless Mouse,1,39.99,ord11,prod11,2023-02-11T14:20:00Z,customer11,2023-02-11T14:20:00Z,customer11
+item14,Organic Green Tea,2,15.99,ord11,prod10,2023-02-11T14:20:00Z,customer11,2023-02-11T14:20:00Z,customer11
+item15,Coffee Maker,1,79.99,ord11,prod5,2023-02-11T14:20:00Z,customer11,2023-02-11T14:20:00Z,customer11
