@@ -117,7 +117,7 @@
           "target": ["entityDefinitionList", "entityColumnList"]
         },
         {
-          "pattern": "entityDataList/{name}/{selectedColumns}/{layout}/{flag}",
+          "pattern": "entityDataList/{name}/{selectedColumns}/{layout}/{showDataPressed}",
           "name": "entityDataList",
           "target": [
             "entityDefinitionList",
