@@ -12,6 +12,7 @@ sap.ui.define([
 			this.oRouter = this.getOwnerComponent().getRouter();
 			this.oModel = this.getOwnerComponent().getModel();
 			this.oRouter.getRoute("entityColumnList").attachPatternMatched(this.onRouteMatched, this);
+			this.oODataModel = this.getOwnerComponent().getModel("ODataModel");
 		},
 
 		//----------------------------------On Page load---------------------------------------------------------------------
@@ -64,19 +65,20 @@ sap.ui.define([
 		 * Handler for loading the OData entity definition based on the provided name. 
 		 */
 		_loadODataProduct: function (sName) {
-			var sKey = encodeURIComponent(sName);
-			var sUrl = "/odata/v4/data-inspector/EntityDefinition('" + sKey + "')?$select=elements";
+			var oContextBinding = this.oODataModel.bindContext("/EntityDefinition('" + sName + "')",
+				null,
+				{
+					$select: "elements"
+				}
+			);
 
-			fetch(sUrl)
-				.then(response => response.json())
-				.then(data => {
+			oContextBinding.requestObject().then(function (oData) {
+				var oEntityColumnListModel = new JSONModel();
+				oEntityColumnListModel.setData({ elements: oData.elements });
+				this.getView().setModel(oEntityColumnListModel, "EntityColumnList");
 
-					var oEntityColumnListModel = new JSONModel();
-					oEntityColumnListModel.setData({ elements: data.elements });
-					this.getView().setModel(oEntityColumnListModel, "EntityColumnList");					
-			})
-			.catch(error => {
-				console.error("Error fetching data:", error);
+			}.bind(this)).catch(function (oError) {
+				console.error("Error fetching data:", oError);
 			});
 		},
 
@@ -178,7 +180,7 @@ sap.ui.define([
 					layout: oNextUIState.layout,
 					name: this._name,
 					selectedColumns: encodeURIComponent(JSON.stringify(this.getOwnerComponent()._aSelectedColumnKeys)),
-					flag: true
+					showDataPressed: true
 				});
 			}.bind(this));
 		},

@@ -3,8 +3,7 @@
     xmlns:m="sap.m"
 	xmlns:core="sap.ui.core"
 	xmlns:mvc="sap.ui.core.mvc">
-    <DynamicPage id="dynamicPageId" toggleHeaderOnTitleClick="false">
-		<!-- DynamicPage Header -->
+    <DynamicPage id="dynamicPageId" toggleHeaderOnTitleClick="false" class="sapUiNoContentPadding">
 		<header>
             <DynamicPageHeader>
                 <content>
@@ -44,7 +43,6 @@
             </DynamicPageHeader>
 		</header>
 
-		<!-- DynamicPage Content -->
 		<content>
 			<m:VBox id= "ListViewVbox" fitContainer="true">
 				<m:OverflowToolbar id="ListViewOverflowToolbar" class="sapFDynamicPageAlignContent">
@@ -83,6 +81,5 @@
 				</m:Table>
 			</m:VBox>
 		</content>
-
 	</DynamicPage>
 </mvc:View>

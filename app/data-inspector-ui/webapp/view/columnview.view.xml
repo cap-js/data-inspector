@@ -5,7 +5,7 @@
 	xmlns:mvc="sap.ui.core.mvc"
 	xmlns:menu="sap.m.table.columnmenu"
 	xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-	<DynamicPage >
+	<DynamicPage class="sapUiNoContentPadding">
 		<title>
 			<DynamicPageTitle>
 				<navigationActions>
@@ -31,7 +31,7 @@
 		</dependents>
 		
 		<content>
-			<m:VBox>
+			<m:VBox height="100%" class="sapUiNoContentPadding">
 				<m:MessageStrip
         			text="{i18n>alertToSelectColumns}"
         			type="Information"
@@ -40,7 +40,6 @@
     				class="sapUiSmallMarginBottom"/>
 				<m:OverflowToolbar class="sapFDynamicPageAlignContent">
 					<m:Title text="{i18n>elements} ({= ${EntityColumnList>/elements}.length })"/>
-					<!-- how to change above text -->
 					<m:ToolbarSpacer/>
 					<m:SearchField search=".onSearch" width="17.5rem"/>
 					<m:Button text="{i18n>showData}"
@@ -49,54 +48,60 @@
                         press=".onShowDataPress"/>
 					<m:ToolbarSeparator />
 				</m:OverflowToolbar>
-				<m:Table
-					id="columnTable"
-					inset="false"
-					mode="MultiSelect"
-					selectionChange="onColumnTableSelectionChange"
-					items="{
-						path: 'EntityColumnList>/elements'	
-					}"
-					class="sapFDynamicPageAlignContent"
-					width="auto">
-					<m:columns>
-						<m:Column headerMenu="menu" app:p13nKey="name">
-							<m:Text text="{i18n>elementName}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="type">
-							<m:Text text="{i18n>type}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="isKey">
-							<m:Text text="{i18n>isKey}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="defaultValue">
-							<m:Text text="{i18n>defaultValue}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="isNotNull">
-							<m:Text text="{i18n>isNotNull}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="isSensitive">
-							<m:Text text="{i18n>isSensitive}"/>
-						</m:Column>
-						<m:Column headerMenu="menu" app:p13nKey="isVirtual">
-							<m:Text text="{i18n>isVirtual}"/>
-						</m:Column>
-					</m:columns>
-					<m:items>
-						<m:ColumnListItem >
-							<m:cells>
-								<m:Text text="{EntityColumnList>name}"/>
-								<m:Text text="{= ${EntityColumnList>length} ? ${EntityColumnList>type} + '(' + ${EntityColumnList>length} + ')' : ${EntityColumnList>type} }"/>
-								<m:Text text="{EntityColumnList>isKey}"/>
-								<m:Text text="{EntityColumnList>defaultValue}"/>
-								<m:Text text="{EntityColumnList>isNotNull}"/>
-								<m:Text text="{EntityColumnList>isSensitive}"/>
-								<m:Text text="{EntityColumnList>isVirtual}"/>
-								
-							</m:cells>
-						</m:ColumnListItem>
-					</m:items>
-				</m:Table>
+				<m:ScrollContainer 
+					height="calc(100vh - 170px)"
+					width="100%"
+					vertical="true"
+					horizontal="true">
+					<m:Table
+						id="columnTable"
+						inset="false"
+						mode="MultiSelect"
+						selectionChange="onColumnTableSelectionChange"
+						items="{
+							path: 'EntityColumnList>/elements'	
+						}"
+						class="sapFDynamicPageAlignContent"
+						width="auto"
+						fixedLayout="false">
+						<m:columns>
+							<m:Column headerMenu="menu" app:p13nKey="name" width="10rem">
+								<m:Text text="{i18n>elementName}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="type" width="8rem">
+								<m:Text text="{i18n>type}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="isKey" width="7rem">
+								<m:Text text="{i18n>isKey}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="defaultValue" width="12rem">
+								<m:Text text="{i18n>defaultValue}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="isSensitive" width="11rem">
+								<m:Text text="{i18n>isSensitive}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="isNotNull" width="9rem">
+								<m:Text text="{i18n>isNotNull}" wrapping="false"/>
+							</m:Column>
+							<m:Column headerMenu="menu" app:p13nKey="isVirtual" width="9rem">
+								<m:Text text="{i18n>isVirtual}" wrapping="false"/>
+							</m:Column>
+						</m:columns>
+						<m:items>
+							<m:ColumnListItem >
+								<m:cells>
+									<m:Text text="{EntityColumnList>name}" wrapping="false"/>
+									<m:Text text="{= ${EntityColumnList>length} ? ${EntityColumnList>type} + '(' + ${EntityColumnList>length} + ')' : ${EntityColumnList>type} }" wrapping="false"/>
+									<m:Text text="{EntityColumnList>isKey}" wrapping="false"/>
+									<m:Text text="{EntityColumnList>defaultValue}" wrapping="false"/>
+									<m:Text text="{EntityColumnList>isSensitive}" wrapping="false"/>
+									<m:Text text="{EntityColumnList>isNotNull}" wrapping="false"/>
+									<m:Text text="{EntityColumnList>isVirtual}" wrapping="false"/>		
+								</m:cells>
+							</m:ColumnListItem>
+						</m:items>
+					</m:Table>
+				</m:ScrollContainer>
 			</m:VBox>
 		</content>
 	</DynamicPage>

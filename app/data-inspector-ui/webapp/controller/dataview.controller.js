@@ -10,9 +10,7 @@ sap.ui.define(
     "sap/m/Select",
     "sap/m/MultiInput",
     "sap/m/Button",
-
     "sap/ui/core/Item",
-    "sap/ui/model/odata/v4/ODataModel",
     "sap/ui/model/Filter",
   ],
   function (
@@ -27,7 +25,6 @@ sap.ui.define(
     MultiInput,
     Button,
     Item,
-    ODataModel,
     Filter
   ) {
     "use strict";
@@ -39,8 +36,8 @@ sap.ui.define(
           this.oOwnerComponent = this.getOwnerComponent();
 
           this.oRouter = this.oOwnerComponent.getRouter();
-          this.oModel = this.oOwnerComponent.getModel();
-          this.flagSkipPrepareTable = false;
+          this.oModel = this.oOwnerComponent.getModel(); // use default model for UI state
+          this.oODataModel = this.getOwnerComponent().getModel("ODataModel"); // OData V4 model
           this.oRouter
             .getRoute("entityDataList")
             .attachPatternMatched(this._onPatternMatch, this);
@@ -48,21 +45,17 @@ sap.ui.define(
 
         // Helper function to handle route pattern match
         _onPatternMatch: function (oEvent) {
-          if (this.flagSkipPrepareTable) {
-            this.flagSkipPrepareTable = false;
-            return;
-          }
           this._name =
             oEvent.getParameter("arguments").name || this._name || "0";
-          this._flag =
-            oEvent.getParameter("arguments").flag === true ||
-            oEvent.getParameter("arguments").flag === "true"
+          this._showDataPressed =
+            oEvent.getParameter("arguments").showDataPressed === true ||
+            oEvent.getParameter("arguments").showDataPressed === "true"
               ? true
               : undefined;
 
           let oViewModel;
           // Setting the name in a view model for easy binding in the view
-          if (this._flag) {
+          if (this._showDataPressed) {
             oViewModel = new JSONModel();
           } else {
             oViewModel = this.getView().getModel("view");
@@ -77,20 +70,17 @@ sap.ui.define(
           );
           oViewModel.setProperty("/selectedColumns", this._aSelectedColumns);
 
-          this._prepareDataTable();
+          // If user clicks on show data button from previous screen, we prepare the data table afresh
+          // Otherwise, if table already exists with/without data we retain it
+          if (this._showDataPressed) {
+            this._prepareDataTable();
+          } else if (this.byId("dataTable")?.getModel("tableData")) {
+            return;
+          }
         },
 
         // Helper funtion to prepare template for data table
         _prepareDataTable() {
-          // checking and destroying existing dialog to avoid multiple instances
-          if (this._oAdvancedFilterDialog) {
-            this._oAdvancedFilterDialog.destroy();
-            this._oAdvancedFilterDialog = null;
-          }
-          if (this._advancedFilter) {
-            this._advancedFilter = undefined;
-          }
-
           let oTable = this.byId("dataTable");
 
           // Clear existing content
@@ -102,17 +92,23 @@ sap.ui.define(
           oTable.removeAllItems();
 
           this._aSelectedColumns.forEach(function (oColumn) {
+            //Calculate column width based on header length. Limit min 5rem max 30rem. 
+            //1 rem equals approximately 0.6 to 0.7 of character width so using 0.65 here.
+            var iCalculatedWidth = Math.ceil(oColumn.length * 0.65) + 1;//1rem padding
+            var iWidth = Math.max(5, Math.min(iCalculatedWidth, 30)); //min 5rem max 30rem
             oTable.addColumn(
               new Column({
-                header: new Text({ text: oColumn }), // Use the first key as header
+                header: new Text({ text: oColumn,
+                  wrapping: true,
+                  width: iWidth+"rem",
+                 }),
               })
             );
           });
 
           // Create local JSON model for table data
           var oTableModel = new JSONModel({
-            items: [],
-            totalCount: 0,
+            items: []
           });
 
           // Set the model to the table
@@ -131,27 +127,18 @@ sap.ui.define(
           });
           this._paginationLimit = 20;
 
-          // If flag is true, it indicates that the user has clicked on "Show Data" button from previous screen
-          // In this case, we reset any existing advanced filters and we fetch fresh data
-          if (this._flag || (!this._flag && !this._advancedFilter)) {
-            this._advancedFilter = undefined;
-            if (this._oAdvancedFilterDialog) {
-              this._oAdvancedFilterDialog.destroy();
-              this._oAdvancedFilterDialog = undefined;
-            }
-            this._fetchData(0, this._paginationLimit);
-          } else {
-            this._fetchData(0, this._paginationLimit, this._advancedFilter);
+          // Reset any existing advanced filters
+          this._advancedFilter = undefined;
+          if (this._oAdvancedFilterDialog) {
+            this._oAdvancedFilterDialog.destroy();
+            this._oAdvancedFilterDialog = undefined;
           }
+          this._fetchData(0, this._paginationLimit);
         },
 
         // Helper function to fetch data from the backend API
         _fetchData: async function (iSkip, iTop, filter) {
-          let sKey = encodeURIComponent(this._name),
-            oODataModel = new ODataModel({
-              serviceUrl: "/odata/v4/data-inspector/",
-              operationMode: "Server",
-            });
+          let sKey = encodeURIComponent(this._name);
 
           let aFilters = [],
             oTable = this.byId("dataTable"),
@@ -171,7 +158,7 @@ sap.ui.define(
 
           aFilters.push(new Filter("entityName", "EQ", sKey));
 
-          let oListBinding = oODataModel.bindList(
+          let oListBinding = this.oODataModel.bindList(
             "/Data",
             null,
             null,
@@ -242,19 +229,18 @@ sap.ui.define(
               );
             else await this._fetchData(iCurrentLength, this._paginationLimit);
           }
-          //used setTimeout to focus on the first newly added row after data is fetched to stop scrolling to top
-          if (iCurrentLength >= 0) {
-            setTimeout(() => {
-              let items = oTable.getItems();
-              let oItem = items[iCurrentLength];
-              oItem.focus();
-            }, 0);
-          }
+
+          // Focus on the first newly added row after items are updated
+          oTable.attachEventOnce("updateFinished", function() {
+            let aItems = oTable.getItems();
+            if (aItems[iCurrentLength]) {
+              aItems[iCurrentLength].focus();
+            }
+          });
         },
 
         // Event handler for Full Screen button
         handleFullScreen: function () {
-          this.flagSkipPrepareTable = true;
           let sNextLayout = this.oModel.getProperty(
             "/actionButtonsInfo/endColumn/fullScreen"
           );
@@ -264,13 +250,12 @@ sap.ui.define(
             selectedColumns: encodeURIComponent(
               JSON.stringify(this._aSelectedColumns)
             ),
-            flag: false,
+            showDataPressed: false,
           });
         },
 
         // Event handler for Exit Full Screen button
         handleExitFullScreen: function () {
-          this.flagSkipPrepareTable = true;
           let sNextLayout = this.oModel.getProperty(
             "/actionButtonsInfo/endColumn/exitFullScreen"
           );
@@ -280,13 +265,12 @@ sap.ui.define(
             selectedColumns: encodeURIComponent(
               JSON.stringify(this._aSelectedColumns)
             ),
-            flag: false,
+            showDataPressed: false,
           });
         },
 
         // Event handler for Close button
         handleClose: function () {
-          this.flagSkipPrepareTable = false;
           let sNextLayout = this.oModel.getProperty(
             "/actionButtonsInfo/endColumn/closeColumn"
           );
@@ -439,10 +423,6 @@ sap.ui.define(
           let oColumnListItem = new ColumnListItem({
             cells: [
               new Select({
-                id: Fragment.createId(
-                  "sap.cap.datainspector.datainspectorui.view.AdvancedFilterDialog",
-                  "columnSelect"
-                ),
                 items: {
                   path: "view>/selectedColumns",
                   template: new Item({
@@ -452,18 +432,10 @@ sap.ui.define(
                 },
               }),
               new MultiInput({
-                id: Fragment.createId(
-                  "sap.cap.datainspector.datainspectorui.view.AdvancedFilterDialog",
-                  "multiInput"
-                ),
                 placeholder: "Enter filter values",
                 valueHelpRequest: this.onValueHelpRequest.bind(this),
               }),
               new Button({
-                id: Fragment.createId(
-                  "sap.cap.datainspector.datainspectorui.view.AdvancedFilterDialog",
-                  "removeFilterBtn"
-                ),
                 icon: "sap-icon://decline",
                 type: "Transparent",
                 press: this.onRemovePress.bind(this),
