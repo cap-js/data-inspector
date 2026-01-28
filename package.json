@@ -47,6 +47,8 @@
     "@cds-models",
     "srv",
     "app",
+    "lib",
+    "templates",
     "cds-plugin.js",
     "index.cds",
     "package.json",

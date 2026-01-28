@@ -6,4 +6,12 @@ module.exports = {
   arrowParens: "always",
   bracketSpacing: true,
   endOfLine: "lf",
+  overrides: [
+    {
+      files: "*.json.hbs",
+      options: {
+        parser: "json",
+      },
+    },
+  ],
 };
