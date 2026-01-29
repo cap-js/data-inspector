@@ -152,6 +152,41 @@ describe("cds add data-inspector", () => {
     expect(scopeCount).to.equal(1, "Scope should not be duplicated");
   });
 
+  it("should not modify existing scope with different description", async () => {
+    // Create a new temp folder with xsuaa
+    const tempExisting = await tempUtil.mkTempFolder();
+    const projectExisting = join(tempExisting, "project");
+
+    // Initialize a CAP project with xsuaa
+    execSync(`cds init project --add xsuaa`, { cwd: tempExisting });
+    updateDependency(projectExisting);
+    execSync(`npm install`, { cwd: projectExisting });
+    setupHack(projectExisting);
+
+    // Manually add the scope with a custom description
+    const xsSecurityPath = join(projectExisting, "xs-security.json");
+    const xsSecurity = JSON.parse(fs.readFileSync(xsSecurityPath, "utf8"));
+    const customDescription = "Custom description for testing";
+    xsSecurity.scopes = xsSecurity.scopes || [];
+    xsSecurity.scopes.push({
+      name: DATA_INSPECTOR_SCOPE,
+      description: customDescription,
+    });
+    fs.writeFileSync(xsSecurityPath, JSON.stringify(xsSecurity, null, 2));
+
+    // Run cds add data-inspector
+    execSync(`cds add data-inspector`, { cwd: projectExisting });
+
+    // Verify the scope was not duplicated and description was not changed
+    const updatedXsSecurity = readXsSecurity(projectExisting);
+    const scopeCount = countScope(updatedXsSecurity, DATA_INSPECTOR_SCOPE);
+    expect(scopeCount).to.equal(1, "Scope should not be duplicated");
+
+    const scope = updatedXsSecurity.scopes.find((s: any) => s.name === DATA_INSPECTOR_SCOPE);
+    expect(scope).to.exist;
+    expect(scope.description).to.equal(customDescription, "Description should not be changed");
+  });
+
   it("should not add scope if xs-security.json does not exist", async () => {
     // Create a new temp folder without xsuaa
     const tempNoXsuaa = await tempUtil.mkTempFolder();
