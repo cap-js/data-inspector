@@ -52,7 +52,7 @@ Install the plugin in your CAP Node.js project.
 npm install @cap-js/data-inspector
 ```
 
-Running your CAP project locally with `cds serve` or `cds watch` will now serve the UI5 app on **Web Applications** endpoint `/data-inspector-ui`.
+Running your CAP project locally with `cds serve` or `cds watch` will now serve the UI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`.
 
 ### Setup with `cds add data-inspector`
 
