@@ -1,6 +1,6 @@
 import cds from "@sap/cds";
 
-const { expect, assert, GET } = cds.test (__dirname)
+const { expect, assert, GET } = cds.test(__dirname);
 
 const SERVICE_ENDPOINT = "/odata/v4/data-inspector";
 const AXIOS_REQ_CONFIG = {
@@ -10,7 +10,7 @@ const AXIOS_REQ_CONFIG = {
   },
 };
 
-describe("Authorization test - ERPCDXCNS-3664", async () => {
+describe("Data entity authorization test", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
@@ -24,29 +24,19 @@ describe("Authorization test - ERPCDXCNS-3664", async () => {
         "/Data?$filter=entityName eq 'datainspector.test.srv.ProductService.Product'",
       AXIOS_REQ_CONFIG
     );
-    expect(response0.status).to.be.equal(
-      200,
-      "Failed to access endpoint with authorization scope"
-    );
+    expect(response0.status).to.be.equal(200, "Failed to access endpoint with authorization scope");
 
     //*********************************************************************//
     let hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT +
-          "/Data?$filter=entityName eq 'datainspector.test.db.Product'",
-        {
-          auth: {
-            username: "test-no-auth",
-            password: "12345",
-          },
-        }
-      );
+      await GET(SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'", {
+        auth: {
+          username: "test-no-auth",
+          password: "12345",
+        },
+      });
     } catch (e) {
-      expect(e.status).to.be.equal(
-        403,
-        "Able to access endpoint without authorization scope"
-      );
+      expect(e.status).to.be.equal(403, "Able to access endpoint without authorization scope");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -55,15 +45,9 @@ describe("Authorization test - ERPCDXCNS-3664", async () => {
 
     hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT +
-          "/Data?$filter=entityName eq 'datainspector.test.db.Product'"
-      );
+      await GET(SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'");
     } catch (e) {
-      expect(e.status).to.be.equal(
-        401,
-        "Able to access endpoint without authentication"
-      );
+      expect(e.status).to.be.equal(401, "Able to access endpoint without authentication");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -81,7 +65,7 @@ describe("Authorization test - ERPCDXCNS-3664", async () => {
  * ***********************************************************************
  */
 
-describe("Data - ERPCDXCNS-3664", async () => {
+describe("Data entity tests", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
@@ -134,8 +118,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     hadError = false;
     try {
       await GET(
-        SERVICE_ENDPOINT +
-          "/Data?$filter=entityName ne 'datainspector.test.db.Products'",
+        SERVICE_ENDPOINT + "/Data?$filter=entityName ne 'datainspector.test.db.Products'",
         AXIOS_REQ_CONFIG
       );
     } catch (e) {
@@ -150,8 +133,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     //*********************************************************************//
 
     let response = await GET(
-      SERVICE_ENDPOINT +
-        "/Data?$filter=entityName eq 'datainspector.test.db.Products'",
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Products'",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -171,10 +153,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
 
     let hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT + "/Data(recordKey='ID=prod1')",
-        AXIOS_REQ_CONFIG
-      );
+      await GET(SERVICE_ENDPOINT + "/Data(recordKey='ID=prod1')", AXIOS_REQ_CONFIG);
     } catch (e) {
       expect(e.status).to.be.equal(
         400,
@@ -204,8 +183,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     //*********************************************************************//
 
     const response0 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data(entityName='datainspector.test.db.Product',recordKey='ID=prod1')",
+      SERVICE_ENDPOINT + "/Data(entityName='datainspector.test.db.Product',recordKey='ID=prod1')",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -347,21 +325,16 @@ describe("Data - ERPCDXCNS-3664", async () => {
   it("GET Data $count", async () => {
     //*********************************************************************//
     const response0 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data/$count?$filter=entityName eq 'datainspector.test.db.Product'",
+      SERVICE_ENDPOINT + "/Data/$count?$filter=entityName eq 'datainspector.test.db.Product'",
       AXIOS_REQ_CONFIG
     );
 
-    expect(response0.data).to.equal(
-      12,
-      "Failed to get only the count of total number of entities"
-    );
+    expect(response0.data).to.equal(12, "Failed to get only the count of total number of entities");
 
     //*********************************************************************//
 
     const response1 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$count=true",
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$count=true",
       AXIOS_REQ_CONFIG
     );
 
@@ -401,9 +374,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
 
-    expect(response0.data.value[0]["entityName"]).to.equal(
-      "datainspector.test.db.Product"
-    );
+    expect(response0.data.value[0]["entityName"]).to.equal("datainspector.test.db.Product");
     expect(response0.data.value[0]["recordKey"]).to.not.equal(undefined);
     expect(response0.data.value[0]["record"]).to.equal(
       undefined,
@@ -418,9 +389,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
 
-    expect(response1.data.value[0]["entityName"]).to.equal(
-      "datainspector.test.db.Product"
-    );
+    expect(response1.data.value[0]["entityName"]).to.equal("datainspector.test.db.Product");
     expect(response1.data.value[0]["recordKey"]).to.not.equal(undefined);
     expect(response1.data.value[0]["record"]).to.not.equal(
       undefined,
@@ -457,8 +426,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     );
     assert(
       response1.data.value.length === 4 &&
-        response1.data.value[0].recordKey ===
-          response0.data.value[0].recordKey &&
+        response1.data.value[0].recordKey === response0.data.value[0].recordKey &&
         response1.data.value[3].recordKey === response0.data.value[3].recordKey,
       "Failed to return paginated entries with skip=0 top=4"
     );
@@ -472,8 +440,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     );
     assert(
       response2.data.value.length === 4 &&
-        response2.data.value[0].recordKey ===
-          response0.data.value[4].recordKey &&
+        response2.data.value[0].recordKey === response0.data.value[4].recordKey &&
         response2.data.value[3].recordKey === response0.data.value[7].recordKey,
       "Failed to return paginated entries with skip=4 top=4"
     );
@@ -481,8 +448,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
     //*********************************************************************//
 
     const response3 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$skip=4",
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$skip=4",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -494,14 +460,12 @@ describe("Data - ERPCDXCNS-3664", async () => {
     //*********************************************************************//
 
     const response4 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$top=4",
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'&$top=4",
       AXIOS_REQ_CONFIG
     );
     assert(
       response4.data.value.length === 4 &&
-        response4.data.value[0].recordKey ===
-          response0.data.value[0].recordKey &&
+        response4.data.value[0].recordKey === response0.data.value[0].recordKey &&
         response4.data.value[3].recordKey === response0.data.value[3].recordKey,
       "Failed to return paginated entries with top=4"
     );
@@ -615,8 +579,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
     assert(
-      response2.data.value[0].record.quantity < 100 &&
-        response2.data.value.length === 10,
+      response2.data.value[0].record.quantity < 100 && response2.data.value.length === 10,
       "Failed to r_filter record with 'lt' operation"
     );
 
@@ -628,8 +591,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
     assert(
-      response3.data.value[0].record.quantity === 100 &&
-        response3.data.value.length === 11,
+      response3.data.value[0].record.quantity === 100 && response3.data.value.length === 11,
       "Failed to r_filter record with 'le' operation"
     );
 
@@ -641,8 +603,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
     assert(
-      response4.data.value[0].record.quantity > 100 &&
-        response4.data.value.length === 1,
+      response4.data.value[0].record.quantity > 100 && response4.data.value.length === 1,
       "Failed to r_filter record with 'gt' operation"
     );
 
@@ -654,8 +615,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       AXIOS_REQ_CONFIG
     );
     assert(
-      response5.data.value[0].record.quantity === 100 &&
-        response5.data.value.length === 2,
+      response5.data.value[0].record.quantity === 100 && response5.data.value.length === 2,
       "Failed to r_filter record with 'ge' operation"
     );
 
@@ -733,10 +693,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       response0.data.value[0].record.productName.localeCompare(
         response0.data.value[1].record.productName
       )
-    ).to.be.lessThan(
-      0,
-      "Failed to r_order by record element in ascending order"
-    );
+    ).to.be.lessThan(0, "Failed to r_order by record element in ascending order");
     let len = response0.data.value.length;
     // TODO: Temporarily disabled. Resolve before release. This assertion is failing with the @cap-js/sqlite. Potential bug?
     // expect(
@@ -768,10 +725,7 @@ describe("Data - ERPCDXCNS-3664", async () => {
       response1.data.value[len - 2].record.productName.localeCompare(
         response1.data.value[len - 1].record.productName
       )
-    ).to.be.greaterThan(
-      0,
-      "Failed to r_order by record element in descending order"
-    );
+    ).to.be.greaterThan(0, "Failed to r_order by record element in descending order");
 
     //*********************************************************************//
 
@@ -784,21 +738,13 @@ describe("Data - ERPCDXCNS-3664", async () => {
     len = response2.data.value.length;
 
     expect(
-      response2.data.value[1].record.ID.localeCompare(
-        response2.data.value[2].record.ID
-      )
-    ).to.be.greaterThan(
-      0,
-      "Failed to r_order by second element in descending order"
-    );
+      response2.data.value[1].record.ID.localeCompare(response2.data.value[2].record.ID)
+    ).to.be.greaterThan(0, "Failed to r_order by second element in descending order");
     expect(
       response2.data.value[0].record.status.localeCompare(
         response2.data.value[len - 1].record.status
       )
-    ).to.be.lessThan(
-      0,
-      "Failed to r_order by first element in ascending order"
-    );
+    ).to.be.lessThan(0, "Failed to r_order by first element in ascending order");
 
     //*********************************************************************//
 
@@ -834,118 +780,110 @@ describe("Data - ERPCDXCNS-3664", async () => {
  * ***********************************************************************
  */
 
-describe("Audit Logging test - ERPCDXCNS-3664", async () => {
+describe("Data entity audit logging test", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
    */
-let auditLogs = [];
-let originalConnectTo;
+  let auditLogs = [];
+  let originalConnectTo;
 
-beforeEach(() => {
-  auditLogs = [];
-  cds.env.requires["audit-log"] = {
-    kind: "audit-log",
-  };
-  originalConnectTo = cds.connect.to;
-  cds.connect.to = (name) => {
-    if (name === "audit-log") {
-      return {
-        log: (...args) => {
-          auditLogs.push(...args);
-          return Promise.resolve();
-        }
-      };
-    }
-    return originalConnectTo(name);
-  };
-});
-
-afterEach(() => {
-  cds.env.requires["audit-log"] = undefined;
-  cds.connect.to = originalConnectTo;
-  auditLogs = [];
-});
-
-  /**
-   * ***********************************************************************
-   * ***********************************************************************
-   */
-
-it("GET Data audit logging test", async () => {
-  auditLogs = [];
-
-  const response0 = await GET(
-    SERVICE_ENDPOINT +
-      "/Data?$filter=entityName eq 'datainspector.test.db.Order'",
-    AXIOS_REQ_CONFIG
-  );
-
-  expect(response0.status).to.equal(200);
-
-  assert.equal(auditLogs[0], "SensitiveDataRead");
-  assert.deepEqual(auditLogs[1], {
-    attributes: [{ name: "address" }],
-    data_subject: {
-      id: { ID: "ord1" },
-      role: undefined,
-      type: "datainspector.test.db.Order",
-    },
-    object: {
-      id: { ID: "ord1" },
-      type: "datainspector.test.db.Order",
-    },
+  beforeEach(() => {
+    auditLogs = [];
+    cds.env.requires["audit-log"] = {
+      kind: "audit-log",
+    };
+    originalConnectTo = cds.connect.to;
+    cds.connect.to = (name) => {
+      if (name === "audit-log") {
+        return {
+          log: (...args) => {
+            auditLogs.push(...args);
+            return Promise.resolve();
+          },
+        };
+      }
+      return originalConnectTo(name);
+    };
   });
 
-  assert(
-    auditLogs.length === 11 * 2,
-    "Audit log not emitted expected number of times for each record"
-  );
-});
+  afterEach(() => {
+    cds.env.requires["audit-log"] = undefined;
+    cds.connect.to = originalConnectTo;
+    auditLogs = [];
+  });
 
   /**
    * ***********************************************************************
    * ***********************************************************************
    */
 
-it("GET Data audit logging test with r_select", async () => {
-  auditLogs = [];
+  it("GET Data audit logging test", async () => {
+    auditLogs = [];
 
-  const response0 = await GET(
-    SERVICE_ENDPOINT +
-      "/Data?$filter=entityName eq 'datainspector.test.db.Order'&r_select=status",
-    AXIOS_REQ_CONFIG
-  );
+    const response0 = await GET(
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Order'",
+      AXIOS_REQ_CONFIG
+    );
 
-  expect(response0.status).to.equal(200);
+    expect(response0.status).to.equal(200);
 
-  assert(
-    auditLogs.length === 0,
-    "Audit log emitted when not expected"
-  );
-});
+    assert.equal(auditLogs[0], "SensitiveDataRead");
+    assert.deepEqual(auditLogs[1], {
+      attributes: [{ name: "address" }],
+      data_subject: {
+        id: { ID: "ord1" },
+        role: undefined,
+        type: "datainspector.test.db.Order",
+      },
+      object: {
+        id: { ID: "ord1" },
+        type: "datainspector.test.db.Order",
+      },
+    });
+
+    assert(
+      auditLogs.length === 11 * 2,
+      "Audit log not emitted expected number of times for each record"
+    );
+  });
 
   /**
    * ***********************************************************************
    * ***********************************************************************
    */
 
-it("GET Data audit logging test on entity with no personal data annotation", async () => {
-  auditLogs = [];
+  it("GET Data audit logging test with r_select", async () => {
+    auditLogs = [];
 
-  const response0 = await GET(
-    SERVICE_ENDPOINT +
-      "/Data?$filter=entityName eq 'datainspector.test.db.Product'",
-    AXIOS_REQ_CONFIG
-  );
+    const response0 = await GET(
+      SERVICE_ENDPOINT +
+        "/Data?$filter=entityName eq 'datainspector.test.db.Order'&r_select=status",
+      AXIOS_REQ_CONFIG
+    );
 
-  expect(response0.status).to.equal(200);
+    expect(response0.status).to.equal(200);
 
-  assert(
-    auditLogs.length === 0,
-    "Audit log emitted when not expected"
-  );
-});
+    assert(auditLogs.length === 0, "Audit log emitted when not expected");
+  });
+
+  /**
+   * ***********************************************************************
+   * ***********************************************************************
+   */
+
+  it("GET Data audit logging test on entity with no personal data annotation", async () => {
+    auditLogs = [];
+
+    const response0 = await GET(
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Product'",
+      AXIOS_REQ_CONFIG
+    );
+
+    expect(response0.status).to.equal(200);
+
+    assert(auditLogs.length === 0, "Audit log emitted when not expected");
+  });
 
   /**
    * ***********************************************************************
@@ -959,7 +897,7 @@ it("GET Data audit logging test on entity with no personal data annotation", asy
  * ***********************************************************************
  */
 
-describe("Server side pagination test - ERPCDXCNS-3929", async () => {
+describe("Data entity server side pagination test", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
@@ -982,8 +920,7 @@ describe("Server side pagination test - ERPCDXCNS-3929", async () => {
     //*********************************************************************//
 
     const response1 = await GET(
-      SERVICE_ENDPOINT +
-        "/Data?$filter=entityName eq 'datainspector.test.db.Food'&$count=true",
+      SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Food'&$count=true",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -1112,14 +1049,10 @@ describe("Server side pagination test - ERPCDXCNS-3929", async () => {
     );
 
     assert(
-      response0.data.value[0].record.name ===
-        response2.data.value[0].record.name &&
-        response0.data.value[9].record.name ===
-          response2.data.value[9].record.name &&
-        response1.data.value[0].record.name ===
-          response2.data.value[10].record.name &&
-        response1.data.value[8].record.name ===
-          response2.data.value[18].record.name,
+      response0.data.value[0].record.name === response2.data.value[0].record.name &&
+        response0.data.value[9].record.name === response2.data.value[9].record.name &&
+        response1.data.value[0].record.name === response2.data.value[10].record.name &&
+        response1.data.value[8].record.name === response2.data.value[18].record.name,
       "Failed to return consistent data in different pages"
     );
 
@@ -1188,14 +1121,10 @@ describe("Server side pagination test - ERPCDXCNS-3929", async () => {
     );
 
     assert(
-      response0.data.value[0].record.name ===
-        response2.data.value[19].record.name &&
-        response0.data.value[9].record.name ===
-          response2.data.value[10].record.name &&
-        response1.data.value[0].record.name ===
-          response2.data.value[9].record.name &&
-        response1.data.value[9].record.name ===
-          response2.data.value[0].record.name,
+      response0.data.value[0].record.name === response2.data.value[19].record.name &&
+        response0.data.value[9].record.name === response2.data.value[10].record.name &&
+        response1.data.value[0].record.name === response2.data.value[9].record.name &&
+        response1.data.value[9].record.name === response2.data.value[0].record.name,
       "Failed to return consistent data in pages across inverted order of r_orderby"
     );
 
@@ -1233,10 +1162,7 @@ describe("Server side pagination test - ERPCDXCNS-3929", async () => {
         AXIOS_REQ_CONFIG
       );
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Expected HTTP 400 with negative $skip"
-      );
+      expect(e.status).to.be.equal(400, "Expected HTTP 400 with negative $skip");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -1251,10 +1177,7 @@ describe("Server side pagination test - ERPCDXCNS-3929", async () => {
         AXIOS_REQ_CONFIG
       );
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Expected HTTP 400 with negative $skiptoken"
-      );
+      expect(e.status).to.be.equal(400, "Expected HTTP 400 with negative $skiptoken");
       hadError = true;
     }
     expect(hadError).to.be.true;
