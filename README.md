@@ -2,6 +2,28 @@
 
 # Data Inspector
 
+- [Data Inspector](#data-inspector)
+  - [About this project](#about-this-project)
+    - [Features](#features)
+  - [Requirements and Setup](#requirements-and-setup)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Setup with `cds add data-inspector`](#setup-with-cds-add-data-inspector)
+    - [UI5 App Configuration for Deployment to BTP using Cloud Portal Service](#ui5-app-configuration-for-deployment-to-btp-using-cloud-portal-service)
+      - [Cloud Portal Service Configuration](#cloud-portal-service-configuration)
+      - [MTA Configuration](#mta-configuration)
+    - [UI5 App Configuration for Deployment to BTP using Workzone](#ui5-app-configuration-for-deployment-to-btp-using-workzone)
+    - [(Optional) flpSandbox.html Configuration for the UI5 App Tile in Local Run](#optional-flpsandboxhtml-configuration-for-the-ui5-app-tile-in-local-run)
+    - [Authorization](#authorization)
+    - [Excluding Entities and Elements](#excluding-entities-and-elements)
+    - [Audit Logging](#audit-logging)
+  - [Testing the Plugin Directly](#testing-the-plugin-directly)
+  - [Support, Feedback, Contributing](#support-feedback-contributing)
+  - [Security / Disclosure](#security--disclosure)
+  - [Code of Conduct](#code-of-conduct)
+  - [Licensing](#licensing)
+
+
 ## About this project
 
 `@cap-js/data-inspector` is a CAP Node.js plugin to view data content of CDS [`Entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a CAP Node.js application. It comes with a UI5 app consumable out-of-the-box.
@@ -30,48 +52,18 @@ Install the plugin in your CAP Node.js project.
 npm install @cap-js/data-inspector
 ```
 
-### UI5 App Configuration for Local Run (Optional)
+Running your CAP project locally with `cds serve` or `cds watch` will now serve the UI5 app on **Web Applications** endpoint `/data-inspector-ui`.
 
-To run and test locally, add the UI5 app to your Fiori Launchpad sandbox configuration `app/flpSandbox.html` of your local CAP Node.js project.
+### Setup with `cds add data-inspector`
 
-**In `ClientSideTargetResolution.adapter.config.inbounds`:**
-```js
-CAPDataInspectorDisplay: {
-  semanticObject: "datainspectorui",
-  action: "display",
-  signature: {
-    parameters: {},
-    additionalParameters: "ignored"
-  },
-  resolutionResult: {
-    additionalInformation: "sap.cap.datainspector.datainspectorui",
-    applicationType: "URL",
-    url: "/data-inspector-ui"
-  }
-}
+Run the following command to add `@cap-js/data-inspector` configuration to your project.
+
+```sh
+cds add data-inspector
 ```
 
-**In `LaunchPage.adapter.config.groups`:**
-```js
-{
-  id: "Supportability",
-  title: "Support Tools",
-  isPreset: true,
-  isVisible: true,
-  isGroupLocked: false,
-  tiles: [
-    {
-      id: "CAPDataInspector",
-      tileType: "sap.ushell.ui.tile.StaticTile",
-      properties: {
-        title: "Data Inspector",
-        targetURL: "#datainspectorui-display",
-        icon: "sap-icon://database"
-      }
-    }
-  ]
-}
-```
+It makes the following changes to your project.
+- Adds the `xsuaa` scope in your `xs-security.json`. Make sure to use this scope in appropriate role collections.
 
 ### UI5 App Configuration for Deployment to BTP using Cloud Portal Service
 
@@ -124,6 +116,51 @@ Example configuration:
 
 *To be added*
 
+
+### (Optional) flpSandbox.html Configuration for the UI5 App Tile in Local Run
+
+If you are using an `flpSandbox.html`, optionally add the UI5 app to see its tile in the sandbox Fiori Launchpad.
+
+**In `ClientSideTargetResolution.adapter.config.inbounds`:**
+```js
+CAPDataInspectorDisplay: {
+  semanticObject: "datainspectorui",
+  action: "display",
+  signature: {
+    parameters: {},
+    additionalParameters: "ignored"
+  },
+  resolutionResult: {
+    additionalInformation: "sap.cap.datainspector.datainspectorui",
+    applicationType: "URL",
+    url: "/data-inspector-ui"
+  }
+}
+```
+
+**In `LaunchPage.adapter.config.groups`:**
+```js
+{
+  id: "Supportability",
+  title: "Support Tools",
+  isPreset: true,
+  isVisible: true,
+  isGroupLocked: false,
+  tiles: [
+    {
+      id: "CAPDataInspector",
+      tileType: "sap.ushell.ui.tile.StaticTile",
+      properties: {
+        title: "Data Inspector",
+        targetURL: "#datainspectorui-display",
+        icon: "sap-icon://database"
+      }
+    }
+  ]
+}
+```
+
+
 ### Authorization
 
 Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` to grant read access to the UI5 app and the underlying OData service.
@@ -159,9 +196,9 @@ The entity `Bar` will not be revealed by `@cap-js/data-inspector`.
 
 If your CAP application uses [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme), `@cap-js/data-inspector` will automatically emit audit logs for read access to sensitive data elements annotated with `@PersonalData.IsPotentiallySensitive`. Refer [Capire](https://cap.cloud.sap/docs/guides/data-privacy/annotations) for audit logging in CAP.
 
-## Test the Plugin Directly
+## Testing the Plugin Directly
 
-To quickly test the plugin directly in your local machine, use the NPM test workspace included in this repository.
+To quickly test the plugin directly without a host CAP Node.js project in your local machine, use the NPM test workspace included in this repository.
 
 1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
 2. Install dependencies: `npm i`
@@ -172,8 +209,8 @@ To quickly test the plugin directly in your local machine, use the NPM test work
    3. `cd ..`
 5. Run the test server: `npm run dev` the UI5 app will be launched in a web browser
 6. Supply credentials: Username: `alice`; Password: keep empty
-<!-- 
-### Local Testing
+
+<!-- ### Local Testing
 
 To execute local tests, simply run:
 
@@ -199,13 +236,13 @@ The hybrid integration tests can be run via:
 
 ```bash
 npm run test:hybrid
-``` -->
+```
 
 #### CI
 
 For CI, the service binding is added during the action run. Uncomment the _Bind against BTP services_ and _BTP Auth_ sections in the file `.github/actions/integration-tests/action.yml` and adjust the service name/names accordingly. The `cds bind` command executed there will be the almost the same as done locally before, with the difference that it will be written to package.json in CI.
 
-You can also execute the tests against a HANA Cloud instance. For that, add the commented sections in the action file and adjust accordingly.
+You can also execute the tests against a HANA Cloud instance. For that, add the commented sections in the action file and adjust accordingly. -->
 
 ## Support, Feedback, Contributing
 
