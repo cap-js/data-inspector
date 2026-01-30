@@ -251,7 +251,7 @@ export class EntityDefinitionReader {
       const filterFunction = (entity: Entity) => {
         return (
           // @ts-expect-error
-          entity.dataSource4DataInspector.includes(value) &&
+          entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
           !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
@@ -275,7 +275,7 @@ export class EntityDefinitionReader {
       const filterFunction = (entity: Entity) => {
         return (
           // @ts-expect-error
-          entity.dataSource4DataInspector.includes(value) &&
+          entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
           !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&

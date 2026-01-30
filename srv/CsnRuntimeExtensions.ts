@@ -3,9 +3,19 @@ import { CDS_ELEMENTS } from "./constants";
 import { EntityDefinition } from "#cds-models/DataInspectorService";
 type Entity = cds.entity;
 
-// This one is not working!!!
+// Use WeakMaps for caching computed values per entity instance
+// This avoids issues with prototype chain inheritance where service entities
+// (which are projections of db entities) would incorrectly share cached values
+const dataSourceCache = new WeakMap<Entity, string>();
+const keyElementsCache = new WeakMap<Entity, string[]>();
+
 function getDataSource(entity: Entity): string {
-  let dataSource: string = undefined;
+  // Check cache first
+  if (dataSourceCache.has(entity)) {
+    return dataSourceCache.get(entity)!;
+  }
+
+  let dataSource: string;
   const srvPrefixes = cds.model.all("service").map((srv) => srv.name + ".");
 
   // If entity name starts with any service prefix, it's a service entity
@@ -20,10 +30,18 @@ function getDataSource(entity: Entity): string {
   else {
     dataSource = EntityDefinition.dataSource.Unknown;
   }
+
+  // Cache the result
+  dataSourceCache.set(entity, dataSource);
   return dataSource;
 }
 
 function getKeyElements(entity: Entity): string[] {
+  // Check cache first
+  if (keyElementsCache.has(entity)) {
+    return keyElementsCache.get(entity)!;
+  }
+
   // Keys could be composite - identify all key elements
   const entityKeys: string[] = [];
   Object.entries(entity.elements).forEach(
@@ -35,18 +53,19 @@ function getKeyElements(entity: Entity): string[] {
       }
     }
   );
+
+  // Cache the result
+  keyElementsCache.set(entity, entityKeys);
   return entityKeys;
 }
 
 cds.extend(cds.entity).with(
   class {
     get dataSource4DataInspector() {
-      // @ts-expect-error
-      return (super.dataSource4DataInspector = getDataSource(this));
+      return getDataSource(this as unknown as Entity);
     }
     get keyElements4DataInspector() {
-      // @ts-expect-error
-      return (super.keyElements4DataInspector = getKeyElements(this));
+      return getKeyElements(this as unknown as Entity);
     }
   }
 );
