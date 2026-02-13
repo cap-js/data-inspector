@@ -52,7 +52,7 @@ Install the plugin in your CAP Node.js project.
 npm install @cap-js/data-inspector
 ```
 
-Running your CAP project locally with `cds serve` or `cds watch` will now serve the UI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`.
+Running your CAP project locally with `cds serve` or `cds watch` will now serve the UI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`. Make sure to add neccessary authorizataion scope to your mock user. See [Authorization](#authorization).
 
 ### Setup with `cds add data-inspector`
 
@@ -163,7 +163,7 @@ CAPDataInspectorDisplay: {
 
 ### Authorization
 
-Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` to grant read access to the UI5 app and the underlying OData service.
+Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` to grant read access to the UI5 app and the underlying OData service. For local development use case, add the scope `capDataInspectorReadonly` to your mock user. Refer [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication) for setting up mock user.
 
 `@cap-js/data-inspector` reads data only through the available CDS services, exposing data based on `xsuaa` scopes granted to the entities and the user. It does not implement own access control. It does not perform any direct SQL queries.
 
