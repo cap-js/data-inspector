@@ -29,3 +29,6 @@ cds.on("bootstrap", (app) => {
     log.error("Reuse UI5 app cannot be served");
   }
 });
+
+// @ts-ignore missing type
+cds.add?.register?.("data-inspector", require("./lib/add"));

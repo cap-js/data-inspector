@@ -9,7 +9,7 @@ const AXIOS_REQ_CONFIG = {
   },
 };
 
-describe("Authorization test - ERPCDXCNS-3121, ERPCDXCNS-3122", async () => {
+describe("EntityDefinition entity authorization test", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
@@ -18,14 +18,8 @@ describe("Authorization test - ERPCDXCNS-3121, ERPCDXCNS-3122", async () => {
   it("GET authorization scope", async () => {
     //*********************************************************************//
 
-    const response0 = await GET(
-      SERVICE_ENDPOINT + "/EntityDefinition",
-      AXIOS_REQ_CONFIG
-    );
-    expect(response0.status).to.be.equal(
-      200,
-      "Failed to access endpoint with authorization scope"
-    );
+    const response0 = await GET(SERVICE_ENDPOINT + "/EntityDefinition", AXIOS_REQ_CONFIG);
+    expect(response0.status).to.be.equal(200, "Failed to access endpoint with authorization scope");
 
     //*********************************************************************//
     let hadError = false;
@@ -37,10 +31,7 @@ describe("Authorization test - ERPCDXCNS-3121, ERPCDXCNS-3122", async () => {
         },
       });
     } catch (e) {
-      expect(e.status).to.be.equal(
-        403,
-        "Able to access endpoint without authorization scope"
-      );
+      expect(e.status).to.be.equal(403, "Able to access endpoint without authorization scope");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -51,10 +42,7 @@ describe("Authorization test - ERPCDXCNS-3121, ERPCDXCNS-3122", async () => {
     try {
       await GET(SERVICE_ENDPOINT + "/EntityDefinition");
     } catch (e) {
-      expect(e.status).to.be.equal(
-        401,
-        "Able to access endpoint without authentication"
-      );
+      expect(e.status).to.be.equal(401, "Able to access endpoint without authentication");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -66,7 +54,7 @@ describe("Authorization test - ERPCDXCNS-3121, ERPCDXCNS-3122", async () => {
  * ***********************************************************************
  */
 
-describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", async () => {
+describe("EntityDefinition entity tests", async () => {
   /**
    * ***********************************************************************
    * ***********************************************************************
@@ -94,8 +82,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response1 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.db.Product')?$select=name",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.db.Product')?$select=name",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -109,8 +96,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response3 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.db.Product')?$select=title",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.db.Product')?$select=title",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -124,8 +110,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response5 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.db.Product')?$select=elements",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.db.Product')?$select=elements",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -139,8 +124,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response6 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.db.Product')?$select=dataSource",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.db.Product')?$select=dataSource",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -182,29 +166,21 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response0.data.value.length === 13 &&
-        response0.data["@odata.count"] === 13,
+      response0.data.value.length === 13 && response0.data["@odata.count"] === 13,
       "Failed to get all entities with $count"
     );
 
     //*********************************************************************//
 
-    const response1 = await GET(
-      SERVICE_ENDPOINT + "/EntityDefinition",
-      AXIOS_REQ_CONFIG
-    );
+    const response1 = await GET(SERVICE_ENDPOINT + "/EntityDefinition", AXIOS_REQ_CONFIG);
     assert(
-      response1.data.value.length === 13 &&
-        response1.data["@odata.count"] === undefined,
+      response1.data.value.length === 13 && response1.data["@odata.count"] === undefined,
       "Failed to get all entities without $count"
     );
 
     //*********************************************************************//
 
-    const response2 = await GET(
-      SERVICE_ENDPOINT + "/EntityDefinition/$count",
-      AXIOS_REQ_CONFIG
-    );
+    const response2 = await GET(SERVICE_ENDPOINT + "/EntityDefinition/$count", AXIOS_REQ_CONFIG);
     expect(response2.data).to.be.equal(
       13,
       "Failed to get only the count of total number of entities"
@@ -219,10 +195,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
   it("GET EntityDefinitions $select", async () => {
     //*********************************************************************//
 
-    const response0 = await GET(
-      SERVICE_ENDPOINT + "/EntityDefinition",
-      AXIOS_REQ_CONFIG
-    );
+    const response0 = await GET(SERVICE_ENDPOINT + "/EntityDefinition", AXIOS_REQ_CONFIG);
     assert(
       response0.data.value[1].name &&
         response0.data.value[1].title &&
@@ -297,8 +270,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response0 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=name eq 'datainspector.test.db.Product'",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=name eq 'datainspector.test.db.Product'",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -314,28 +286,22 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response1.data.value.length > 1 &&
-        response1.data.value[0].name.includes("Product"),
+      response1.data.value.length > 1 && response1.data.value[0].name.includes("Product"),
       "Failed to filter entity by 'name' contains"
     );
 
     //*********************************************************************//
 
     const response2 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=name eq 'datainspector.test.db.Offer'",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=name eq 'datainspector.test.db.Offer'",
       AXIOS_REQ_CONFIG
     );
-    assert(
-      response2.data.value.length === 0,
-      "Failed to filter non-existent entity by 'name' eq"
-    );
+    assert(response2.data.value.length === 0, "Failed to filter non-existent entity by 'name' eq");
 
     //*********************************************************************//
 
     const response3 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=contains(name, 'datainspector.test.db.Offer')",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=contains(name, 'datainspector.test.db.Offer')",
       AXIOS_REQ_CONFIG
     );
     assert(
@@ -350,8 +316,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response6.data.value.length === 3 &&
-        response6.data.value[0].title === "Products Table",
+      response6.data.value.length === 3 && response6.data.value[0].title === "Products Table",
       "Failed to filter entity by 'title' eq"
     );
 
@@ -362,8 +327,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response7.data.value.length === 4 &&
-        response7.data.value[0].title.includes("Products"),
+      response7.data.value.length === 4 && response7.data.value[0].title.includes("Products"),
       "Failed to filter entity by 'title' contains"
     );
 
@@ -374,34 +338,29 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response8.data.value.length === 6 &&
-        response8.data.value[0].dataSource === "db",
+      response8.data.value.length === 6 && response8.data.value[0].dataSource === "db",
       "Failed to filter entity by 'dataSource' eq"
     );
 
     //*********************************************************************//
 
     const response9 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=contains(dataSource, 'serv')",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=contains(dataSource, 'serv')",
       AXIOS_REQ_CONFIG
     );
     assert(
-      response9.data.value.length === 6 &&
-        response9.data.value[0].dataSource === "service",
+      response9.data.value.length === 6 && response9.data.value[0].dataSource === "service",
       "Failed to filter entity by 'dataSource' contains"
     );
 
     //*********************************************************************//
 
     const response10 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=contains(dataSource, 'unknown')",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=contains(dataSource, 'unknown')",
       AXIOS_REQ_CONFIG
     );
     assert(
-      response10.data.value.length === 1 &&
-        response10.data.value[0].dataSource === "unknown",
+      response10.data.value.length === 1 && response10.data.value[0].dataSource === "unknown",
       "Failed to filter entity by 'dataSource' contains"
     );
 
@@ -413,8 +372,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response11.data.value.length === 3 &&
-        response11.data.value[0].dataSource === "service",
+      response11.data.value.length === 3 && response11.data.value[0].dataSource === "service",
       "[Special $filter 'and' support for UI use case] Failed to filter entity by 'dataSource' eq AND 'name' contains"
     );
 
@@ -426,8 +384,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       AXIOS_REQ_CONFIG
     );
     assert(
-      response12.data.value.length === 3 &&
-        response12.data.value[0].dataSource === "service",
+      response12.data.value.length === 3 && response12.data.value[0].dataSource === "service",
       "[Special $filter 'and' support for UI use case] Failed to filter entity by 'name' contains AND 'dataSource' eq"
     );
 
@@ -458,10 +415,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
         AXIOS_REQ_CONFIG
       );
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Failed to reject request to filter by 'elements' eq"
-      );
+      expect(e.status).to.be.equal(400, "Failed to reject request to filter by 'elements' eq");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -471,8 +425,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     hadError = false;
     try {
       await GET(
-        SERVICE_ENDPOINT +
-          "/EntityDefinition?$filter=contains(elements, 'test')",
+        SERVICE_ENDPOINT + "/EntityDefinition?$filter=contains(elements, 'test')",
         AXIOS_REQ_CONFIG
       );
     } catch (e) {
@@ -499,9 +452,10 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
       SERVICE_ENDPOINT + "/EntityDefinition?$orderby=name",
       AXIOS_REQ_CONFIG
     );
-    expect(
-      response0.data.value[0].name.localeCompare(response0.data.value[1].name)
-    ).to.be.lessThan(0, "Failed to order by column 'name' ascending");
+    expect(response0.data.value[0].name.localeCompare(response0.data.value[1].name)).to.be.lessThan(
+      0,
+      "Failed to order by column 'name' ascending"
+    );
 
     //*********************************************************************//
 
@@ -517,45 +471,27 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
 
     let hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT + "/EntityDefinition?$orderby=title",
-        AXIOS_REQ_CONFIG
-      );
+      await GET(SERVICE_ENDPOINT + "/EntityDefinition?$orderby=title", AXIOS_REQ_CONFIG);
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Failed to reject request to order by 'title'"
-      );
+      expect(e.status).to.be.equal(400, "Failed to reject request to order by 'title'");
       hadError = true;
     }
     expect(hadError).to.be.true;
     //*********************************************************************//
     hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT + "/EntityDefinition?$orderby=elements",
-        AXIOS_REQ_CONFIG
-      );
+      await GET(SERVICE_ENDPOINT + "/EntityDefinition?$orderby=elements", AXIOS_REQ_CONFIG);
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Failed to reject request to order by 'elements'"
-      );
+      expect(e.status).to.be.equal(400, "Failed to reject request to order by 'elements'");
       hadError = true;
     }
     expect(hadError).to.be.true;
     //*********************************************************************//
     hadError = false;
     try {
-      await GET(
-        SERVICE_ENDPOINT + "/EntityDefinition?$orderby=dataSource",
-        AXIOS_REQ_CONFIG
-      );
+      await GET(SERVICE_ENDPOINT + "/EntityDefinition?$orderby=dataSource", AXIOS_REQ_CONFIG);
     } catch (e) {
-      expect(e.status).to.be.equal(
-        400,
-        "Failed to reject request to order by 'dataSource'"
-      );
+      expect(e.status).to.be.equal(400, "Failed to reject request to order by 'dataSource'");
       hadError = true;
     }
     expect(hadError).to.be.true;
@@ -614,43 +550,29 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response0 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.db.CdsCoreTypes')?$select=elements",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.db.CdsCoreTypes')?$select=elements",
       AXIOS_REQ_CONFIG
     );
-    assert(
-      response0.data.elements.length === 19,
-      "Failed to get all elements of an entity"
-    );
+    assert(response0.data.elements.length === 19, "Failed to get all elements of an entity");
     const uuid = response0.data.elements.filter((x) => x.name === "uuid")[0];
     expect(uuid.isKey).to.be.true;
 
-    const boolean = response0.data.elements.filter(
-      (x) => x.name === "boolean"
-    )[0];
+    const boolean = response0.data.elements.filter((x) => x.name === "boolean")[0];
     expect(boolean.isNotNull).to.be.true;
 
-    const integer = response0.data.elements.filter(
-      (x) => x.name === "integer"
-    )[0];
+    const integer = response0.data.elements.filter((x) => x.name === "integer")[0];
     expect(integer.defaultValue).to.be.equal(8);
 
     const date = response0.data.elements.filter((x) => x.name === "date")[0];
     expect(date.isSensitive).to.be.true;
 
-    const hiddenField = response0.data.elements.filter(
-      (x) => x.name === "hiddenField"
-    );
+    const hiddenField = response0.data.elements.filter((x) => x.name === "hiddenField");
     expect(hiddenField.length).to.be.equal(0);
 
-    const virtualField = response0.data.elements.filter(
-      (x) => x.name === "virtualField"
-    )[0];
+    const virtualField = response0.data.elements.filter((x) => x.name === "virtualField")[0];
     expect(virtualField.isVirtual).to.be.true;
 
-    const string = response0.data.elements.filter(
-      (x) => x.name === "string"
-    )[0];
+    const string = response0.data.elements.filter((x) => x.name === "string")[0];
     expect(string.length).to.be.equal(88);
     expect(string.type).to.be.equal("cds.String");
     expect(string.isKey).to.be.false;
@@ -669,8 +591,7 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response0 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition('datainspector.test.srv.ProductService.Product')",
+      SERVICE_ENDPOINT + "/EntityDefinition('datainspector.test.srv.ProductService.Product')",
       AXIOS_REQ_CONFIG
     );
     expect(response0.data.name).to.be.equal(
@@ -699,14 +620,10 @@ describe("EntityDefinition - ERPCDXCNS-3121, ERPCDXCNS-3122, ERPCDXCNS-3664", as
     //*********************************************************************//
 
     const response1 = await GET(
-      SERVICE_ENDPOINT +
-        "/EntityDefinition?$filter=contains(name, '.DraftAdministrativeData')",
+      SERVICE_ENDPOINT + "/EntityDefinition?$filter=contains(name, '.DraftAdministrativeData')",
       AXIOS_REQ_CONFIG
     );
-    assert(
-      response1.data.value.length === 0,
-      "Failed to hide DraftAdministrativeData entities"
-    );
+    assert(response1.data.value.length === 0, "Failed to hide DraftAdministrativeData entities");
 
     //*********************************************************************//
   });

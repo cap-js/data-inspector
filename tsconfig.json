@@ -13,26 +13,14 @@
     "outDir": "./gen",
     "rootDir": "./",
     "skipLibCheck": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
-    "types": [
-      "node", "mocha"
-    ],
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node", "mocha"],
     "strict": false,
     "allowJs": true,
     "paths": {
-      "#cds-models/*": [
-        "./@cds-models/*"
-      ]
+      "#cds-models/*": ["./@cds-models/*"]
     }
   },
-  "include": [
-    "./srv/**/*.ts",
-    "./cds-plugin.ts",
-    "./index.cds"
-  ],
-  "exclude": [
-    "./node_modules/"
-  ]
+  "include": ["./srv/**/*.ts", "./lib/**/*.ts", "./cds-plugin.ts", "./index.cds"],
+  "exclude": ["./node_modules/"]
 }
