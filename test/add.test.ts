@@ -6,6 +6,9 @@ import crypto from "crypto";
 import { expect } from "chai";
 
 const DATA_INSPECTOR_SCOPE = "$XSAPPNAME.capDataInspectorReadonly";
+const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
+const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
+const DATA_INSPECTOR_MTA_MODULE_NAME = "capjsdatainspectorapp";
 
 // Get the absolute path to the data-inspector gen directory (compiled output)
 const DATA_INSPECTOR_ROOT = resolve(__dirname, "..", "gen");
@@ -52,15 +55,27 @@ function updateDependency(projectFolder: string): void {
 }
 
 /**
- * Hack to replace @sap/cds with @sap/cds-dk in the installed cds-plugin.js
+ * Hack to replace @sap/cds with @sap/cds-dk in the installed plugin files
  * This is required because cds.add is only available in @sap/cds-dk
+ * Also fixes @sap/cds-foss import which is bundled with cds-dk
  */
 function setupHack(projectFolder: string): void {
-  const cdsPluginPath = join(projectFolder, "node_modules/@cap-js/data-inspector/cds-plugin.js");
+  const pluginDir = join(projectFolder, "node_modules/@cap-js/data-inspector");
+
+  // Fix cds-plugin.js
+  const cdsPluginPath = join(pluginDir, "cds-plugin.js");
   const cdsPlugin = fs.readFileSync(cdsPluginPath, "utf8");
-  // Replace requires from cds to cds-dk (handles TypeScript compiled output)
-  const updatedData = cdsPlugin.replace(/require\("@sap\/cds"\)/g, 'require("@sap/cds-dk")');
-  fs.writeFileSync(cdsPluginPath, updatedData);
+  const updatedCdsPlugin = cdsPlugin.replace(/require\("@sap\/cds"\)/g, 'require("@sap/cds-dk")');
+  fs.writeFileSync(cdsPluginPath, updatedCdsPlugin);
+
+  // Fix lib/add.js - replace @sap/cds-dk require to ensure cds-foss is resolvable
+  const addJsPath = join(pluginDir, "lib/add.js");
+  if (fs.existsSync(addJsPath)) {
+    const addJs = fs.readFileSync(addJsPath, "utf8");
+    // Also replace @sap/cds references in add.js
+    const updatedAddJs = addJs.replace(/require\("@sap\/cds"\)/g, 'require("@sap/cds-dk")');
+    fs.writeFileSync(addJsPath, updatedAddJs);
+  }
 }
 
 /**
@@ -105,7 +120,7 @@ describe("cds add data-inspector", () => {
     bookshop = join(temp, "bookshop");
 
     // Initialize a CAP project with xsuaa
-    execSync(`cds init bookshop --add xsuaa`, { cwd: temp });
+    execSync(`cds init bookshop --add xsuaa --nodejs`, { cwd: temp });
 
     // Update dependency to use local data-inspector
     updateDependency(bookshop);
@@ -158,7 +173,7 @@ describe("cds add data-inspector", () => {
     const projectExisting = join(tempExisting, "project");
 
     // Initialize a CAP project with xsuaa
-    execSync(`cds init project --add xsuaa`, { cwd: tempExisting });
+    execSync(`cds init project --add xsuaa --nodejs`, { cwd: tempExisting });
     updateDependency(projectExisting);
     execSync(`npm install`, { cwd: projectExisting });
     setupHack(projectExisting);
@@ -193,7 +208,7 @@ describe("cds add data-inspector", () => {
     const projectNoXsuaa = join(tempNoXsuaa, "project");
 
     // Initialize a CAP project without xsuaa
-    execSync(`cds init project`, { cwd: tempNoXsuaa });
+    execSync(`cds init project --nodejs`, { cwd: tempNoXsuaa });
     updateDependency(projectNoXsuaa);
     execSync(`npm install`, { cwd: projectNoXsuaa });
 
@@ -209,5 +224,529 @@ describe("cds add data-inspector", () => {
 
     // Verify xs-security.json still does not exist (plugin should not create it)
     expect(fs.existsSync(xsSecurityPath)).to.be.false;
+  });
+});
+
+/**
+ * Helper functions for portal service tests
+ */
+
+/**
+ * Create a minimal mta.yaml with portal service
+ */
+function createMtaWithPortal(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create a minimal mta.yaml without portal service
+ */
+function createMtaWithoutPortal(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create a minimal CommonDataModel.json
+ */
+function createCommonDataModel(projectFolder: string): void {
+  const cdmContent = {
+    _version: "3.0.0",
+    identification: {
+      id: "test-bundle-id",
+      entityType: "bundle",
+    },
+    payload: {
+      catalogs: [
+        {
+          _version: "3.0.0",
+          identification: {
+            id: "existingCatalogId",
+            title: "{{existingTitle}}",
+            entityType: "catalog",
+            i18n: "i18n/existingCatalog.properties",
+          },
+          payload: {
+            viz: [],
+          },
+        },
+      ],
+      groups: [
+        {
+          _version: "3.0.0",
+          identification: {
+            id: "existingGroupId",
+            title: "{{existingGroup}}",
+            entityType: "group",
+            i18n: "i18n/existingGroup.properties",
+          },
+          payload: {
+            viz: [],
+          },
+        },
+      ],
+      sites: [],
+    },
+  };
+  const flpDir = join(projectFolder, "flp", "portal-site");
+  fs.mkdirSync(flpDir, { recursive: true });
+  fs.writeFileSync(join(flpDir, "CommonDataModel.json"), JSON.stringify(cdmContent, null, 4));
+}
+
+/**
+ * Read and parse CommonDataModel.json
+ */
+function readCommonDataModel(projectFolder: string): any {
+  const cdmPath = join(projectFolder, "flp", "portal-site", "CommonDataModel.json");
+  return JSON.parse(fs.readFileSync(cdmPath, "utf8"));
+}
+
+/**
+ * Read and parse mta.yaml
+ */
+function readMta(projectFolder: string): any {
+  const mtaPath = join(projectFolder, "mta.yaml");
+  // Using js-yaml which is available in @sap/cds-dk
+  const yaml = require("@sap/cds-dk").utils.yaml;
+  return yaml.load(fs.readFileSync(mtaPath, "utf8"));
+}
+
+/**
+ * Check if i18n file exists
+ */
+function i18nFileExists(projectFolder: string): boolean {
+  const i18nPath = join(projectFolder, "flp", "portal-site", "i18n", "capDataInspector.properties");
+  return fs.existsSync(i18nPath);
+}
+
+/**
+ * Read i18n properties file
+ */
+function readI18nFile(projectFolder: string): string {
+  const i18nPath = join(projectFolder, "flp", "portal-site", "i18n", "capDataInspector.properties");
+  return fs.readFileSync(i18nPath, "utf8");
+}
+
+describe("cds add data-inspector - Portal Service Configuration", () => {
+  const tempUtil = new TempUtil(__filename);
+
+  after(async () => {
+    await tempUtil.cleanUp();
+  });
+
+  describe("Portal service detection", () => {
+    it("should not configure portal when mta.yaml does not exist", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project without mta
+      execSync(`cds init project --add xsuaa --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create CommonDataModel.json without mta.yaml
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify CommonDataModel.json was not modified (no catalog/group added)
+      const cdm = readCommonDataModel(project);
+      const hasCatalog = cdm.payload.catalogs.some(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      const hasGroup = cdm.payload.groups.some(
+        (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
+      );
+
+      expect(hasCatalog).to.be.false;
+      expect(hasGroup).to.be.false;
+    });
+
+    it("should not configure portal when CommonDataModel.json does not exist", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project with mta
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Add portal service to mta but don't create CommonDataModel.json
+      createMtaWithPortal(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify CommonDataModel.json was not created
+      const cdmPath = join(project, "flp", "portal-site", "CommonDataModel.json");
+      expect(fs.existsSync(cdmPath)).to.be.false;
+    });
+
+    it("should not configure portal when mta.yaml has no portal service", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create mta without portal service and CommonDataModel.json
+      createMtaWithoutPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify CommonDataModel.json was not modified
+      const cdm = readCommonDataModel(project);
+      const hasCatalog = cdm.payload.catalogs.some(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      expect(hasCatalog).to.be.false;
+    });
+  });
+
+  describe("CommonDataModel.json modification", () => {
+    it("should add catalog and group when portal service is configured", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify catalog was added
+      const cdm = readCommonDataModel(project);
+      const catalog = cdm.payload.catalogs.find(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      expect(catalog).to.exist;
+      expect(catalog.identification.title).to.equal("{{capDataInspectorCatalog}}");
+      expect(catalog.identification.i18n).to.equal("i18n/capDataInspector.properties");
+      expect(catalog.payload.viz).to.have.lengthOf(1);
+      expect(catalog.payload.viz[0].appId).to.equal("sap.cap.datainspector.datainspectorui");
+
+      // Verify group was added
+      const group = cdm.payload.groups.find(
+        (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
+      );
+      expect(group).to.exist;
+      expect(group.identification.title).to.equal("{{capDataInspectorGroup}}");
+      expect(group.payload.viz).to.have.lengthOf(1);
+      expect(group.payload.viz[0].appId).to.equal("sap.cap.datainspector.datainspectorui");
+    });
+
+    it("should not duplicate catalog and group when run multiple times", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector twice
+      execSync(`cds add data-inspector`, { cwd: project });
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify catalog and group are not duplicated
+      const cdm = readCommonDataModel(project);
+      const catalogCount = cdm.payload.catalogs.filter(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      ).length;
+      const groupCount = cdm.payload.groups.filter(
+        (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
+      ).length;
+
+      expect(catalogCount).to.equal(1, "Catalog should not be duplicated");
+      expect(groupCount).to.equal(1, "Group should not be duplicated");
+    });
+
+    it("should preserve existing catalogs and groups", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify existing catalog and group are preserved
+      const cdm = readCommonDataModel(project);
+      const existingCatalog = cdm.payload.catalogs.find(
+        (c: any) => c.identification?.id === "existingCatalogId"
+      );
+      const existingGroup = cdm.payload.groups.find(
+        (g: any) => g.identification?.id === "existingGroupId"
+      );
+
+      expect(existingCatalog).to.exist;
+      expect(existingGroup).to.exist;
+    });
+  });
+
+  describe("i18n properties file creation", () => {
+    it("should create i18n properties file when portal service is configured", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify i18n file was created
+      expect(i18nFileExists(project)).to.be.true;
+
+      // Verify i18n file content
+      const i18nContent = readI18nFile(project);
+      expect(i18nContent).to.include("capDataInspectorCatalog");
+      expect(i18nContent).to.include("capDataInspectorGroup");
+    });
+
+    it("should not overwrite existing i18n file", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Create existing i18n file with custom content
+      const i18nDir = join(project, "flp", "portal-site", "i18n");
+      fs.mkdirSync(i18nDir, { recursive: true });
+      const customContent = "customProperty = Custom Value";
+      fs.writeFileSync(join(i18nDir, "capDataInspector.properties"), customContent);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify i18n file was not overwritten
+      const i18nContent = readI18nFile(project);
+      expect(i18nContent).to.equal(customContent);
+    });
+  });
+
+  describe("mta.yaml modification", () => {
+    it("should add HTML5 module for data inspector when portal service is configured", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify module was added
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      expect(module.type).to.equal("html5");
+      expect(module.path).to.equal("node_modules/@cap-js/data-inspector/app/data-inspector-ui");
+      expect(module["build-parameters"]["build-result"]).to.equal("./");
+      expect(module["build-parameters"]["builder"]).to.equal("custom");
+      expect(module["build-parameters"]["commands"]).to.deep.equal([]);
+    });
+
+    it("should add artifact to content module when portal service is configured", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify artifact was added to content module
+      const mta = readMta(project);
+      const contentModule = mta.modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.path === "."
+      );
+
+      expect(contentModule).to.exist;
+      const artifact = contentModule["build-parameters"].requires.find(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      );
+
+      expect(artifact).to.exist;
+      expect(artifact.artifacts).to.deep.equal(["datainspectorapp.zip"]);
+      expect(artifact["target-path"]).to.equal("resources/");
+    });
+
+    it("should not duplicate module and artifact when run multiple times", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector twice
+      execSync(`cds add data-inspector`, { cwd: project });
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify module is not duplicated
+      const mta = readMta(project);
+      const moduleCount = mta.modules.filter(
+        (m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      ).length;
+      expect(moduleCount).to.equal(1, "Module should not be duplicated");
+
+      // Verify artifact is not duplicated
+      const contentModule = mta.modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.path === "."
+      );
+      const artifactCount = contentModule["build-parameters"].requires.filter(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      ).length;
+      expect(artifactCount).to.equal(1, "Artifact should not be duplicated");
+    });
+
+    it("should preserve existing modules and artifacts", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify existing module is preserved
+      const mta = readMta(project);
+      const existingModule = mta.modules.find((m: any) => m.name === "test-html5-app");
+      expect(existingModule).to.exist;
+
+      // Verify existing artifact is preserved
+      const contentModule = mta.modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.path === "."
+      );
+      const existingArtifact = contentModule["build-parameters"].requires.find(
+        (r: any) => r.name === "test-html5-app"
+      );
+      expect(existingArtifact).to.exist;
+    });
   });
 });
