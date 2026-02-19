@@ -28,4 +28,6 @@ jobs:
       - run: npm i
       - run: cds v
       - run: npm run build
+      - name: Deploy test SQLite database
+        run: cd test && cds deploy -2 sqlite:db/testservice.db
       - run: npm run test
