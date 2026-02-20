@@ -11,7 +11,7 @@ const log = cds.log("data-inspector");
 
 export class XsSecurityConfigurator extends BaseConfigurator {
   get name(): string {
-    return "XSUAA Security";
+    return "xs-security.json";
   }
 
   /**

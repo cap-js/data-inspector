@@ -62,8 +62,6 @@ export class PortalServiceConfigurator extends BaseConfigurator {
    * Configure data inspector for Cloud Portal Service
    */
   async run(): Promise<void> {
-    log.debug(`${this.name} detected. Configuring Data Inspector FLP integration...`);
-
     // 1. Update CommonDataModel.json
     await this.updateCommonDataModel();
 
@@ -73,7 +71,7 @@ export class PortalServiceConfigurator extends BaseConfigurator {
     // 3. Update mta.yaml
     await this.updateMtaYaml();
 
-    log.debug("Data Inspector FLP integration configured.");
+    log.debug("Cloud Portal service configured");
   }
 
   /**

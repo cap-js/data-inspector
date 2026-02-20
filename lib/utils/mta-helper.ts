@@ -14,7 +14,7 @@ const log = cds.log("data-inspector");
  * Get the path to the MTA file (mta.yaml or mta.yml)
  * Returns null if no MTA file exists
  */
-export function getMtaPath(): string | null {
+function getMtaPath(): string | null {
   if (exists("mta.yaml")) return "mta.yaml";
   if (exists("mta.yml")) return "mta.yml";
   return null;
