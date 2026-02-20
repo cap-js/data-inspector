@@ -56,14 +56,6 @@ export function readMta(projectFolder: string): any {
 }
 
 /**
- * Check if mta.yaml exists
- */
-export function mtaExists(projectFolder: string): boolean {
-  const mtaPath = join(projectFolder, "mta.yaml");
-  return fs.existsSync(mtaPath);
-}
-
-/**
  * Check if i18n file exists
  */
 export function i18nFileExists(projectFolder: string): boolean {

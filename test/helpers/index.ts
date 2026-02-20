@@ -2,15 +2,7 @@
  * Export all test helpers from a single entry point
  */
 export { TempUtil } from "./temp-util";
-export {
-  DATA_INSPECTOR_ROOT,
-  ProjectOptions,
-  updateDependency,
-  setupHack,
-  undoSetupHack,
-  createTestProject,
-  runCdsAddDataInspector,
-} from "./project-setup";
+export { createTestProject, runCdsAddDataInspector } from "./project-setup";
 export {
   readXsSecurity,
   xsSecurityExists,
@@ -18,7 +10,6 @@ export {
   readCommonDataModel,
   commonDataModelExists,
   readMta,
-  mtaExists,
   i18nFileExists,
   readI18nFile,
 } from "./file-readers";

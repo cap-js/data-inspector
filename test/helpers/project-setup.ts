@@ -8,12 +8,12 @@ import fs from "fs";
 import { TempUtil } from "./temp-util";
 
 // Get the absolute path to the data-inspector gen directory (compiled output)
-export const DATA_INSPECTOR_ROOT = resolve(__dirname, "..", "..", "gen");
+const DATA_INSPECTOR_ROOT = resolve(__dirname, "..", "..", "gen");
 
 /**
  * Options for creating a test project
  */
-export interface ProjectOptions {
+interface ProjectOptions {
   xsuaa?: boolean;
   mta?: boolean;
 }
@@ -21,7 +21,7 @@ export interface ProjectOptions {
 /**
  * Updates package.json to add data-inspector as a local dependency
  */
-export function updateDependency(projectFolder: string): void {
+function updateDependency(projectFolder: string): void {
   const packageJSONPath = join(projectFolder, "package.json");
   const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, "utf8"));
   packageJSON.devDependencies = packageJSON.devDependencies || {};
@@ -33,7 +33,7 @@ export function updateDependency(projectFolder: string): void {
  * Hack to replace @sap/cds with @sap/cds-dk in the installed plugin files
  * This is required because cds.add is only available in @sap/cds-dk
  */
-export function setupHack(projectFolder: string): void {
+function setupHack(projectFolder: string): void {
   const pluginDir = join(projectFolder, "node_modules/@cap-js/data-inspector");
 
   // Fix cds-plugin.js
@@ -48,18 +48,6 @@ export function setupHack(projectFolder: string): void {
     const addJs = fs.readFileSync(addJsPath, "utf8");
     const updatedAddJs = addJs.replace(/require\("@sap\/cds"\)/g, 'require("@sap/cds-dk")');
     fs.writeFileSync(addJsPath, updatedAddJs);
-  }
-}
-
-/**
- * Undo the hack to restore @sap/cds in the installed cds-plugin.js
- */
-export function undoSetupHack(projectFolder: string): void {
-  const cdsPluginPath = join(projectFolder, "node_modules/@cap-js/data-inspector/cds-plugin.js");
-  if (fs.existsSync(cdsPluginPath)) {
-    const cdsPlugin = fs.readFileSync(cdsPluginPath, "utf8");
-    const updatedData = cdsPlugin.replace(/require\("@sap\/cds-dk"\)/g, 'require("@sap/cds")');
-    fs.writeFileSync(cdsPluginPath, updatedData);
   }
 }
 
