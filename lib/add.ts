@@ -12,6 +12,7 @@ const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
 const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";
 const DATA_INSPECTOR_I18N_FILE = "i18n/capDataInspector.properties";
 const DATA_INSPECTOR_MTA_MODULE_NAME = "capjsdatainspectorapp";
+const DEFAULT_SRV_DESTINATION = "srv-api";
 
 const DATA_INSPECTOR_CATALOG = {
   _version: "3.0.0",
@@ -164,9 +165,7 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
         cdmContent.payload.catalogs.push(DATA_INSPECTOR_CATALOG);
         log.debug(`Added catalog '${DATA_INSPECTOR_CATALOG_ID}' to CommonDataModel.json`);
       } else {
-        log.debug(
-          `Catalog '${DATA_INSPECTOR_CATALOG_ID}' already exists in CommonDataModel.json`
-        );
+        log.debug(`Catalog '${DATA_INSPECTOR_CATALOG_ID}' already exists in CommonDataModel.json`);
       }
 
       // Check if group already exists
@@ -208,7 +207,7 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
   }
 
   /**
-   * Update mta.yaml with data inspector module and content artifact
+   * Update mta.yaml with data inspector module, content artifact, and destination patch command
    */
   async updateMtaYaml(): Promise<void> {
     const mtaPath = exists("mta.yaml") ? "mta.yaml" : "mta.yml";
@@ -221,20 +220,34 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
         mtaContent.modules = [];
       }
 
+      // Detect destination for xs-app.json patching
+      const detectedDestination = await this.detectSrvDestination();
+      const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
+
       // 1. Add data inspector HTML5 module if it doesn't exist
-      const moduleExists = mtaContent.modules.some(
+      let dataInspectorModule = mtaContent.modules.find(
         (module: any) => module.name === DATA_INSPECTOR_MTA_MODULE_NAME
       );
 
-      if (!moduleExists) {
-        const dataInspectorModule = {
+      if (!dataInspectorModule) {
+        // Create module with patch command if needed
+        const commands: string[] = [];
+        if (needsDestinationPatch) {
+          const patchCommand = `node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='${detectedDestination}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"`;
+          commands.push(patchCommand);
+          log.debug(
+            `Will patch xs-app.json destination to '${detectedDestination}' during MTA build`
+          );
+        }
+
+        dataInspectorModule = {
           name: DATA_INSPECTOR_MTA_MODULE_NAME,
           type: "html5",
           path: "node_modules/@cap-js/data-inspector/app/data-inspector-ui",
           "build-parameters": {
             "build-result": "./",
             builder: "custom",
-            commands: [],
+            commands,
             "supported-platforms": [],
           },
         };
@@ -255,6 +268,27 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
         log.debug(`Added module '${DATA_INSPECTOR_MTA_MODULE_NAME}' to mta.yaml`);
       } else {
         log.debug(`Module '${DATA_INSPECTOR_MTA_MODULE_NAME}' already exists in mta.yaml`);
+
+        // Check if destination patch is needed but not yet added
+        if (needsDestinationPatch) {
+          if (!dataInspectorModule["build-parameters"]) {
+            dataInspectorModule["build-parameters"] = {};
+          }
+          if (!dataInspectorModule["build-parameters"].commands) {
+            dataInspectorModule["build-parameters"].commands = [];
+          }
+
+          const commands = dataInspectorModule["build-parameters"].commands;
+          const patchCommandExists = commands.some(
+            (cmd: string) => cmd.includes("xs-app.json") && cmd.includes("destination")
+          );
+
+          if (!patchCommandExists) {
+            const patchCommand = `node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='${detectedDestination}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"`;
+            commands.push(patchCommand);
+            log.debug(`Added destination patch command for '${detectedDestination}'`);
+          }
+        }
       }
 
       // 2. Add artifact to content module's build-parameters.requires
@@ -284,9 +318,7 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
           };
 
           contentModule["build-parameters"].requires.push(artifactEntry);
-          log.debug(
-            `Added artifact 'datainspectorapp.zip' to content module's build-parameters`
-          );
+          log.debug(`Added artifact 'datainspectorapp.zip' to content module's build-parameters`);
         } else {
           log.debug(
             `Artifact for '${DATA_INSPECTOR_MTA_MODULE_NAME}' already exists in content module`
@@ -302,6 +334,84 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
       await write(yaml.stringify(mtaContent)).to(mtaPath);
     } catch (error) {
       log.error(`Failed to update mta.yaml: ${error.message}`);
+    }
+  }
+
+  /**
+   * Detect the CAP backend service destination name from mta.yaml
+   * Detection priority:
+   * 1. Content module's parameters.config.destinations (where url references srv-url)
+   * 2. nodejs module's provides section with srv-url property
+   * 3. Existing HTML5 app's xs-app.json OData route destination
+   * 4. Falls back to "srv-api" (standard CAP convention)
+   */
+  async detectSrvDestination(): Promise<string> {
+    const mtaPath = exists("mta.yaml") ? "mta.yaml" : exists("mta.yml") ? "mta.yml" : null;
+    if (!mtaPath) {
+      return DEFAULT_SRV_DESTINATION;
+    }
+
+    try {
+      const mtaContent = cds.parse.yaml(await read(mtaPath));
+      const modules = mtaContent.modules || [];
+
+      // 1. Look for content module with destinations config referencing srv-url
+      const contentModule = modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.parameters?.config?.destinations
+      );
+
+      if (contentModule) {
+        const destinations = contentModule.parameters.config.destinations;
+        const srvDest = destinations.find(
+          (d: any) => d.url && (d.url.includes("srv-url") || d.url.includes("srv-api"))
+        );
+        if (srvDest?.name) {
+          log.debug(`Detected destination '${srvDest.name}' from content module config`);
+          return srvDest.name;
+        }
+      }
+
+      // 2. Look for nodejs module with provides section containing srv-url
+      const srvModule = modules.find(
+        (m: any) => m.type === "nodejs" && m.provides?.some((p: any) => p.properties?.["srv-url"])
+      );
+
+      if (srvModule) {
+        const provider = srvModule.provides.find((p: any) => p.properties?.["srv-url"]);
+        if (provider?.name) {
+          log.debug(`Detected destination '${provider.name}' from nodejs module provides`);
+          return provider.name;
+        }
+      }
+
+      // 3. Check existing HTML5 app's xs-app.json for OData routes
+      const html5Module = modules.find(
+        (m: any) => m.type === "html5" && m.name !== DATA_INSPECTOR_MTA_MODULE_NAME && m.path
+      );
+
+      if (html5Module) {
+        const xsAppPath = join(html5Module.path, "xs-app.json");
+        if (exists(xsAppPath)) {
+          try {
+            const xsApp = await read(xsAppPath);
+            const odataRoute = xsApp.routes?.find(
+              (r: any) => r.source?.includes("odata") && r.destination
+            );
+            if (odataRoute?.destination) {
+              log.debug(`Detected destination '${odataRoute.destination}' from existing HTML5 app`);
+              return odataRoute.destination;
+            }
+          } catch {
+            // Ignore errors reading existing xs-app.json
+          }
+        }
+      }
+
+      // 4. Default fallback
+      return DEFAULT_SRV_DESTINATION;
+    } catch (error) {
+      log.debug(`Failed to detect destination: ${error.message}`);
+      return DEFAULT_SRV_DESTINATION;
     }
   }
 };

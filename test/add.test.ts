@@ -749,4 +749,204 @@ describe("cds add data-inspector - Portal Service Configuration", () => {
       expect(existingArtifact).to.exist;
     });
   });
+
+  describe("Destination configuration", () => {
+    /**
+     * Create mta.yaml with custom destination in content module config
+     */
+    function createMtaWithCustomDestination(projectFolder: string, destinationName: string): void {
+      const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: ${destinationName}
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    parameters:
+      config:
+        destinations:
+          - forwardAuthToken: true
+            name: ${destinationName}
+            url: ~{${destinationName}/srv-url}
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+  - name: test-srv
+    type: nodejs
+    path: gen/srv
+    provides:
+      - name: ${destinationName}
+        properties:
+          srv-url: \${default-url}
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+      fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+    }
+
+    /**
+     * Create mta.yaml with default srv-api destination
+     */
+    function createMtaWithDefaultDestination(projectFolder: string): void {
+      createMtaWithCustomDestination(projectFolder, "srv-api");
+    }
+
+    it("should not add patch command when using default srv-api destination", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration with default destination
+      createMtaWithDefaultDestination(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify module was added but no patch command
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      expect(module["build-parameters"]["commands"]).to.deep.equal([]);
+    });
+
+    it("should add patch command when using custom destination", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+      const customDestination = "poetry-slams-srv-api";
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration with custom destination
+      createMtaWithCustomDestination(project, customDestination);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify module was added with patch command
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      const commands = module["build-parameters"]["commands"];
+      expect(commands).to.have.lengthOf(1);
+      expect(commands[0]).to.include("xs-app.json");
+      expect(commands[0]).to.include(customDestination);
+    });
+
+    it("should not duplicate patch command when run multiple times", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+      const customDestination = "my-custom-srv";
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration with custom destination
+      createMtaWithCustomDestination(project, customDestination);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector twice
+      execSync(`cds add data-inspector`, { cwd: project });
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify patch command is not duplicated
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      const commands = module["build-parameters"]["commands"];
+      expect(commands).to.have.lengthOf(1);
+    });
+
+    it("should detect destination from existing HTML5 app xs-app.json", async () => {
+      const tempFolder = await tempUtil.mkTempFolder();
+      const project = join(tempFolder, "project");
+      const customDestination = "bookshop-srv";
+
+      // Initialize CAP project
+      execSync(`cds init project --add xsuaa,mta --nodejs`, { cwd: tempFolder });
+      updateDependency(project);
+      execSync(`npm install`, { cwd: project });
+      setupHack(project);
+
+      // Create portal configuration without destinations in config
+      createMtaWithPortal(project);
+      createCommonDataModel(project);
+
+      // Create an existing HTML5 app with custom destination in xs-app.json
+      const appDir = join(project, "app", "test-app");
+      fs.mkdirSync(appDir, { recursive: true });
+      const xsAppContent = {
+        authenticationMethod: "route",
+        routes: [
+          {
+            source: "^/odata/v4/(.*)",
+            target: "/odata/v4/$1",
+            destination: customDestination,
+            authenticationType: "xsuaa",
+          },
+          {
+            source: "^(.*)$",
+            target: "$1",
+            service: "html5-apps-repo-rt",
+            authenticationType: "xsuaa",
+          },
+        ],
+      };
+      fs.writeFileSync(join(appDir, "xs-app.json"), JSON.stringify(xsAppContent, null, 2));
+
+      // Run cds add data-inspector
+      execSync(`cds add data-inspector`, { cwd: project });
+
+      // Verify module was added with patch command for detected destination
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      const commands = module["build-parameters"]["commands"];
+      expect(commands).to.have.lengthOf(1);
+      expect(commands[0]).to.include(customDestination);
+    });
+  });
 });
