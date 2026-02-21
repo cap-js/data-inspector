@@ -74,7 +74,7 @@ export class PortalServiceConfigurator extends BaseConfigurator {
 
   /**
    * Update CommonDataModel.json with data inspector catalog and group.
-   * Uses cds.add.merge() for idempotent merging with nested array support.
+   * Uses cds.add.merge() for idempotent merging.
    */
   private async updateCommonDataModel(): Promise<void> {
     const cdmPath = "flp/portal-site/CommonDataModel.json";
@@ -113,7 +113,8 @@ export class PortalServiceConfigurator extends BaseConfigurator {
 
   /**
    * Update mta.yaml with data inspector module and content artifact.
-   * Uses cds.add.merge() for idempotent merging with template support.
+   * 1. HTML5 module: Added via cds.add.merge() with template
+   * 2. Content artifact: Added programmatically (cds.add.merge doesn't seem to support nested array paths)
    *
    * See: https://cap.cloud.sap/docs/tools/apis/cds-add#merge-from-into-file-o
    */
@@ -125,26 +126,22 @@ export class PortalServiceConfigurator extends BaseConfigurator {
     const detectedDestination = await detectSrvDestination(mtaContent);
     const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
 
-    // Define addition for idempotent merging (prevents duplicate module)
-    const dataInspectorModule = {
-      in: "modules",
-      where: { name: DATA_INSPECTOR_MTA_MODULE_NAME },
-    };
-
     try {
       // Step 1: Add the HTML5 module
       await cds.add
-        .merge(join(__dirname, "../../templates/mta-data-inspector.yaml.hbs"))
+        .merge(join(__dirname, "../../templates/mta-data-inspector-module.yaml.hbs"))
         .into("mta.yaml", {
           with: {
             customDestination: needsDestinationPatch ? detectedDestination : null,
           },
-          additions: [dataInspectorModule],
+          additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
         });
 
-      log.debug("Added data inspector module to mta.yaml");
+      log.debug("Added data inspector HTML5 module to mta.yaml");
 
-      // Step 2: Add artifact to content module (programmatically for now)
+      // Step 2: Add artifact to content module's build-parameters.requires
+      // Note: cds.add.merge() doesn't seem to support nested array targeting for mta.yaml
+      // So we add the artifact programmatically
       await this.addArtifactToContentModule();
     } catch (error) {
       log.error(`Failed to update mta.yaml: ${error.message}`);
@@ -153,6 +150,8 @@ export class PortalServiceConfigurator extends BaseConfigurator {
 
   /**
    * Add the data inspector artifact to the content module's build-parameters.requires.
+   * This is done programmatically because cds.add.merge() doesn't seem to support targeting
+   * nested arrays within a module (e.g., modules[?name='x'].build-parameters.requires).
    */
   private async addArtifactToContentModule(): Promise<void> {
     const mtaContent = await readMta();
@@ -172,7 +171,7 @@ export class PortalServiceConfigurator extends BaseConfigurator {
       contentModule["build-parameters"].requires = [];
     }
 
-    // Check if artifact already exists
+    // Check if artifact already exists (idempotent)
     const artifactExists = contentModule["build-parameters"].requires.some(
       (req: any) => req.name === DATA_INSPECTOR_MTA_MODULE_NAME
     );
