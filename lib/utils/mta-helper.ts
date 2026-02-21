@@ -11,12 +11,11 @@ import { DATA_INSPECTOR_MTA_MODULE_NAME, DEFAULT_SRV_DESTINATION } from "./const
 const log = cds.log("data-inspector");
 
 /**
- * Get the path to the MTA file (mta.yaml or mta.yml)
- * Returns null if no MTA file exists
+ * Get the path to the MTA file
+ * Returns null if mta.yaml does not exist
  */
-function getMtaPath(): string | null {
+export function getMtaPath(): string | null {
   if (exists("mta.yaml")) return "mta.yaml";
-  if (exists("mta.yml")) return "mta.yml";
   return null;
 }
 

@@ -20,6 +20,10 @@ import {
   createCommonDataModel,
   createHtml5AppWithDestination,
   createExistingI18nFile,
+  createMtaWithContentModuleNoBuildParams,
+  createMtaWithContentModuleNoRequires,
+  createMtaWithNodejsProvides,
+  createMtaWithMultipleContentModules,
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
   DATA_INSPECTOR_MTA_MODULE_NAME,
@@ -408,6 +412,111 @@ describe("PortalServiceConfigurator", () => {
       // Patch command + npm install + npm run build:cf
       expect(commands).to.have.lengthOf(3);
       expect(commands[0]).to.include(customDestination);
+    });
+
+    it("should detect destination from nodejs module provides section", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const customDestination = "my-srv-api";
+
+      // Create portal configuration with destination in nodejs provides
+      createMtaWithNodejsProvides(project, customDestination);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      runCdsAddDataInspector(project);
+
+      // Verify module was added with patch command for detected destination
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+
+      expect(module).to.exist;
+      const commands = module["build-parameters"]["commands"];
+      // Patch command + npm install + npm run build:cf
+      expect(commands).to.have.lengthOf(3);
+      expect(commands[0]).to.include(customDestination);
+    });
+  });
+
+  describe("edge cases", () => {
+    it("should handle content module without build-parameters", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with content module that has no build-parameters
+      createMtaWithContentModuleNoBuildParams(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector - should not crash
+      runCdsAddDataInspector(project);
+
+      // Verify artifact was added (build-parameters and requires should be created)
+      const mta = readMta(project);
+      const contentModule = mta.modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.path === "."
+      );
+
+      expect(contentModule).to.exist;
+      expect(contentModule["build-parameters"]).to.exist;
+      expect(contentModule["build-parameters"].requires).to.exist;
+
+      const artifact = contentModule["build-parameters"].requires.find(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      );
+      expect(artifact).to.exist;
+    });
+
+    it("should handle content module without build-parameters.requires", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with content module that has no requires array
+      createMtaWithContentModuleNoRequires(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector - should not crash
+      runCdsAddDataInspector(project);
+
+      // Verify artifact was added (requires array should be created)
+      const mta = readMta(project);
+      const contentModule = mta.modules.find(
+        (m: any) => m.type === "com.sap.application.content" && m.path === "."
+      );
+
+      expect(contentModule).to.exist;
+      expect(contentModule["build-parameters"].requires).to.exist;
+
+      const artifact = contentModule["build-parameters"].requires.find(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      );
+      expect(artifact).to.exist;
+    });
+
+    it("should handle multiple content modules by using first match", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with multiple content modules
+      createMtaWithMultipleContentModules(project);
+      createCommonDataModel(project);
+
+      // Run cds add data-inspector
+      runCdsAddDataInspector(project);
+
+      // Verify artifact was added to first content module
+      const mta = readMta(project);
+
+      // First content module should have the artifact
+      const firstContentModule = mta.modules.find((m: any) => m.name === "first-content");
+      expect(firstContentModule).to.exist;
+      const artifactInFirst = firstContentModule["build-parameters"].requires.find(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      );
+      expect(artifactInFirst).to.exist;
+
+      // Second content module should NOT have the artifact
+      const secondContentModule = mta.modules.find((m: any) => m.name === "second-content");
+      expect(secondContentModule).to.exist;
+      const artifactInSecond = secondContentModule["build-parameters"].requires.find(
+        (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
+      );
+      expect(artifactInSecond).to.not.exist;
     });
   });
 });

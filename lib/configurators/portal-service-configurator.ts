@@ -7,7 +7,7 @@
  * - Destination detection and xs-app.json patching
  */
 const cds = require("@sap/cds-dk");
-const { exists, read, write, path } = cds.utils;
+const { exists, write, path } = cds.utils;
 const { join } = path;
 
 import { BaseConfigurator } from "./base-configurator";
@@ -25,6 +25,7 @@ import {
   hasPortalService,
   findContentModule,
   detectSrvDestination,
+  getMtaPath,
 } from "../utils/mta-helper";
 
 const log = cds.log("data-inspector");
@@ -119,6 +120,9 @@ export class PortalServiceConfigurator extends BaseConfigurator {
    * See: https://cap.cloud.sap/docs/tools/apis/cds-add#merge-from-into-file-o
    */
   private async updateMtaYaml(): Promise<void> {
+    const mtaPath = getMtaPath();
+    if (!mtaPath) return;
+
     const mtaContent = await readMta();
     if (!mtaContent) return;
 
@@ -127,10 +131,10 @@ export class PortalServiceConfigurator extends BaseConfigurator {
     const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
 
     try {
-      // Step 1: Add the HTML5 module
+      // Step 1: Add the HTML5 module (use detected mta path to support both .yaml and .yml)
       await cds.add
         .merge(join(__dirname, "../../templates/mta-data-inspector-module.yaml.hbs"))
-        .into("mta.yaml", {
+        .into(mtaPath, {
           with: {
             customDestination: needsDestinationPatch ? detectedDestination : null,
           },

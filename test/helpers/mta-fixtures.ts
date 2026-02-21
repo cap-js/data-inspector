@@ -223,3 +223,178 @@ export function createExistingI18nFile(projectFolder: string, content: string): 
   fs.mkdirSync(i18nDir, { recursive: true });
   fs.writeFileSync(join(i18nDir, "capDataInspector.properties"), content);
 }
+
+/**
+ * Create mta.yaml with content module that has no build-parameters
+ */
+export function createMtaWithContentModuleNoBuildParams(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create mta.yaml with content module that has build-parameters but no requires
+ */
+export function createMtaWithContentModuleNoRequires(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create mta.yaml with destination provided via nodejs module provides section
+ */
+export function createMtaWithNodejsProvides(projectFolder: string, destinationName: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: test-srv
+    type: nodejs
+    path: gen/srv
+    provides:
+      - name: ${destinationName}
+        properties:
+          srv-url: \${default-url}
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create mta.yaml with multiple content modules (edge case)
+ */
+export function createMtaWithMultipleContentModules(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: first-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+  - name: second-content
+    type: com.sap.application.content
+    path: .
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - otherapp.zip
+          name: other-html5-app
+          target-path: resources/
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}

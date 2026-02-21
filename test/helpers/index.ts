@@ -21,6 +21,10 @@ export {
   createCommonDataModel,
   createHtml5AppWithDestination,
   createExistingI18nFile,
+  createMtaWithContentModuleNoBuildParams,
+  createMtaWithContentModuleNoRequires,
+  createMtaWithNodejsProvides,
+  createMtaWithMultipleContentModules,
 } from "./mta-fixtures";
 
 // Test constants - these values must match what's in lib/utils/constants.ts
