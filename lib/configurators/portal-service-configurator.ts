@@ -112,159 +112,80 @@ export class PortalServiceConfigurator extends BaseConfigurator {
   }
 
   /**
-   * Update mta.yaml with data inspector module, content artifact, and destination patch command.
+   * Update mta.yaml with data inspector module and content artifact.
+   * Uses cds.add.merge() for idempotent merging with template support.
    *
-   * NOTE: We use programmatic manipulation instead of cds.add.merge() because cds.add.merge()
-   * cannot handle the content module artifact addition. It requires:
-   *
-   * 1. Finding a module by TWO criteria: type="com.sap.application.content" AND path="."
-   * 2. Adding to a nested array: modules[?].build-parameters.requires
-   *
-   * cds.add.merge() only supports simple selection like { in: "modules", where: { name: "X" } }
-   * but NOT { in: "modules", where: { type: "X", path: "Y" } } or targeting nested arrays
-   * within matched elements.
-   *
-   * Example of what we need but cannot express:
-   *   { in: "modules[type=com.sap.application.content,path=.].build-parameters.requires",
-   *     where: { name: "capjsdatainspectorapp" } }
+   * See: https://cap.cloud.sap/docs/tools/apis/cds-add#merge-from-into-file-o
    */
   private async updateMtaYaml(): Promise<void> {
     const mtaContent = await readMta();
     if (!mtaContent) return;
 
-    // Ensure modules array exists
-    if (!mtaContent.modules) {
-      mtaContent.modules = [];
-    }
-
     // Detect destination for xs-app.json patching
     const detectedDestination = await detectSrvDestination(mtaContent);
     const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
 
-    // 1. Add data inspector HTML5 module if it doesn't exist
-    let dataInspectorModule = mtaContent.modules.find(
-      (module: any) => module.name === DATA_INSPECTOR_MTA_MODULE_NAME
+    // Define addition for idempotent merging (prevents duplicate module)
+    const dataInspectorModule = {
+      in: "modules",
+      where: { name: DATA_INSPECTOR_MTA_MODULE_NAME },
+    };
+
+    try {
+      // Step 1: Add the HTML5 module
+      await cds.add
+        .merge(join(__dirname, "../../templates/mta-data-inspector.yaml.hbs"))
+        .into("mta.yaml", {
+          with: {
+            customDestination: needsDestinationPatch ? detectedDestination : null,
+          },
+          additions: [dataInspectorModule],
+        });
+
+      log.debug("Added data inspector module to mta.yaml");
+
+      // Step 2: Add artifact to content module (programmatically for now)
+      await this.addArtifactToContentModule();
+    } catch (error) {
+      log.error(`Failed to update mta.yaml: ${error.message}`);
+    }
+  }
+
+  /**
+   * Add the data inspector artifact to the content module's build-parameters.requires.
+   */
+  private async addArtifactToContentModule(): Promise<void> {
+    const mtaContent = await readMta();
+    if (!mtaContent) return;
+
+    const contentModule = findContentModule(mtaContent);
+    if (!contentModule) {
+      log.debug("Content module not found, skipping artifact addition");
+      return;
+    }
+
+    // Ensure build-parameters and requires exist
+    if (!contentModule["build-parameters"]) {
+      contentModule["build-parameters"] = {};
+    }
+    if (!contentModule["build-parameters"].requires) {
+      contentModule["build-parameters"].requires = [];
+    }
+
+    // Check if artifact already exists
+    const artifactExists = contentModule["build-parameters"].requires.some(
+      (req: any) => req.name === DATA_INSPECTOR_MTA_MODULE_NAME
     );
 
-    if (!dataInspectorModule) {
-      // Build commands for UI5 app during MTA build
-      const commands: string[] = [];
-
-      // If destination is not default, patch xs-app.json before building
-      if (needsDestinationPatch) {
-        const patchCommand = `node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='${detectedDestination}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"`;
-        commands.push(patchCommand);
-        log.debug(
-          `Will patch xs-app.json destination to '${detectedDestination}' during MTA build`
-        );
-      }
-
-      // Install dependencies and build the UI5 app
-      commands.push("npm install");
-      commands.push("npm run build:cf");
-
-      dataInspectorModule = {
+    if (!artifactExists) {
+      contentModule["build-parameters"].requires.push({
         name: DATA_INSPECTOR_MTA_MODULE_NAME,
-        type: "html5",
-        path: "node_modules/@cap-js/data-inspector/app/data-inspector-ui",
-        "build-parameters": {
-          "build-result": "dist",
-          builder: "custom",
-          commands,
-          "supported-platforms": [],
-        },
-      };
+        artifacts: ["datainspectorapp.zip"],
+        "target-path": "resources/",
+      });
 
-      /*
-       * Insert the module in a logical position within mta.yaml:
-       * - If other HTML5 modules exist, insert after the last one (keeps HTML5 modules grouped)
-       * - Otherwise, insert at the beginning of the modules array
-       *
-       * How this works:
-       * 1. reduce() scans all modules, returning the index of the last HTML5 module found
-       *    - Starts with -1 (no HTML5 module found yet)
-       *    - For each module, if it's HTML5, remember its index; otherwise keep the previous index
-       * 2. splice(index, 0, item) inserts `item` at `index` without removing anything (0 = delete count)
-       * 3. unshift(item) inserts `item` at the beginning of the array
-       */
-      const lastHtml5ModuleIndex = mtaContent.modules.reduce(
-        (lastIndex: number, module: any, index: number) =>
-          module.type === "html5" ? index : lastIndex,
-        -1
-      );
-
-      if (lastHtml5ModuleIndex >= 0) {
-        // Insert after the last HTML5 module
-        mtaContent.modules.splice(lastHtml5ModuleIndex + 1, 0, dataInspectorModule);
-      } else {
-        // No HTML5 modules found, insert at the beginning
-        mtaContent.modules.unshift(dataInspectorModule);
-      }
-
-      log.debug(`Added module '${DATA_INSPECTOR_MTA_MODULE_NAME}' to mta.yaml`);
-    } else {
-      log.debug(`Module '${DATA_INSPECTOR_MTA_MODULE_NAME}' already exists in mta.yaml`);
-
-      // Check if destination patch is needed but not yet added
-      if (needsDestinationPatch) {
-        if (!dataInspectorModule["build-parameters"]) {
-          dataInspectorModule["build-parameters"] = {};
-        }
-        if (!dataInspectorModule["build-parameters"].commands) {
-          dataInspectorModule["build-parameters"].commands = [];
-        }
-
-        const commands = dataInspectorModule["build-parameters"].commands;
-        const patchCommandExists = commands.some(
-          (cmd: string) => cmd.includes("xs-app.json") && cmd.includes("destination")
-        );
-
-        if (!patchCommandExists) {
-          const patchCommand = `node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='${detectedDestination}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"`;
-          commands.push(patchCommand);
-          log.debug(`Added destination patch command for '${detectedDestination}'`);
-        }
-      }
+      await writeMta(mtaContent);
+      log.debug("Added artifact to content module's build-parameters");
     }
-
-    // 2. Add artifact to content module's build-parameters.requires
-    const contentModule = findContentModule(mtaContent);
-
-    if (contentModule) {
-      // Ensure build-parameters and requires exist
-      if (!contentModule["build-parameters"]) {
-        contentModule["build-parameters"] = {};
-      }
-      if (!contentModule["build-parameters"].requires) {
-        contentModule["build-parameters"].requires = [];
-      }
-
-      // Check if artifact already exists
-      const artifactExists = contentModule["build-parameters"].requires.some(
-        (req: any) => req.name === DATA_INSPECTOR_MTA_MODULE_NAME
-      );
-
-      if (!artifactExists) {
-        const artifactEntry = {
-          artifacts: ["datainspectorapp.zip"],
-          name: DATA_INSPECTOR_MTA_MODULE_NAME,
-          "target-path": "resources/",
-        };
-
-        contentModule["build-parameters"].requires.push(artifactEntry);
-        log.debug(`Added artifact 'datainspectorapp.zip' to content module's build-parameters`);
-      } else {
-        log.debug(
-          `Artifact for '${DATA_INSPECTOR_MTA_MODULE_NAME}' already exists in content module`
-        );
-      }
-    } else {
-      log.debug(
-        `Could not find content module (type: com.sap.application.content, path: .) in mta.yaml`
-      );
-    }
-
-    // Write updated content
-    await writeMta(mtaContent);
   }
 }

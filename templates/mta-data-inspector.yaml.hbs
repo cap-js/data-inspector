@@ -1,0 +1,14 @@
+modules:
+  - name: capjsdatainspectorapp
+    type: html5
+    path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+{{#customDestination}}
+        - node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='{{.}}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"
+{{/customDestination}}
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
