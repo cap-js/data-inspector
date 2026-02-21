@@ -189,7 +189,18 @@ export class PortalServiceConfigurator extends BaseConfigurator {
         },
       };
 
-      // Find a good position to insert (after other html5 modules or at the beginning)
+      /*
+       * Insert the module in a logical position within mta.yaml:
+       * - If other HTML5 modules exist, insert after the last one (keeps HTML5 modules grouped)
+       * - Otherwise, insert at the beginning of the modules array
+       *
+       * How this works:
+       * 1. reduce() scans all modules, returning the index of the last HTML5 module found
+       *    - Starts with -1 (no HTML5 module found yet)
+       *    - For each module, if it's HTML5, remember its index; otherwise keep the previous index
+       * 2. splice(index, 0, item) inserts `item` at `index` without removing anything (0 = delete count)
+       * 3. unshift(item) inserts `item` at the beginning of the array
+       */
       const lastHtml5ModuleIndex = mtaContent.modules.reduce(
         (lastIndex: number, module: any, index: number) =>
           module.type === "html5" ? index : lastIndex,
@@ -197,8 +208,10 @@ export class PortalServiceConfigurator extends BaseConfigurator {
       );
 
       if (lastHtml5ModuleIndex >= 0) {
+        // Insert after the last HTML5 module
         mtaContent.modules.splice(lastHtml5ModuleIndex + 1, 0, dataInspectorModule);
       } else {
+        // No HTML5 modules found, insert at the beginning
         mtaContent.modules.unshift(dataInspectorModule);
       }
 
