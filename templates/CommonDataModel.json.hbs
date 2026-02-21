@@ -1,0 +1,43 @@
+{
+  "payload": {
+    "catalogs": [
+      {
+        "_version": "3.0.0",
+        "identification": {
+          "id": "capDataInspectorCatalogId",
+          "title": "{{capDataInspectorCatalog}}",
+          "entityType": "catalog",
+          "i18n": "i18n/capDataInspector.properties"
+        },
+        "payload": {
+          "viz": [
+            {
+              "appId": "sap.cap.datainspector.datainspectorui",
+              "vizId": "datainspectorui-display"
+            }
+          ]
+        }
+      }
+    ],
+    "groups": [
+      {
+        "_version": "3.0.0",
+        "identification": {
+          "id": "capDataInspectorGroupId",
+          "title": "{{capDataInspectorGroup}}",
+          "entityType": "group",
+          "i18n": "i18n/capDataInspector.properties"
+        },
+        "payload": {
+          "viz": [
+            {
+              "id": "sap.cap.datainspector.datainspectorui",
+              "appId": "sap.cap.datainspector.datainspectorui",
+              "vizId": "datainspectorui-display"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

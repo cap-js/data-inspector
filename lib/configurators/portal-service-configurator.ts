@@ -12,8 +12,6 @@ const { join } = path;
 
 import { BaseConfigurator } from "./base-configurator";
 import {
-  DATA_INSPECTOR_CATALOG,
-  DATA_INSPECTOR_GROUP,
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
   DATA_INSPECTOR_I18N_FILE,
@@ -75,52 +73,20 @@ export class PortalServiceConfigurator extends BaseConfigurator {
   }
 
   /**
-   * Update CommonDataModel.json with data inspector catalog and group
+   * Update CommonDataModel.json with data inspector catalog and group.
+   * Uses cds.add.merge() for idempotent merging with nested array support.
    */
   private async updateCommonDataModel(): Promise<void> {
     const cdmPath = "flp/portal-site/CommonDataModel.json";
 
     try {
-      // cds.utils.read auto-parses JSON files
-      const cdmContent = await read(cdmPath);
-
-      // Ensure payload structure exists
-      if (!cdmContent.payload) {
-        cdmContent.payload = {};
-      }
-      if (!cdmContent.payload.catalogs) {
-        cdmContent.payload.catalogs = [];
-      }
-      if (!cdmContent.payload.groups) {
-        cdmContent.payload.groups = [];
-      }
-
-      // Check if catalog already exists
-      const catalogExists = cdmContent.payload.catalogs.some(
-        (catalog: any) => catalog.identification?.id === DATA_INSPECTOR_CATALOG_ID
-      );
-
-      if (!catalogExists) {
-        cdmContent.payload.catalogs.push(DATA_INSPECTOR_CATALOG);
-        log.debug(`Added catalog '${DATA_INSPECTOR_CATALOG_ID}' to CommonDataModel.json`);
-      } else {
-        log.debug(`Catalog '${DATA_INSPECTOR_CATALOG_ID}' already exists in CommonDataModel.json`);
-      }
-
-      // Check if group already exists
-      const groupExists = cdmContent.payload.groups.some(
-        (group: any) => group.identification?.id === DATA_INSPECTOR_GROUP_ID
-      );
-
-      if (!groupExists) {
-        cdmContent.payload.groups.push(DATA_INSPECTOR_GROUP);
-        log.debug(`Added group '${DATA_INSPECTOR_GROUP_ID}' to CommonDataModel.json`);
-      } else {
-        log.debug(`Group '${DATA_INSPECTOR_GROUP_ID}' already exists in CommonDataModel.json`);
-      }
-
-      // Write updated content
-      await write(JSON.stringify(cdmContent, null, 4)).to(cdmPath);
+      await cds.add.merge(__dirname, "../../templates/CommonDataModel.json.hbs").into(cdmPath, {
+        additions: [
+          { in: "payload.catalogs", where: { "identification.id": DATA_INSPECTOR_CATALOG_ID } },
+          { in: "payload.groups", where: { "identification.id": DATA_INSPECTOR_GROUP_ID } },
+        ],
+      });
+      log.debug("Added data inspector catalog and group to CommonDataModel.json");
     } catch (error) {
       log.error(`Failed to update CommonDataModel.json: ${error.message}`);
     }
@@ -146,7 +112,21 @@ export class PortalServiceConfigurator extends BaseConfigurator {
   }
 
   /**
-   * Update mta.yaml with data inspector module, content artifact, and destination patch command
+   * Update mta.yaml with data inspector module, content artifact, and destination patch command.
+   *
+   * NOTE: We use programmatic manipulation instead of cds.add.merge() because cds.add.merge()
+   * cannot handle the content module artifact addition. It requires:
+   *
+   * 1. Finding a module by TWO criteria: type="com.sap.application.content" AND path="."
+   * 2. Adding to a nested array: modules[?].build-parameters.requires
+   *
+   * cds.add.merge() only supports simple selection like { in: "modules", where: { name: "X" } }
+   * but NOT { in: "modules", where: { type: "X", path: "Y" } } or targeting nested arrays
+   * within matched elements.
+   *
+   * Example of what we need but cannot express:
+   *   { in: "modules[type=com.sap.application.content,path=.].build-parameters.requires",
+   *     where: { name: "capjsdatainspectorapp" } }
    */
   private async updateMtaYaml(): Promise<void> {
     const mtaContent = await readMta();
