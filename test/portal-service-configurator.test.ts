@@ -226,9 +226,13 @@ describe("PortalServiceConfigurator", () => {
       expect(module).to.exist;
       expect(module.type).to.equal("html5");
       expect(module.path).to.equal("node_modules/@cap-js/data-inspector/app/data-inspector-ui");
-      expect(module["build-parameters"]["build-result"]).to.equal("./");
+      expect(module["build-parameters"]["build-result"]).to.equal("dist");
       expect(module["build-parameters"]["builder"]).to.equal("custom");
-      expect(module["build-parameters"]["commands"]).to.deep.equal([]);
+      // Commands always include npm install and build:cf (UI5 is built during MTA build)
+      expect(module["build-parameters"]["commands"]).to.deep.equal([
+        "npm install",
+        "npm run build:cf",
+      ]);
     });
 
     it("should add artifact to content module", async () => {
@@ -322,12 +326,16 @@ describe("PortalServiceConfigurator", () => {
       // Run cds add data-inspector
       runCdsAddDataInspector(project);
 
-      // Verify module was added but no patch command
+      // Verify module was added with only build commands (no destination patch needed)
       const mta = readMta(project);
       const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
 
       expect(module).to.exist;
-      expect(module["build-parameters"]["commands"]).to.deep.equal([]);
+      // Only npm install and build commands, no destination patch
+      expect(module["build-parameters"]["commands"]).to.deep.equal([
+        "npm install",
+        "npm run build:cf",
+      ]);
     });
 
     it("should add patch command when using custom destination", async () => {
@@ -341,15 +349,18 @@ describe("PortalServiceConfigurator", () => {
       // Run cds add data-inspector
       runCdsAddDataInspector(project);
 
-      // Verify module was added with patch command
+      // Verify module was added with patch command before build commands
       const mta = readMta(project);
       const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
 
       expect(module).to.exist;
       const commands = module["build-parameters"]["commands"];
-      expect(commands).to.have.lengthOf(1);
+      // Patch command + npm install + npm run build:cf
+      expect(commands).to.have.lengthOf(3);
       expect(commands[0]).to.include("xs-app.json");
       expect(commands[0]).to.include(customDestination);
+      expect(commands[1]).to.equal("npm install");
+      expect(commands[2]).to.equal("npm run build:cf");
     });
 
     it("should not duplicate patch command when run multiple times", async () => {
@@ -364,13 +375,14 @@ describe("PortalServiceConfigurator", () => {
       runCdsAddDataInspector(project);
       runCdsAddDataInspector(project);
 
-      // Verify patch command is not duplicated
+      // Verify patch command is not duplicated (still 3 commands total)
       const mta = readMta(project);
       const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
 
       expect(module).to.exist;
       const commands = module["build-parameters"]["commands"];
-      expect(commands).to.have.lengthOf(1);
+      // Should still be 3: patch + npm install + npm run build:cf
+      expect(commands).to.have.lengthOf(3);
     });
 
     it("should detect destination from existing HTML5 app xs-app.json", async () => {
@@ -393,7 +405,8 @@ describe("PortalServiceConfigurator", () => {
 
       expect(module).to.exist;
       const commands = module["build-parameters"]["commands"];
-      expect(commands).to.have.lengthOf(1);
+      // Patch command + npm install + npm run build:cf
+      expect(commands).to.have.lengthOf(3);
       expect(commands[0]).to.include(customDestination);
     });
   });
