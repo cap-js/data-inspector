@@ -167,8 +167,10 @@ export class PortalServiceConfigurator extends BaseConfigurator {
     );
 
     if (!dataInspectorModule) {
-      // Create module with patch command if needed
+      // Build commands for UI5 app during MTA build
       const commands: string[] = [];
+
+      // If destination is not default, patch xs-app.json before building
       if (needsDestinationPatch) {
         const patchCommand = `node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='${detectedDestination}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"`;
         commands.push(patchCommand);
@@ -177,12 +179,16 @@ export class PortalServiceConfigurator extends BaseConfigurator {
         );
       }
 
+      // Install dependencies and build the UI5 app
+      commands.push("npm install");
+      commands.push("npm run build:cf");
+
       dataInspectorModule = {
         name: DATA_INSPECTOR_MTA_MODULE_NAME,
         type: "html5",
         path: "node_modules/@cap-js/data-inspector/app/data-inspector-ui",
         "build-parameters": {
-          "build-result": "./",
+          "build-result": "dist",
           builder: "custom",
           commands,
           "supported-platforms": [],
