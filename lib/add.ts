@@ -22,7 +22,6 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
   /**
    * List of configurators to run.
    * Each configurator handles a specific integration (XSUAA, Portal Service, Work Zone, etc.)
-   * Order matters: XSUAA should run first as it's a prerequisite for other integrations.
    */
   private configurators: BaseConfigurator[] = [
     new XsSecurityConfigurator(),

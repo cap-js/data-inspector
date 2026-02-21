@@ -1,10 +1,12 @@
 /**
  * Configurator for SAP BTP Cloud Portal Service (FLP) integration.
  * Handles:
- * - CommonDataModel.json modification (catalog and group)
- * - i18n properties file creation
- * - mta.yaml modification (HTML5 module and content artifact)
- * - Destination detection and xs-app.json patching
+ * - CommonDataModel.json modification (adding catalog and group)
+ * - i18n properties file creation for catalog and group titles
+ * - mta.yaml modification
+ *    - adding html5 module with destination name detection and xs-app.json patching
+ *    - adding html5 artifact to content module's build-parameters.requires
+ * Note: cds.add.merge() is used for idempotent merging where possible, but some manual manipulation is needed for nested structures in mta.yaml
  */
 const cds = require("@sap/cds-dk");
 const { exists, write, path } = cds.utils;
@@ -131,9 +133,9 @@ export class PortalServiceConfigurator extends BaseConfigurator {
     const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
 
     try {
-      // Step 1: Add the HTML5 module (use detected mta path to support both .yaml and .yml)
+      // Step 1: Add the HTML5 module
       await cds.add
-        .merge(join(__dirname, "../../templates/mta-data-inspector-module.yaml.hbs"))
+        .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
         .into(mtaPath, {
           with: {
             customDestination: needsDestinationPatch ? detectedDestination : null,
