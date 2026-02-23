@@ -98,39 +98,38 @@ Add the `html5` module of the UI5 app as follows.
 If the destination name of your CAP backend service is not the conventional `srv-api`, the approuter configuration `xs-app.json` of the UI5 app must be patched with your specific destination name. To do so, add the following script in the build command and provide your destination name to `DESTINATION_NAME`.
 
 ```yaml
-        - >-
-          node -e "
-          const DESTINATION_NAME = 'your destination name';
-          const fs = require('fs');
-          const xs = JSON.parse(fs.readFileSync('xs-app.json'));
-          xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
-          fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
-          "
+- >-
+  node -e "
+  const DESTINATION_NAME = 'your destination name';
+  const fs = require('fs');
+  const xs = JSON.parse(fs.readFileSync('xs-app.json'));
+  xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
+  fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
+  "
 ```
 
 Your `html5` module now looks like as follows, if your destination name is `foo-srv-api`.
 
 ```yaml
-  - name: capjsdatainspectorapp
-    type: html5
-    path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
-    build-parameters:
-      build-result: dist
-      builder: custom
-      commands:
-        - >-
-          node -e "
-          const DESTINATION_NAME = 'foo-srv-api';
-          const fs = require('fs');
-          const xs = JSON.parse(fs.readFileSync('xs-app.json'));
-          xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
-          fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
-          "
-        - npm install
-        - npm run build:cf
-      supported-platforms:
-        []
-
+- name: capjsdatainspectorapp
+  type: html5
+  path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+      - >-
+        node -e "
+        const DESTINATION_NAME = 'foo-srv-api';
+        const fs = require('fs');
+        const xs = JSON.parse(fs.readFileSync('xs-app.json'));
+        xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
+        fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
+        "
+      - npm install
+      - npm run build:cf
+    supported-platforms:
+      []
 ```
 
 Note: Running `cds add data-inspector` will automatically detect your destination name and add the above patch script. Make sure to review the destination name and amend as necessary.
