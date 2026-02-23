@@ -28,7 +28,8 @@ export async function readMta(): Promise<any | null> {
   try {
     return cds.parse.yaml(await read(mtaPath));
   } catch (error) {
-    log.error(`Failed to parse MTA file: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    log.error(`Failed to parse MTA file: ${message}`);
     return null;
   }
 }

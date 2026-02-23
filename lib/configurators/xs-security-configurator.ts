@@ -33,7 +33,8 @@ export class XsSecurityConfigurator extends BaseConfigurator {
         });
       log.debug("Added data-inspector scope to xs-security.json");
     } catch (error) {
-      log.error(`Failed to update xs-security.json: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to update xs-security.json: ${message}`);
     }
   }
 }

@@ -91,7 +91,8 @@ export class PortalServiceConfigurator extends BaseConfigurator {
       });
       log.debug("Added data inspector catalog and group to CommonDataModel.json");
     } catch (error) {
-      log.error(`Failed to update CommonDataModel.json: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to update CommonDataModel.json: ${message}`);
     }
   }
 
@@ -110,7 +111,8 @@ export class PortalServiceConfigurator extends BaseConfigurator {
       await write(DATA_INSPECTOR_I18N_CONTENT).to(i18nPath);
       log.debug(`Created i18n file '${DATA_INSPECTOR_I18N_FILE}'`);
     } catch (error) {
-      log.error(`Failed to create i18n file: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to create i18n file: ${message}`);
     }
   }
 
@@ -150,7 +152,8 @@ export class PortalServiceConfigurator extends BaseConfigurator {
       // So we add the artifact programmatically
       await this.addArtifactToContentModule();
     } catch (error) {
-      log.error(`Failed to update mta.yaml: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to update mta.yaml: ${message}`);
     }
   }
 
