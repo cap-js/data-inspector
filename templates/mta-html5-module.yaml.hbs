@@ -7,7 +7,14 @@ modules:
       builder: custom
       commands:
 {{#customDestination}}
-        - node -e "const f='xs-app.json',x=JSON.parse(require('fs').readFileSync(f));x.routes.find(r=>r.destination).destination='{{.}}';require('fs').writeFileSync(f,JSON.stringify(x,null,2))"
+        - >-
+          node -e "
+          const DESTINATION_NAME = '{{.}}';
+          const fs = require('fs');
+          const xs = JSON.parse(fs.readFileSync('xs-app.json'));
+          xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
+          fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
+          "
 {{/customDestination}}
         - npm install
         - npm run build:cf
