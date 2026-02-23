@@ -9,11 +9,13 @@
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Setup with `cds add data-inspector`](#setup-with-cds-add-data-inspector)
-    - [UI5 App Configuration for Deployment to BTP using Cloud Portal Service](#ui5-app-configuration-for-deployment-to-btp-using-cloud-portal-service)
-      - [Cloud Portal Service Configuration](#cloud-portal-service-configuration)
+    - [UI5 App Configuration for Deployment to BTP](#ui5-app-configuration-for-deployment-to-btp)
       - [MTA Configuration](#mta-configuration)
-    - [UI5 App Configuration for Deployment to BTP using Workzone](#ui5-app-configuration-for-deployment-to-btp-using-workzone)
-    - [(Optional) flpSandbox.html Configuration for the UI5 App Tile in Local Run](#optional-flpsandboxhtml-configuration-for-the-ui5-app-tile-in-local-run)
+        - [1. Add `html5` module](#1-add-html5-module)
+        - [2. Include UI5 App Artifact](#2-include-ui5-app-artifact)
+      - [Using Cloud Portal Service](#using-cloud-portal-service)
+      - [Using SAP Build Work Zone](#using-sap-build-work-zone)
+    - [(Optional) flpSandbox.html Configuration for the UI5 App Tile for Local Testing](#optional-flpsandboxhtml-configuration-for-the-ui5-app-tile-for-local-testing)
     - [Authorization](#authorization)
     - [Excluding Entities and Elements](#excluding-entities-and-elements)
     - [Audit Logging](#audit-logging)
@@ -63,15 +65,98 @@ cds add data-inspector
 ```
 
 It makes the following changes to your project.
-- Adds the `xsuaa` scope in your `xs-security.json`. Make sure to use this scope in appropriate role collections.
+- **XSUAA**: Adds the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json`. Make sure to use this scope in appropriate role collections. Also see [Authorization](#authorization).
+- **MTA configuration**: Adds the following configuration to your `mta.yaml`. Also see [MTA Configuration](#mta-configuration).
+  - Adds `html5` module `capjsdatainspectorapp` of the UI5 app.
+  - Adds the `capjsdatainspectorapp` artifact to your FLP application content module (where `type = com.sap.application.content and path = "."`). 
+- **Cloud Portal service**: Adds `catalog` and `group` configuration for the UI5 app to your `flp/portal-site/CommonDataModel.json`. Also see [Using Cloud Portal Service](#using-cloud-portal-service).
 
-### UI5 App Configuration for Deployment to BTP using Cloud Portal Service
+### UI5 App Configuration for Deployment to BTP
 
-#### Cloud Portal Service Configuration
+#### MTA Configuration
 
-Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataModel.json`:
+`@cap-js/data-inspector` comes with the source of its UI5 app which can be found at `node_modules/@cap-js/data-inspector/app/data-inspector-ui`. Just like any UI5 app built natively in your CAP application, `@cap-js/data-inspector`'s UI5 app must be built during your MTA build and included in your FLP application content module for deployment to the `HTML5 Application Repository` service.
 
-**In `payload.catalogs.payload.viz`:**
+##### 1. Add `html5` module
+
+Add the `html5` module of the UI5 app as follows.
+
+```yaml
+  - name: capjsdatainspectorapp
+    type: html5
+    path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+```
+
+If the destination name of your CAP backend service is not the conventional `srv-api`, the approuter configuration `xs-app.json` of the UI5 app must be patched with your specific destination name. To do so, add the following script in the build command and provide your destination name to `DESTINATION_NAME`.
+
+```yaml
+        - >-
+          node -e "
+          const DESTINATION_NAME = 'your destination name';
+          const fs = require('fs');
+          const xs = JSON.parse(fs.readFileSync('xs-app.json'));
+          xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
+          fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
+          "
+```
+
+Your `html5` module now looks like as follows, if your destination name is `foo-srv-api`.
+
+```yaml
+  - name: capjsdatainspectorapp
+    type: html5
+    path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - >-
+          node -e "
+          const DESTINATION_NAME = 'foo-srv-api';
+          const fs = require('fs');
+          const xs = JSON.parse(fs.readFileSync('xs-app.json'));
+          xs.routes.find(r => r.destination).destination = DESTINATION_NAME;
+          fs.writeFileSync('xs-app.json', JSON.stringify(xs, null, 2));
+          "
+        - npm install
+        - npm run build:cf
+      supported-platforms:
+        []
+
+```
+
+Note: Running `cds add data-inspector` will automatically detect your destination name and add the above patch script. Make sure to review the destination name and amend as necessary.
+
+##### 2. Include UI5 App Artifact
+
+Include the UI5 app artifact from the above `html5` module [capjsdatainspectorapp](#1-add-html5-module) in your FLP application content module as follows.
+
+```yaml
+- name: <your app content module name>
+  type: com.sap.application.content
+  path: .
+  build-parameters:
+    build-result: resources
+    requires:
+      - name: capjsdatainspectorapp
+          artifacts:
+            - datainspectorapp.zip
+          target-path: resources/
+```
+
+#### Using Cloud Portal Service
+
+In your `flp/portal-site/CommonDataModel.json` add the following entries to an existing `catalog` and `group` configurations of your choice.
+
+**In `payload.catalogs[?].payload.viz`:**
 ```json
 {
   "appId": "sap.cap.datainspector.datainspectorui",
@@ -79,7 +164,7 @@ Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataMo
 }
 ```
 
-**In `payload.groups.payload.viz`:**
+**In `payload.groups[?].payload.viz`:**
 ```json
 {
   "id": "sap.cap.datainspector.datainspectorui",
@@ -88,38 +173,71 @@ Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataMo
 }
 ```
 
-#### MTA Configuration
+Or add a `catalog` and `group` separately. Example:
 
-Add the UI5 app to your MTA archive for deployment to the BTP HTML5 Repository service just like any UI5 app native to your CAP application. Place the prebuilt UI5 app archive `capdatainspectorapp.zip` available under `node_modules/@capdata-inspector/app/data-inspector-ui` at a suitable directory of your choice in your project workspace and reference it in your `mta.yaml` configuration while building your MTA archive as usual.
+```json
+{
+  "payload": {
+    "catalogs": [
+      {
+        ...
+      },
+      {
+        "_version": "3.0.0",
+        "identification": {
+          "id": "capDataInspectorCatalogId",
+          "title": "Data Inspector",
+          "entityType": "catalog",
+          "i18n": "..."
+        },
+        "payload": {
+          "viz": [
+            {
+              "appId": "sap.cap.datainspector.datainspectorui",
+              "vizId": "datainspectorui-display"
+            }
+          ]
+        }
+      }
+    ],
+    "groups": [
+      {
+        ...
+      },
+      {
+        "_version": "3.0.0",
+        "identification": {
+          "id": "capDataInspectorGroupId",
+          "title": "Data Inspector",
+          "entityType": "group",
+          "i18n": "..."
+        },
+        "payload": {
+          "viz": [
+            {
+              "id": "sap.cap.datainspector.datainspectorui",
+              "appId": "sap.cap.datainspector.datainspectorui",
+              "vizId": "datainspectorui-display"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
 
-Example configuration:
-
-**In `modules` of your `mta.yaml`:**
-```yaml
-- name: capdatainspectorapp
-  type: html5
-  path: node_modules/@cap-js/data-inspector/app/data-inspector-ui # Adapt according to your file location
-
-- name: app-content # The UI content module of your CAP application, 'name: app-content' is an example and would be different from your configuration
-  type: com.sap.application.content
-  path: .
-  build-parameters:
-    build-result: resources
-    requires:
-      - artifacts:
-          - capdbinspectorapp.zip
-          name: capdatainspectorapp
-          target-path: resources/
 ```
 
-### UI5 App Configuration for Deployment to BTP using Workzone
+Note: Running `cds add data-inspector` will add a new `catalog` and `group` if your project is detected to be using Cloud Portal service.
+
+#### Using SAP Build Work Zone
 
 *To be added*
 
 
-### (Optional) flpSandbox.html Configuration for the UI5 App Tile in Local Run
+### (Optional) flpSandbox.html Configuration for the UI5 App Tile for Local Testing
 
-If you are using an `flpSandbox.html`, optionally add the UI5 app to see its tile in the sandbox Fiori Launchpad.
+If you are using an `flpSandbox.html` to test locally, add the UI5 app tile in the sandbox Fiori Launchpad.
 
 **In `ClientSideTargetResolution.adapter.config.inbounds`:**
 ```js
