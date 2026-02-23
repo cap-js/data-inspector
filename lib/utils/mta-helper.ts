@@ -2,9 +2,8 @@
  * MTA file helper utilities for reading, parsing, and modifying mta.yaml
  */
 const cds = require("@sap/cds-dk");
-const { exists, read, write, path } = cds.utils;
+const { exists, read, write, path, yaml } = cds.utils;
 const { join } = path;
-const yaml = require("@sap/cds-foss").yaml;
 
 import { DATA_INSPECTOR_MTA_MODULE_NAME, DEFAULT_SRV_DESTINATION } from "./constants";
 
@@ -41,7 +40,7 @@ export async function writeMta(mtaContent: any): Promise<void> {
   const mtaPath = getMtaPath();
   if (!mtaPath) return;
 
-  await write(yaml.stringify(mtaContent)).to(mtaPath);
+  await write(yaml.dump(mtaContent)).to(mtaPath);
 }
 
 /**

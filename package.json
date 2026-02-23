@@ -27,8 +27,7 @@
   },
   "peerDependencies": {
     "@sap/cds": ">=9",
-    "@sap/cds-dk": ">=9",
-    "@sap/cds-foss": ">=5"
+    "@sap/cds-dk": ">=9"
   },
   "devDependencies": {
     "@cap-js/audit-logging": "^1.1.1",
