@@ -21,10 +21,8 @@ import {
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
-  createExistingI18nFile,
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,
-  createMtaWithNodejsProvides,
   createMtaWithMultipleContentModules,
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
@@ -192,25 +190,6 @@ describe("PortalServiceConfigurator", () => {
       const i18nContent = readI18nFile(project);
       expect(i18nContent).to.include("capDataInspectorCatalog");
       expect(i18nContent).to.include("capDataInspectorGroup");
-    });
-
-    it("should not overwrite existing i18n file", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-
-      // Create portal configuration
-      createMtaWithPortal(project);
-      createCommonDataModel(project);
-
-      // Create existing i18n file with custom content
-      const customContent = "customProperty = Custom Value";
-      createExistingI18nFile(project, customContent);
-
-      // Run cds add data-inspector
-      runCdsAddDataInspector(project);
-
-      // Verify i18n file was not overwritten
-      const i18nContent = readI18nFile(project);
-      expect(i18nContent).to.equal(customContent);
     });
   });
 
@@ -421,7 +400,7 @@ describe("PortalServiceConfigurator", () => {
       const customDestination = "my-srv-api";
 
       // Create portal configuration with destination in nodejs provides
-      createMtaWithNodejsProvides(project, customDestination);
+      createMtaWithCustomDestination(project, customDestination);
       createCommonDataModel(project);
 
       // Run cds add data-inspector

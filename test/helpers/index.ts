@@ -22,10 +22,8 @@ export {
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
-  createExistingI18nFile,
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,
-  createMtaWithNodejsProvides,
   createMtaWithMultipleContentModules,
 } from "./mta-fixtures";
 
