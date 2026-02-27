@@ -18,6 +18,8 @@ import {
   createMtaWithCustomDestination,
   createMtaWithDefaultDestination,
   createCommonDataModel,
+  createCommonDataModelWithSingleSite,
+  createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
   createExistingI18nFile,
   createMtaWithContentModuleNoBuildParams,
@@ -434,6 +436,81 @@ describe("PortalServiceConfigurator", () => {
       // Patch command + npm install + npm run build:cf
       expect(commands).to.have.lengthOf(3);
       expect(commands[0]).to.include(customDestination);
+    });
+  });
+
+  describe("groupsOrder configuration", () => {
+    it("should auto-add group to groupsOrder when there is exactly one site", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with single site
+      createMtaWithPortal(project);
+      createCommonDataModelWithSingleSite(project);
+
+      // Run cds add data-inspector
+      runCdsAddDataInspector(project);
+
+      // Verify group was added to groupsOrder
+      const cdm = readCommonDataModel(project);
+      const site = cdm.payload.sites[0];
+
+      expect(site.payload.groupsOrder).to.include(DATA_INSPECTOR_GROUP_ID);
+      // Existing group should still be there
+      expect(site.payload.groupsOrder).to.include("existingGroupId");
+    });
+
+    it("should not duplicate group in groupsOrder when run multiple times", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with single site
+      createMtaWithPortal(project);
+      createCommonDataModelWithSingleSite(project);
+
+      // Run cds add data-inspector twice
+      runCdsAddDataInspector(project);
+      runCdsAddDataInspector(project);
+
+      // Verify group is not duplicated
+      const cdm = readCommonDataModel(project);
+      const site = cdm.payload.sites[0];
+      const groupCount = site.payload.groupsOrder.filter(
+        (g: string) => g === DATA_INSPECTOR_GROUP_ID
+      ).length;
+
+      expect(groupCount).to.equal(1, "Group should not be duplicated in groupsOrder");
+    });
+
+    it("should not modify groupsOrder when there are multiple sites", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with multiple sites
+      createMtaWithPortal(project);
+      createCommonDataModelWithMultipleSites(project);
+
+      // Run cds add data-inspector
+      runCdsAddDataInspector(project);
+
+      // Verify no site's groupsOrder was modified (should only have existing group)
+      const cdm = readCommonDataModel(project);
+      for (const site of cdm.payload.sites) {
+        expect(site.payload.groupsOrder).to.not.include(DATA_INSPECTOR_GROUP_ID);
+        expect(site.payload.groupsOrder).to.include("existingGroupId");
+      }
+    });
+
+    it("should not modify groupsOrder when there are no sites", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      // Create portal configuration with no sites
+      createMtaWithPortal(project);
+      createCommonDataModel(project); // Creates CommonDataModel with empty sites array
+
+      // Run cds add data-inspector - should not crash
+      runCdsAddDataInspector(project);
+
+      // Verify sites array is still empty (or unchanged)
+      const cdm = readCommonDataModel(project);
+      expect(cdm.payload.sites).to.have.lengthOf(0);
     });
   });
 

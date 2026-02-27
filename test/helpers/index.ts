@@ -19,6 +19,8 @@ export {
   createMtaWithCustomDestination,
   createMtaWithDefaultDestination,
   createCommonDataModel,
+  createCommonDataModelWithSingleSite,
+  createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
   createExistingI18nFile,
   createMtaWithContentModuleNoBuildParams,

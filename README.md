@@ -132,7 +132,7 @@ Your `html5` module now looks like as follows, if your destination name is `foo-
       []
 ```
 
-Note: Running `cds add data-inspector` will automatically detect your destination name and add the above patch script. Make sure to review the destination name and amend as necessary.
+Running `cds add data-inspector` will automatically detect your destination name and add the above patch script. Make sure to review the destination name and amend as necessary.
 
 ##### 2. Include UI5 App Artifact
 
@@ -227,7 +227,7 @@ Or add a `catalog` and `group` separately. Example:
 
 ```
 
-Note: Running `cds add data-inspector` will add a new `catalog` and `group` if your project is detected to be using Cloud Portal service.
+Running `cds add data-inspector` will add a new `catalog` and `group` if your project is detected to be using Cloud Portal service. It will also append the group id `capDataInspectorGroupId` to the site's `groupsOrder` so that the tile is visible by default in Fiori Launchpad, if only one `site` is found in the `CommonDataModel.json`. If you have more than one `site`, make sure to add the group id to `groupsOrder` array in your prefered `site`.
 
 #### Using SAP Build Work Zone
 

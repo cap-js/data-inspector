@@ -140,9 +140,45 @@ export function createMtaWithDefaultDestination(projectFolder: string): void {
 }
 
 /**
- * Create a minimal CommonDataModel.json
+ * Create a minimal CommonDataModel.json (with no sites)
  */
 export function createCommonDataModel(projectFolder: string): void {
+  createCommonDataModelWithSites(projectFolder, 0);
+}
+
+/**
+ * Create CommonDataModel.json with a single site
+ */
+export function createCommonDataModelWithSingleSite(projectFolder: string): void {
+  createCommonDataModelWithSites(projectFolder, 1);
+}
+
+/**
+ * Create CommonDataModel.json with multiple sites
+ */
+export function createCommonDataModelWithMultipleSites(projectFolder: string): void {
+  createCommonDataModelWithSites(projectFolder, 2);
+}
+
+/**
+ * Create CommonDataModel.json with specified number of sites
+ */
+function createCommonDataModelWithSites(projectFolder: string, siteCount: number): void {
+  const sites = [];
+  for (let i = 0; i < siteCount; i++) {
+    sites.push({
+      _version: "3.0.0",
+      identification: {
+        id: `site-${i + 1}-id`,
+        entityType: "site",
+        title: `Test Site ${i + 1}`,
+      },
+      payload: {
+        groupsOrder: ["existingGroupId"],
+      },
+    });
+  }
+
   const cdmContent = {
     _version: "3.0.0",
     identification: {
@@ -178,7 +214,7 @@ export function createCommonDataModel(projectFolder: string): void {
           },
         },
       ],
-      sites: [],
+      sites: sites,
     },
   };
   const flpDir = join(projectFolder, "flp", "portal-site");

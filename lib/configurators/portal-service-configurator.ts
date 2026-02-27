@@ -9,7 +9,7 @@
  * Note: cds.add.merge() is used for idempotent merging where possible, but some manual manipulation is needed for nested structures in mta.yaml
  */
 const cds = require("@sap/cds-dk");
-const { exists, write, path } = cds.utils;
+const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
 import { BaseConfigurator } from "./base-configurator";
@@ -78,6 +78,7 @@ export class PortalServiceConfigurator extends BaseConfigurator {
   /**
    * Update CommonDataModel.json with data inspector catalog and group.
    * Uses cds.add.merge() for idempotent merging.
+   * Also adds the group to groupsOrder if there's exactly one site.
    */
   private async updateCommonDataModel(): Promise<void> {
     const cdmPath = "flp/portal-site/CommonDataModel.json";
@@ -90,9 +91,61 @@ export class PortalServiceConfigurator extends BaseConfigurator {
         ],
       });
       log.debug("Added data inspector catalog and group to CommonDataModel.json");
+
+      // Add group to groupsOrder for default visibility
+      await this.addGroupToGroupsOrder(cdmPath);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to update CommonDataModel.json: ${message}`);
+    }
+  }
+
+  /**
+   * Add the data inspector group to the site's groupsOrder array.
+   * - If exactly one site: auto-add to groupsOrder
+   * - If multiple sites: log info message for manual addition
+   */
+  private async addGroupToGroupsOrder(cdmPath: string): Promise<void> {
+    try {
+      // cds.utils.read returns parsed JSON for .json files
+      const cdmContent = await read(cdmPath);
+      const sites = cdmContent?.payload?.sites;
+
+      if (!sites || sites.length === 0) {
+        log.debug("No sites found in CommonDataModel.json");
+        return;
+      }
+
+      if (sites.length > 1) {
+        log.info(
+          `Multiple sites found in CommonDataModel.json. ` +
+            `To display the Data Inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+            `to the groupsOrder array in your preferred site.`
+        );
+        return;
+      }
+
+      // Exactly one site - auto-add to groupsOrder
+      const site = sites[0];
+      if (!site.payload) {
+        site.payload = {};
+      }
+      if (!site.payload.groupsOrder) {
+        site.payload.groupsOrder = [];
+      }
+
+      // Idempotent: check if already present
+      if (site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
+        log.debug("Data inspector group already in groupsOrder");
+        return;
+      }
+
+      site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
+      await write(JSON.stringify(cdmContent, null, 4)).to(cdmPath);
+      log.debug("Added data inspector group to groupsOrder for default visibility");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to update groupsOrder: ${message}`);
     }
   }
 
