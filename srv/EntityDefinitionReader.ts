@@ -6,10 +6,7 @@ type Element = cds.type<"type"> & {
 };
 type Entity = cds.entity;
 
-import {
-  EntityDefinition,
-  EntityElement,
-} from "#cds-models/DataInspectorService";
+import { EntityDefinition, EntityElement } from "#cds-models/DataInspectorService";
 import {
   HttpStatusCode,
   HIDDEN_ANNOTATION,
@@ -36,9 +33,7 @@ export class EntityDefinitionReader {
      */
     const parameters = req.params;
     if (parameters.length) {
-      const filteredEntity = entities.filter(
-        (e) => e.name === parameters[0]["name"]
-      );
+      const filteredEntity = entities.filter((e) => e.name === parameters[0]["name"]);
       if (
         !filteredEntity.length ||
         filteredEntity[0][HIDDEN_ANNOTATION] ||
@@ -86,10 +81,7 @@ export class EntityDefinitionReader {
     const count = filteredEntities.length;
 
     // Process /$count request (plain count)
-    if (
-      req.query.SELECT.columns?.length === 1 &&
-      req.query.SELECT.columns[0].as === "$count"
-    ) {
+    if (req.query.SELECT.columns?.length === 1 && req.query.SELECT.columns[0].as === "$count") {
       return [{ $count: count }];
     }
 
@@ -358,15 +350,11 @@ export class EntityDefinitionReader {
   private _getDataSource(entity: Entity) {
     if (!this._srvPrefixesCache) {
       // Get all service name prefixes (with trailing dot) and keep it cached for data source determination
-      this._srvPrefixesCache = cds.model
-        .all("service")
-        .map((srv) => srv.name + ".");
+      this._srvPrefixesCache = cds.model.all("service").map((srv) => srv.name + ".");
     }
 
     // If entity name starts with any service prefix, it's a service entity
-    if (
-      this._srvPrefixesCache.some((srvName) => entity.name.startsWith(srvName))
-    ) {
+    if (this._srvPrefixesCache.some((srvName) => entity.name.startsWith(srvName))) {
       return EntityDefinition.dataSource.Service;
     }
     // For DB: exclude entities with @cds.persistence.skip === true
