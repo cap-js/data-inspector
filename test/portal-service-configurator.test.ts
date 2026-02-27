@@ -300,7 +300,7 @@ describe("PortalServiceConfigurator", () => {
     });
   });
 
-  describe("destination configuration", () => {
+  describe("mta.yaml html5 module destination configuration", () => {
     it("should not add patch command when using default srv-api destination", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
@@ -418,8 +418,8 @@ describe("PortalServiceConfigurator", () => {
     });
   });
 
-  describe("groupsOrder configuration", () => {
-    it("should auto-add group to groupsOrder when there is exactly one site", async () => {
+  describe("CommonDataModel.json site groupsOrder configuration", () => {
+    it("should add group to groupsOrder when there is exactly one site", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
       // Create portal configuration with single site
@@ -477,7 +477,7 @@ describe("PortalServiceConfigurator", () => {
       }
     });
 
-    it("should not modify groupsOrder when there are no sites", async () => {
+    it("should not add groupsOrder when there are no sites", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
       // Create portal configuration with no sites
@@ -514,10 +514,10 @@ describe("PortalServiceConfigurator", () => {
       expect(contentModule["build-parameters"]).to.exist;
       expect(contentModule["build-parameters"].requires).to.exist;
 
-      const artifact = contentModule["build-parameters"].requires.find(
+      const requiredModule = contentModule["build-parameters"].requires.find(
         (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
       );
-      expect(artifact).to.exist;
+      expect(requiredModule).to.exist;
     });
 
     it("should handle content module without build-parameters.requires", async () => {
@@ -539,10 +539,10 @@ describe("PortalServiceConfigurator", () => {
       expect(contentModule).to.exist;
       expect(contentModule["build-parameters"].requires).to.exist;
 
-      const artifact = contentModule["build-parameters"].requires.find(
+      const requiredModule = contentModule["build-parameters"].requires.find(
         (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
       );
-      expect(artifact).to.exist;
+      expect(requiredModule).to.exist;
     });
 
     it("should handle multiple content modules by using first match", async () => {
@@ -558,21 +558,21 @@ describe("PortalServiceConfigurator", () => {
       // Verify artifact was added to first content module
       const mta = readMta(project);
 
-      // First content module should have the artifact
+      // First content module should require the html5 module
       const firstContentModule = mta.modules.find((m: any) => m.name === "first-content");
       expect(firstContentModule).to.exist;
-      const artifactInFirst = firstContentModule["build-parameters"].requires.find(
+      const requiredModuleInFirst = firstContentModule["build-parameters"].requires.find(
         (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
       );
-      expect(artifactInFirst).to.exist;
+      expect(requiredModuleInFirst).to.exist;
 
-      // Second content module should NOT have the artifact
+      // Second content module should NOT require the html5 module
       const secondContentModule = mta.modules.find((m: any) => m.name === "second-content");
       expect(secondContentModule).to.exist;
-      const artifactInSecond = secondContentModule["build-parameters"].requires.find(
+      const requiredModuleInSecond = secondContentModule["build-parameters"].requires.find(
         (r: any) => r.name === DATA_INSPECTOR_MTA_MODULE_NAME
       );
-      expect(artifactInSecond).to.not.exist;
+      expect(requiredModuleInSecond).to.not.exist;
     });
   });
 });
