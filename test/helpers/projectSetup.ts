@@ -5,7 +5,7 @@ import { execSync } from "child_process";
 import { join, resolve } from "path";
 import fs from "fs";
 
-import { TempUtil } from "./temp-util";
+import { TempUtil } from "./TempUtil";
 
 // Get the absolute path to the data-inspector gen directory (compiled output)
 const DATA_INSPECTOR_ROOT = resolve(__dirname, "..", "..", "gen");

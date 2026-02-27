@@ -11,7 +11,7 @@
 const cds = require("@sap/cds-dk");
 
 import {
-  BaseConfigurator,
+  AddPluginConfigurator,
   XsSecurityConfigurator,
   PortalServiceConfigurator,
 } from "./configurators";
@@ -23,7 +23,7 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
    * List of configurators to run.
    * Each configurator handles a specific integration (XSUAA, Portal Service, Work Zone, etc.)
    */
-  private configurators: BaseConfigurator[] = [
+  private configurators: AddPluginConfigurator[] = [
     new XsSecurityConfigurator(),
     new PortalServiceConfigurator(),
     // Future: new WorkZoneConfigurator(),

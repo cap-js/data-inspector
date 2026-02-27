@@ -2,7 +2,7 @@
  * Base class for all configurators.
  * Each configurator handles a specific integration (Portal Service, Work Zone, etc.)
  */
-export abstract class BaseConfigurator {
+export abstract class AddPluginConfigurator {
   /**
    * Human-readable name for logging
    */

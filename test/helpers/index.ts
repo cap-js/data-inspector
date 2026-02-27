@@ -1,8 +1,8 @@
 /**
  * Export all test helpers from a single entry point
  */
-export { TempUtil } from "./temp-util";
-export { createTestProject, runCdsAddDataInspector } from "./project-setup";
+export { TempUtil } from "./TempUtil";
+export { createTestProject, runCdsAddDataInspector } from "./projectSetup";
 export {
   readXsSecurity,
   xsSecurityExists,
@@ -12,7 +12,7 @@ export {
   readMta,
   i18nFileExists,
   readI18nFile,
-} from "./file-readers";
+} from "./fileReaders";
 export {
   createMtaWithPortal,
   createMtaWithoutPortal,
@@ -25,7 +25,7 @@ export {
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,
   createMtaWithMultipleContentModules,
-} from "./mta-fixtures";
+} from "./mtaFixtures";
 
 // Test constants - these values must match what's in lib/utils/constants.ts
 // We define them here to avoid cross-importing between test and lib folders

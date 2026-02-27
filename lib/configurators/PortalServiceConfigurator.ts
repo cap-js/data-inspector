@@ -12,7 +12,7 @@ const cds = require("@sap/cds-dk");
 const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
-import { BaseConfigurator } from "./base-configurator";
+import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import {
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
@@ -28,11 +28,11 @@ import {
   findContentModule,
   detectSrvDestination,
   getMtaPath,
-} from "../utils/mta-helper";
+} from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
 
-export class PortalServiceConfigurator extends BaseConfigurator {
+export class PortalServiceConfigurator extends AddPluginConfigurator {
   get name(): string {
     return "Cloud Portal Service";
   }

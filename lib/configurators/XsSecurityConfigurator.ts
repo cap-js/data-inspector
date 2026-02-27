@@ -5,11 +5,11 @@
 const cds = require("@sap/cds-dk");
 const { exists } = cds.utils;
 
-import { BaseConfigurator } from "./base-configurator";
+import { AddPluginConfigurator } from "./AddPluginConfigurator";
 
 const log = cds.log("data-inspector");
 
-export class XsSecurityConfigurator extends BaseConfigurator {
+export class XsSecurityConfigurator extends AddPluginConfigurator {
   get name(): string {
     return "xs-security.json";
   }
