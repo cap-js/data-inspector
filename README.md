@@ -64,10 +64,11 @@ cds add data-inspector
 ```
 
 It makes the following changes to your project.
+
 - **XSUAA**: Adds the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json`. Make sure to use this scope in appropriate role collections. Also see [Authorization](#authorization).
 - **MTA configuration**: Adds the following configuration to your `mta.yaml`. Also see [MTA Configuration](#mta-configuration).
   - Adds `html5` module `capjsdatainspectorapp` of the UI5 app.
-  - Adds the `capjsdatainspectorapp` artifact to your FLP application content module (where `type = com.sap.application.content and path = "."`). 
+  - Adds the `capjsdatainspectorapp` artifact to your FLP application content module (where `type = com.sap.application.content and path = "."`).
 - **Cloud Portal service**: Adds `catalog` and `group` configuration for the UI5 app to your `flp/portal-site/CommonDataModel.json`. Also see [Using Cloud Portal Service](#using-cloud-portal-service).
 
 ### UI5 App Configuration for Deployment to BTP
@@ -81,17 +82,16 @@ It makes the following changes to your project.
 Add the `html5` module of the UI5 app as follows.
 
 ```yaml
-  - name: capjsdatainspectorapp
-    type: html5
-    path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
-    build-parameters:
-      build-result: dist
-      builder: custom
-      commands:
-        - npm install
-        - npm run build:cf
-      supported-platforms:
-        []
+- name: capjsdatainspectorapp
+  type: html5
+  path: node_modules/@cap-js/data-inspector/app/data-inspector-ui
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+      - npm install
+      - npm run build:cf
+    supported-platforms: []
 ```
 
 If the destination name of your CAP backend service is not the conventional `srv-api`, the approuter configuration `xs-app.json` of the UI5 app must be patched with your specific destination name. To do so, add the following script in the build command and provide your destination name to `DESTINATION_NAME`.
@@ -127,8 +127,7 @@ Your `html5` module now looks like as follows, if your destination name is `foo-
         "
       - npm install
       - npm run build:cf
-    supported-platforms:
-      []
+    supported-platforms: []
 ```
 
 Running `cds add data-inspector` will automatically detect your destination name and add the above patch script. Make sure to review the destination name and amend as necessary.
@@ -155,6 +154,7 @@ Include the UI5 app artifact from the above `html5` module [capjsdatainspectorap
 In your `flp/portal-site/CommonDataModel.json` add the following entries to an existing `catalog` and `group` configurations of your choice.
 
 **In `payload.catalogs[?].payload.viz`:**
+
 ```json
 {
   "appId": "sap.cap.datainspector.datainspectorui",
@@ -163,6 +163,7 @@ In your `flp/portal-site/CommonDataModel.json` add the following entries to an e
 ```
 
 **In `payload.groups[?].payload.viz`:**
+
 ```json
 {
   "id": "sap.cap.datainspector.datainspectorui",
