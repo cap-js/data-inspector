@@ -23,7 +23,6 @@
   - [Code of Conduct](#code-of-conduct)
   - [Licensing](#licensing)
 
-
 ## About this project
 
 `@cap-js/data-inspector` is a CAP Node.js plugin to view data content of CDS [`Entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a CAP Node.js application. It comes with a UI5 app consumable out-of-the-box.
@@ -44,7 +43,7 @@
 
 ### Installation
 
-*Internal npm registry detail to be added until publishing at npmjs.com*
+_Internal npm registry detail to be added until publishing at npmjs.com_
 
 Install the plugin in your CAP Node.js project.
 
@@ -63,6 +62,7 @@ cds add data-inspector
 ```
 
 It makes the following changes to your project.
+
 - Adds the `xsuaa` scope in your `xs-security.json`. Make sure to use this scope in appropriate role collections.
 
 ### UI5 App Configuration for Deployment to BTP using Cloud Portal Service
@@ -72,6 +72,7 @@ It makes the following changes to your project.
 Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataModel.json`:
 
 **In `payload.catalogs.payload.viz`:**
+
 ```json
 {
   "appId": "sap.cap.datainspector.datainspectorui",
@@ -80,6 +81,7 @@ Add the configuration to your Cloud Portal service `flp/portal-site/CommonDataMo
 ```
 
 **In `payload.groups.payload.viz`:**
+
 ```json
 {
   "id": "sap.cap.datainspector.datainspectorui",
@@ -95,6 +97,7 @@ Add the UI5 app to your MTA archive for deployment to the BTP HTML5 Repository s
 Example configuration:
 
 **In `modules` of your `mta.yaml`:**
+
 ```yaml
 - name: capdatainspectorapp
   type: html5
@@ -114,14 +117,14 @@ Example configuration:
 
 ### UI5 App Configuration for Deployment to BTP using Workzone
 
-*To be added*
-
+_To be added_
 
 ### (Optional) flpSandbox.html Configuration for the UI5 App Tile in Local Run
 
 If you are using an `flpSandbox.html`, optionally add the UI5 app to see its tile in the sandbox Fiori Launchpad.
 
 **In `ClientSideTargetResolution.adapter.config.inbounds`:**
+
 ```js
 CAPDataInspectorDisplay: {
   semanticObject: "datainspectorui",
@@ -139,6 +142,7 @@ CAPDataInspectorDisplay: {
 ```
 
 **In `LaunchPage.adapter.config.groups`:**
+
 ```js
 {
   id: "Supportability",
@@ -159,7 +163,6 @@ CAPDataInspectorDisplay: {
   ]
 }
 ```
-
 
 ### Authorization
 
@@ -203,7 +206,7 @@ To quickly test the plugin directly without a host CAP Node.js project in your l
 1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
 2. Install dependencies: `npm i`
 3. Generate CDS model types by saving any .cds file from VS Code. Refer [CDS Typer documentation](https://cap.cloud.sap/docs/tools/cds-typer) for more details.
-4. Create the test sqlite db: 
+4. Create the test sqlite db:
    1. `cd test`
    2. `cds deploy -2 sqlite:db/testservice.db`
    3. `cd ..`
