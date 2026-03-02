@@ -1,7 +1,7 @@
 /**
  * Configurator for SAP BTP Cloud Portal Service (FLP) integration.
  * Handles:
- * - CommonDataModel.json modification (adding catalog and group)
+ * - CommonDataModel.json modification (adding catalog, group and site's groupsOrder)
  * - i18n properties file creation for catalog and group titles
  * - mta.yaml modification
  *    - adding html5 module with destination name detection and xs-app.json patching
