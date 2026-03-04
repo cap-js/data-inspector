@@ -21,9 +21,13 @@ jobs:
         run: |
           npm install
           npm run lint
-          cd tests/incidents-app && npm install 
-          cd ../..
-          npm run test
+      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      - run: npm i
+      - run: cds v
+      - run: npm run build
+      - name: Deploy test SQLite database
+        run: cd test && cds deploy -2 sqlite:db/testservice.db
+      - run: npm run test
 
       - name: get-version
         id: package-version
@@ -38,6 +42,4 @@ jobs:
         with:
           tag: "v${{ steps.package-version.outputs.current-version }}"
           body: "${{ steps.parse-changelog.outputs.body }}"
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+      - run: npm publish --access public --provenance
