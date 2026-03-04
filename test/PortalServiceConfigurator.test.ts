@@ -38,7 +38,7 @@ describe("PortalServiceConfigurator", () => {
   });
 
   describe("detection", () => {
-    it("should not configure portal when mta.yaml does not exist", async () => {
+    it("should configure CDM but skip MTA when mta.yaml does not exist", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true });
 
       // Create CommonDataModel.json without mta.yaml
@@ -47,7 +47,7 @@ describe("PortalServiceConfigurator", () => {
       // Run cds add data-inspector
       runCdsAddDataInspector(project);
 
-      // Verify CommonDataModel.json was not modified (no catalog/group added)
+      // Verify CommonDataModel.json WAS modified (CDM file existence is sufficient)
       const cdm = readCommonDataModel(project);
       const hasCatalog = cdm.payload.catalogs.some(
         (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
@@ -56,8 +56,11 @@ describe("PortalServiceConfigurator", () => {
         (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
       );
 
-      expect(hasCatalog).to.be.false;
-      expect(hasGroup).to.be.false;
+      expect(hasCatalog).to.be.true;
+      expect(hasGroup).to.be.true;
+
+      // Verify i18n file was created
+      expect(i18nFileExists(project)).to.be.true;
     });
 
     it("should not configure portal when CommonDataModel.json does not exist", async () => {
@@ -73,7 +76,7 @@ describe("PortalServiceConfigurator", () => {
       expect(commonDataModelExists(project)).to.be.false;
     });
 
-    it("should not configure portal when mta.yaml has no portal service", async () => {
+    it("should configure CDM and MTA when mta.yaml exists without portal service", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
       // Create mta without portal service and CommonDataModel.json
@@ -83,12 +86,17 @@ describe("PortalServiceConfigurator", () => {
       // Run cds add data-inspector
       runCdsAddDataInspector(project);
 
-      // Verify CommonDataModel.json was not modified
+      // CDM file existence is sufficient — catalog and group should be added
       const cdm = readCommonDataModel(project);
       const hasCatalog = cdm.payload.catalogs.some(
         (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
       );
-      expect(hasCatalog).to.be.false;
+      expect(hasCatalog).to.be.true;
+
+      // MTA should also be updated since mta.yaml exists
+      const mta = readMta(project);
+      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+      expect(module).to.exist;
     });
   });
 

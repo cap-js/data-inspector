@@ -70,3 +70,19 @@ export function readI18nFile(projectFolder: string): string {
   const i18nPath = join(projectFolder, "flp", "portal-site", "i18n", "capDataInspector.properties");
   return fs.readFileSync(i18nPath, "utf8");
 }
+
+/**
+ * Read and parse workzone/cdm.json
+ */
+export function readWorkzoneCdm(projectFolder: string): any[] {
+  const cdmPath = join(projectFolder, "workzone", "cdm.json");
+  return JSON.parse(fs.readFileSync(cdmPath, "utf8"));
+}
+
+/**
+ * Check if workzone/cdm.json exists
+ */
+export function workzoneCdmExists(projectFolder: string): boolean {
+  const cdmPath = join(projectFolder, "workzone", "cdm.json");
+  return fs.existsSync(cdmPath);
+}

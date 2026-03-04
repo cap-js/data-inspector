@@ -42,25 +42,6 @@ export async function writeMta(mtaContent: any): Promise<void> {
 }
 
 /**
- * Check if a resource with specific service and plan exists in MTA
- */
-export function hasResource(mtaContent: any, service: string, servicePlan: string): boolean {
-  const resources = mtaContent?.resources || [];
-  return resources.some(
-    (resource: any) =>
-      resource.parameters?.service === service &&
-      resource.parameters?.["service-plan"] === servicePlan
-  );
-}
-
-/**
- * Check if the host project uses cloud portal service
- */
-export function hasPortalService(mtaContent: any): boolean {
-  return hasResource(mtaContent, "portal", "standard");
-}
-
-/**
  * Find the content module (type: com.sap.application.content, path: .)
  */
 export function findContentModule(mtaContent: any): any | null {

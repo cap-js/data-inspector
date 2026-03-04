@@ -53,9 +53,9 @@ describe("cds add data-inspector", () => {
     });
 
     it("should skip configurators when preconditions are not met", async () => {
-      // Create a project with xsuaa but without portal service
+      // Create a project with xsuaa but without CommonDataModel.json
       const project = await createTestProject(tempUtil, { xsuaa: true });
-      createCommonDataModel(project); // CDM exists but no portal service in MTA
+      // Do NOT create CommonDataModel.json — PortalServiceConfigurator should be skipped
 
       // Run cds add data-inspector
       runCdsAddDataInspector(project);
@@ -65,12 +65,12 @@ describe("cds add data-inspector", () => {
       const scopeCount = countScope(xsSecurity, DATA_INSPECTOR_SCOPE);
       expect(scopeCount).to.equal(1, "XsSecurityConfigurator should have run");
 
-      // Verify PortalServiceConfigurator was skipped (no MTA file)
-      const cdm = readCommonDataModel(project);
-      const hasCatalog = cdm.payload.catalogs.some(
-        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
-      );
-      expect(hasCatalog).to.be.false;
+      // Verify PortalServiceConfigurator was skipped (no CommonDataModel.json)
+      // readCommonDataModel would fail since file doesn't exist, so just check file absence
+      const fs = require("fs");
+      const path = require("path");
+      const cdmPath = path.join(project, "flp", "portal-site", "CommonDataModel.json");
+      expect(fs.existsSync(cdmPath)).to.be.false;
     });
   });
 });

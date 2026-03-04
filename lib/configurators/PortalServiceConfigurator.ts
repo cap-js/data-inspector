@@ -3,76 +3,52 @@
  * Handles:
  * - CommonDataModel.json modification (adding catalog, group and site's groupsOrder)
  * - i18n properties file creation for catalog and group titles
- * - mta.yaml modification
- *    - adding html5 module pointing to CDS build output (gen/cap-js-data-inspector-ui)
- *    - adding html5 artifact to content module's build-parameters.requires
+ * - mta.yaml modification (if mta.yaml exists — inherited from FlpBaseConfigurator)
  *
- * Note: cds.add.merge() is used for idempotent merging where possible,
- * but some manual manipulation is needed for nested structures in mta.yaml.
- * Destination patching (xs-app.json) is handled by the CDS build plugin (lib/build.ts),
- * not by this configurator.
+ * Detection: Presence of flp/portal-site/CommonDataModel.json is sufficient.
+ * MTA changes are conditional — only applied when mta.yaml exists.
+ *
+ * Destination patching (xs-app.json) is handled by the CDS build plugin (lib/build.ts).
  */
 const cds = require("@sap/cds-dk");
 const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
-import { AddPluginConfigurator } from "./AddPluginConfigurator";
+import { FlpBaseConfigurator } from "./FlpBaseConfigurator";
 import {
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
   DATA_INSPECTOR_I18N_FILE,
   DATA_INSPECTOR_I18N_CONTENT,
-  DATA_INSPECTOR_MTA_MODULE_NAME,
 } from "../utils/constants";
-import {
-  readMta,
-  writeMta,
-  hasPortalService,
-  findContentModule,
-  getMtaPath,
-} from "../utils/mtaHelper";
+import { getMtaPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
 
-export class PortalServiceConfigurator extends AddPluginConfigurator {
+export class PortalServiceConfigurator extends FlpBaseConfigurator {
   get name(): string {
     return "Cloud Portal Service";
   }
 
   /**
    * Check if the host project uses cloud portal service.
-   * Returns true if:
-   * 1. flp/portal-site/CommonDataModel.json exists
-   * 2. mta.yaml has a resource with service: portal, service-plan: standard
+   * Returns true if flp/portal-site/CommonDataModel.json exists.
    */
   async canRun(): Promise<boolean> {
-    // Check for CommonDataModel.json
-    const cdmPath = "flp/portal-site/CommonDataModel.json";
-    if (!exists(cdmPath)) {
-      return false;
-    }
-
-    // Check for mta.yaml with portal service
-    const mtaContent = await readMta();
-    if (!mtaContent) {
-      return false;
-    }
-
-    return hasPortalService(mtaContent);
+    return exists("flp/portal-site/CommonDataModel.json");
   }
 
   /**
    * Configure data inspector for Cloud Portal Service
    */
   async run(): Promise<void> {
-    // 1. Update CommonDataModel.json
     await this.updateCommonDataModel();
-
-    // 2. Create i18n properties file
     await this.createI18nPropertiesFile();
 
-    // 3. Update mta.yaml
-    await this.updateMtaYaml();
+    // Only update mta.yaml if it exists
+    if (getMtaPath()) {
+      await this.updateMtaYaml();
+    }
 
     log.debug("Cloud Portal service configured");
   }
@@ -94,7 +70,6 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
       });
       log.debug("Added data inspector catalog and group to CommonDataModel.json");
 
-      // Add group to groupsOrder for default visibility
       await this.addGroupToGroupsOrder(cdmPath);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -104,12 +79,9 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
 
   /**
    * Add the data inspector group to the site's groupsOrder array.
-   * - If exactly one site: auto-add to groupsOrder
-   * - If multiple sites: log info message for manual addition
    */
   private async addGroupToGroupsOrder(cdmPath: string): Promise<void> {
     try {
-      // cds.utils.read returns parsed JSON for .json files
       const cdmContent = await read(cdmPath);
       const sites = cdmContent?.payload?.sites;
 
@@ -127,7 +99,6 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         return;
       }
 
-      // Exactly one site - auto-add to groupsOrder
       const site = sites[0];
       if (!site.payload) {
         site.payload = {};
@@ -136,7 +107,6 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         site.payload.groupsOrder = [];
       }
 
-      // Idempotent: check if already present
       if (site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
         log.debug("Data inspector group already in groupsOrder");
         return;
@@ -168,77 +138,6 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to create i18n file: ${message}`);
-    }
-  }
-
-  /**
-   * Update mta.yaml with data inspector module and content artifact.
-   * 1. HTML5 module: Added via cds.add.merge() with template
-   * 2. Content artifact: Added programmatically (cds.add.merge doesn't seem to support nested array paths)
-   *
-   * See: https://cap.cloud.sap/docs/tools/apis/cds-add#merge-from-into-file-o
-   */
-  private async updateMtaYaml(): Promise<void> {
-    const mtaPath = getMtaPath();
-    if (!mtaPath) return;
-
-    try {
-      // Step 1: Add the HTML5 module
-      await cds.add
-        .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
-        .into(mtaPath, {
-          additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
-        });
-
-      log.debug("Added data inspector HTML5 module to mta.yaml");
-
-      // Step 2: Add artifact to content module's build-parameters.requires
-      // Note: cds.add.merge() doesn't seem to support nested array targeting for mta.yaml
-      // So we add the artifact programmatically
-      await this.addArtifactToContentModule();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(`Failed to update mta.yaml: ${message}`);
-    }
-  }
-
-  /**
-   * Add the data inspector artifact to the content module's build-parameters.requires.
-   * This is done programmatically because cds.add.merge() doesn't seem to support targeting
-   * nested arrays within a module (e.g., modules[?name='x'].build-parameters.requires).
-   */
-  private async addArtifactToContentModule(): Promise<void> {
-    const mtaContent = await readMta();
-    if (!mtaContent) return;
-
-    const contentModule = findContentModule(mtaContent);
-    if (!contentModule) {
-      log.debug("Content module not found, skipping artifact addition");
-      return;
-    }
-
-    // Ensure build-parameters and requires exist
-    if (!contentModule["build-parameters"]) {
-      contentModule["build-parameters"] = {};
-    }
-    if (!contentModule["build-parameters"].requires) {
-      contentModule["build-parameters"].requires = [];
-    }
-
-    // Check if artifact already exists (idempotent)
-    const artifactExists = contentModule["build-parameters"].requires.some(
-      (req: any) => req.name === DATA_INSPECTOR_MTA_MODULE_NAME
-    );
-
-    if (!artifactExists) {
-      contentModule["build-parameters"].requires.push({
-        name: DATA_INSPECTOR_MTA_MODULE_NAME,
-        artifacts: ["datainspectorapp.zip"],
-        "target-path": "resources/",
-      });
-
-      await writeMta(mtaContent);
-      log.debug("Added artifact to content module's build-parameters");
     }
   }
 }

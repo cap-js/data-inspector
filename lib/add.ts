@@ -4,7 +4,7 @@
  * This plugin configures the host project to use data-inspector by:
  * 1. Adding the required XSUAA scope to xs-security.json
  * 2. Configuring Cloud Portal Service integration (if detected)
- *    - Future: SAP Build Work Zone integration
+ * 3. Configuring SAP Build Workzone integration (if detected)
  *
  * Each integration is handled by a separate configurator for maintainability.
  */
@@ -14,6 +14,7 @@ import {
   AddPluginConfigurator,
   XsSecurityConfigurator,
   PortalServiceConfigurator,
+  WorkzoneConfigurator,
 } from "./configurators";
 
 const log = cds.log("data-inspector");
@@ -26,7 +27,7 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
   private configurators: AddPluginConfigurator[] = [
     new XsSecurityConfigurator(),
     new PortalServiceConfigurator(),
-    // Future: new WorkZoneConfigurator(),
+    new WorkzoneConfigurator(),
   ];
 
   async run() {

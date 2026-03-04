@@ -320,6 +320,102 @@ resources:
 }
 
 /**
+ * Create a minimal mta.yaml with SAP Build Workzone service
+ */
+export function createMtaWithWorkzone(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-workzone
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: build-workzone-standard
+      service-plan: local-entry-point
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create a minimal workzone/cdm.json with existing entries
+ */
+export function createWorkzoneCdm(projectFolder: string): void {
+  const cdmContent = [
+    {
+      _version: "3.0",
+      identification: {
+        id: "existingGroupId",
+        title: "{{title}}",
+        entityType: "group",
+      },
+      payload: {
+        viz: [
+          {
+            id: "existingApp",
+            appId: "existingApp",
+            vizId: "existingApp-display",
+          },
+        ],
+      },
+      texts: [
+        {
+          locale: "",
+          textDictionary: {
+            title: "Existing Group",
+          },
+        },
+        {
+          locale: "en",
+          textDictionary: {
+            title: "Existing Group",
+          },
+        },
+      ],
+    },
+  ];
+  const workzoneDir = join(projectFolder, "workzone");
+  fs.mkdirSync(workzoneDir, { recursive: true });
+  fs.writeFileSync(join(workzoneDir, "cdm.json"), JSON.stringify(cdmContent, null, 2));
+}
+
+/**
+ * Create an empty workzone/cdm.json (empty array)
+ */
+export function createEmptyWorkzoneCdm(projectFolder: string): void {
+  const workzoneDir = join(projectFolder, "workzone");
+  fs.mkdirSync(workzoneDir, { recursive: true });
+  fs.writeFileSync(join(workzoneDir, "cdm.json"), JSON.stringify([], null, 2));
+}
+
+/**
  * Create mta.yaml with multiple content modules (edge case)
  */
 export function createMtaWithMultipleContentModules(projectFolder: string): void {

@@ -4,18 +4,33 @@
  * Copies the data-inspector UI5 app into the build output and patches
  * xs-app.json with the correct backend destination name.
  *
+ * For Workzone projects, also patches manifest.json with sap.cloud.service.
+ *
+ * For Kyma buildpack projects (detected by app/html5-deployer/resources/),
+ * additionally runs the UI5 build to produce a deployment-ready ZIP archive
+ * and copies it to app/html5-deployer/resources/.
+ *
  * Destination resolution order (highest to lowest priority):
  * 1. cds.env configuration: cds.data_inspector.destination
  * 2. Auto-detected from existing UI5 apps in the project
  * 3. Default: "srv-api" (standard CAP convention)
+ *
+ * sap.cloud.service resolution order:
+ * 1. cds.env configuration: cds.data_inspector.cloudService
+ * 2. Auto-detected from existing UI5 apps' manifest.json
+ * 3. No default — warning logged if not found
  */
 const cds = require("@sap/cds-dk");
 const { exists, read, path } = cds.utils;
 const { join } = path;
+const { execSync } = require("child_process");
+const fs = require("fs");
 
 const log = cds.log("data-inspector");
 
 const DEFAULT_SRV_DESTINATION = "srv-api";
+const WORKZONE_CDM_PATH = "workzone/cdm.json";
+const HTML5_DEPLOYER_RESOURCES_PATH = "app/html5-deployer/resources";
 
 module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   /**
@@ -60,6 +75,27 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       log.info(`Patched xs-app.json destination to '${destination}'`);
     } else {
       log.debug(`Using default destination '${DEFAULT_SRV_DESTINATION}'`);
+    }
+
+    // Patch sap.cloud.service in manifest.json for Workzone projects
+    if (exists(join(cds.root, WORKZONE_CDM_PATH))) {
+      const cloudService = await this.resolveCloudService();
+      if (cloudService) {
+        await this.patchManifestCloudService(cloudService);
+        log.info(`Patched manifest.json sap.cloud.service to '${cloudService}'`);
+      } else {
+        log.warn(
+          "Workzone detected but could not determine sap.cloud.service. " +
+            "Set cds.data_inspector.cloudService in your configuration or ensure " +
+            "an existing UI5 app has sap.cloud.service in its manifest.json."
+        );
+      }
+    }
+
+    // For Kyma buildpack: build ZIP and copy to app/html5-deployer/resources/
+    const html5DeployerResources = join(cds.root, HTML5_DEPLOYER_RESOURCES_PATH);
+    if (exists(html5DeployerResources)) {
+      await this.buildAndCopyZip(html5DeployerResources);
     }
   }
 
@@ -118,41 +154,31 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * the destination from OData routes.
    */
   private async detectDestinationFromApps(): Promise<string | null> {
-    // Common locations where UI5 apps are found in CAP projects
-    const appDirs = ["app", "apps"];
+    const appDirPath = join(cds.root, "app");
+    if (!exists(appDirPath)) return null;
 
-    for (const appDir of appDirs) {
-      const appDirPath = join(cds.root, appDir);
-      if (!exists(appDirPath)) continue;
+    try {
+      const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
 
-      try {
-        const entries = require("fs").readdirSync(appDirPath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          // Skip the data-inspector's own UI app
-          if (entry.name === "data-inspector-ui") continue;
+        const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
+        if (!exists(xsAppPath)) continue;
 
-          const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
-          if (!exists(xsAppPath)) continue;
-
-          try {
-            const xsApp = JSON.parse(require("fs").readFileSync(xsAppPath, "utf8"));
-            const odataRoute = xsApp.routes?.find(
-              (r: any) =>
-                r.destination &&
-                r.destination !== "html5-apps-repo-rt" &&
-                (r.source?.includes("odata") || r.source?.includes("api"))
-            );
-            if (odataRoute?.destination) {
-              return odataRoute.destination;
-            }
-          } catch {
-            // Skip unreadable xs-app.json
+        try {
+          const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
+          const odataRoute = xsApp.routes?.find(
+            (r: any) => r.destination && (r.source?.includes("odata") || r.source?.includes("api"))
+          );
+          if (odataRoute?.destination) {
+            return odataRoute.destination;
           }
+        } catch {
+          // Skip unreadable xs-app.json
         }
-      } catch {
-        // Skip inaccessible directories
       }
+    } catch {
+      // Skip inaccessible directory
     }
 
     return null;
@@ -168,18 +194,166 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       return;
     }
 
-    const xsApp = JSON.parse(require("fs").readFileSync(xsAppPath, "utf8"));
+    const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
     let patched = false;
 
     for (const route of xsApp.routes || []) {
-      if (route.destination && route.destination !== "html5-apps-repo-rt") {
+      if (route.destination) {
         route.destination = destination;
         patched = true;
       }
     }
 
     if (patched) {
-      require("fs").writeFileSync(xsAppPath, JSON.stringify(xsApp, null, 2));
+      fs.writeFileSync(xsAppPath, JSON.stringify(xsApp, null, 2));
+    }
+  }
+
+  /**
+   * Resolve the sap.cloud.service value for Workzone integration.
+   * Priority:
+   * 1. cds.env.data_inspector.cloudService (explicit configuration)
+   * 2. Auto-detect from existing UI5 apps' manifest.json
+   * 3. null (caller handles the warning)
+   */
+  private async resolveCloudService(): Promise<string | null> {
+    // 1. Check cds.env configuration
+    const configCloudService = cds.env.data_inspector?.cloudService;
+    if (configCloudService) {
+      log.debug(`Using configured cloudService '${configCloudService}' from cds.env`);
+      return configCloudService;
+    }
+
+    // 2. Auto-detect from existing UI5 apps
+    const detected = await this.detectCloudServiceFromApps();
+    if (detected) {
+      log.debug(`Auto-detected sap.cloud.service '${detected}' from existing UI5 app`);
+      return detected;
+    }
+
+    // 3. Not found
+    return null;
+  }
+
+  /**
+   * Auto-detect the sap.cloud.service value from existing UI5 apps' manifest.json.
+   * Scans app/{appName}/webapp/manifest.json for the sap.cloud.service property.
+   */
+  private async detectCloudServiceFromApps(): Promise<string | null> {
+    const appDirPath = join(cds.root, "app");
+    if (!exists(appDirPath)) return null;
+
+    try {
+      const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+
+        const manifestPath = join(appDirPath, entry.name, "webapp", "manifest.json");
+        if (!exists(manifestPath)) continue;
+
+        try {
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+          const cloudService = manifest?.["sap.cloud"]?.service;
+          if (cloudService) {
+            return cloudService;
+          }
+        } catch {
+          // Skip unreadable manifest.json
+        }
+      }
+    } catch {
+      // Skip inaccessible directory
+    }
+
+    return null;
+  }
+
+  /**
+   * Patch the manifest.json in the build output with sap.cloud.service.
+   */
+  private async patchManifestCloudService(cloudService: string): Promise<void> {
+    const manifestPath = join(this.task.dest, "webapp", "manifest.json");
+    if (!exists(manifestPath)) {
+      log.warn("manifest.json not found in build output, cannot patch sap.cloud.service");
+      return;
+    }
+
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+
+    // Add or update sap.cloud section
+    manifest["sap.cloud"] = {
+      public: true,
+      service: cloudService,
+    };
+
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  }
+
+  /**
+   * Build the UI5 app ZIP and copy it to app/html5-deployer/resources/.
+   * This is used for Kyma buildpack deployments where the content deployer
+   * expects pre-built ZIP archives in app/html5-deployer/resources/.
+   *
+   * Steps:
+   * 1. Install dependencies in gen/ build output (npm ci)
+   * 2. Run npm run build:cf to produce the ZIP via ui5-task-zipper
+   * 3. Copy the resulting ZIP to app/html5-deployer/resources/
+   * 4. Clean up build artifacts (node_modules, dist) in gen/
+   */
+  private async buildAndCopyZip(html5DeployerResources: string): Promise<void> {
+    const buildDir = this.task.dest;
+    const zipName = "datainspectorapp.zip"; // matches ui5-deploy.yaml archiveName + .zip
+
+    try {
+      log.info("Building data-inspector UI5 app ZIP for Kyma buildpack deployment...");
+
+      // Step 1: Install dependencies
+      log.debug(`Running npm ci in ${buildDir}`);
+      execSync("npm ci", {
+        cwd: buildDir,
+        stdio: "pipe",
+        timeout: 120000, // 2 minute timeout
+      });
+
+      // Step 2: Run build:cf to produce the ZIP
+      log.debug(`Running npm run build:cf in ${buildDir}`);
+      execSync("npm run build:cf", {
+        cwd: buildDir,
+        stdio: "pipe",
+        timeout: 120000,
+      });
+
+      // Step 3: Copy ZIP to html5-deployer resources
+      const zipSrc = join(buildDir, "dist", zipName);
+      if (!exists(zipSrc)) {
+        log.error(
+          `Expected ZIP not found at ${zipSrc} after build:cf. ` +
+            "Check ui5-deploy.yaml archiveName configuration."
+        );
+        return;
+      }
+
+      const zipDest = join(html5DeployerResources, zipName);
+      fs.copyFileSync(zipSrc, zipDest);
+      log.info(`Copied ${zipName} to ${HTML5_DEPLOYER_RESOURCES_PATH}/`);
+
+      // Step 4: Clean up build artifacts in gen/ to keep output lean
+      const distDir = join(buildDir, "dist");
+      const nodeModulesDir = join(buildDir, "node_modules");
+      if (exists(distDir)) {
+        fs.rmSync(distDir, { recursive: true, force: true });
+      }
+      if (exists(nodeModulesDir)) {
+        fs.rmSync(nodeModulesDir, { recursive: true, force: true });
+      }
+      log.debug("Cleaned up build artifacts in gen/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to build UI5 app ZIP: ${message}`);
+      log.error(
+        "Ensure @ui5/cli and ui5-task-zipper are available. " +
+          "Check that the data-inspector UI5 app has a valid build:cf script."
+      );
     }
   }
 };
