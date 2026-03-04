@@ -210,7 +210,7 @@ describe("PortalServiceConfigurator", () => {
 
       expect(module).to.exist;
       expect(module.type).to.equal("html5");
-      expect(module.path).to.equal("node_modules/@cap-js/data-inspector/app/data-inspector-ui");
+      expect(module.path).to.equal("gen/cap-js-data-inspector-ui");
       expect(module["build-parameters"]["build-result"]).to.equal("dist");
       expect(module["build-parameters"]["builder"]).to.equal("custom");
       // Commands always include npm install and build:cf (UI5 is built during MTA build)
@@ -297,124 +297,6 @@ describe("PortalServiceConfigurator", () => {
         (r: any) => r.name === "test-html5-app"
       );
       expect(existingArtifact).to.exist;
-    });
-  });
-
-  describe("mta.yaml html5 module destination configuration", () => {
-    it("should not add patch command when using default srv-api destination", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-
-      // Create portal configuration with default destination
-      createMtaWithDefaultDestination(project);
-      createCommonDataModel(project);
-
-      // Run cds add data-inspector
-      runCdsAddDataInspector(project);
-
-      // Verify module was added with only build commands (no destination patch needed)
-      const mta = readMta(project);
-      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
-
-      expect(module).to.exist;
-      // Only npm install and build commands, no destination patch
-      expect(module["build-parameters"]["commands"]).to.deep.equal([
-        "npm install",
-        "npm run build:cf",
-      ]);
-    });
-
-    it("should add patch command when using custom destination", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-      const customDestination = "poetry-slams-srv-api";
-
-      // Create portal configuration with custom destination
-      createMtaWithCustomDestination(project, customDestination);
-      createCommonDataModel(project);
-
-      // Run cds add data-inspector
-      runCdsAddDataInspector(project);
-
-      // Verify module was added with patch command before build commands
-      const mta = readMta(project);
-      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
-
-      expect(module).to.exist;
-      const commands = module["build-parameters"]["commands"];
-      // Patch command + npm install + npm run build:cf
-      expect(commands).to.have.lengthOf(3);
-      expect(commands[0]).to.include("xs-app.json");
-      expect(commands[0]).to.include(customDestination);
-      expect(commands[1]).to.equal("npm install");
-      expect(commands[2]).to.equal("npm run build:cf");
-    });
-
-    it("should not duplicate patch command when run multiple times", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-      const customDestination = "my-custom-srv";
-
-      // Create portal configuration with custom destination
-      createMtaWithCustomDestination(project, customDestination);
-      createCommonDataModel(project);
-
-      // Run cds add data-inspector twice
-      runCdsAddDataInspector(project);
-      runCdsAddDataInspector(project);
-
-      // Verify patch command is not duplicated (still 3 commands total)
-      const mta = readMta(project);
-      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
-
-      expect(module).to.exist;
-      const commands = module["build-parameters"]["commands"];
-      // Should still be 3: patch + npm install + npm run build:cf
-      expect(commands).to.have.lengthOf(3);
-    });
-
-    it("should detect destination from existing HTML5 app xs-app.json", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-      const customDestination = "bookshop-srv";
-
-      // Create portal configuration without destinations in config
-      createMtaWithPortal(project);
-      createCommonDataModel(project);
-
-      // Create an existing HTML5 app with custom destination in xs-app.json
-      createHtml5AppWithDestination(project, customDestination);
-
-      // Run cds add data-inspector
-      runCdsAddDataInspector(project);
-
-      // Verify module was added with patch command for detected destination
-      const mta = readMta(project);
-      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
-
-      expect(module).to.exist;
-      const commands = module["build-parameters"]["commands"];
-      // Patch command + npm install + npm run build:cf
-      expect(commands).to.have.lengthOf(3);
-      expect(commands[0]).to.include(customDestination);
-    });
-
-    it("should detect destination from nodejs module provides section", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-      const customDestination = "my-srv-api";
-
-      // Create portal configuration with destination in nodejs provides
-      createMtaWithCustomDestination(project, customDestination);
-      createCommonDataModel(project);
-
-      // Run cds add data-inspector
-      runCdsAddDataInspector(project);
-
-      // Verify module was added with patch command for detected destination
-      const mta = readMta(project);
-      const module = mta.modules.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
-
-      expect(module).to.exist;
-      const commands = module["build-parameters"]["commands"];
-      // Patch command + npm install + npm run build:cf
-      expect(commands).to.have.lengthOf(3);
-      expect(commands[0]).to.include(customDestination);
     });
   });
 

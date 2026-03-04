@@ -4,9 +4,13 @@
  * - CommonDataModel.json modification (adding catalog, group and site's groupsOrder)
  * - i18n properties file creation for catalog and group titles
  * - mta.yaml modification
- *    - adding html5 module with destination name detection and xs-app.json patching
+ *    - adding html5 module pointing to CDS build output (gen/cap-js-data-inspector-ui)
  *    - adding html5 artifact to content module's build-parameters.requires
- * Note: cds.add.merge() is used for idempotent merging where possible, but some manual manipulation is needed for nested structures in mta.yaml
+ *
+ * Note: cds.add.merge() is used for idempotent merging where possible,
+ * but some manual manipulation is needed for nested structures in mta.yaml.
+ * Destination patching (xs-app.json) is handled by the CDS build plugin (lib/build.ts),
+ * not by this configurator.
  */
 const cds = require("@sap/cds-dk");
 const { exists, read, write, path } = cds.utils;
@@ -19,14 +23,12 @@ import {
   DATA_INSPECTOR_I18N_FILE,
   DATA_INSPECTOR_I18N_CONTENT,
   DATA_INSPECTOR_MTA_MODULE_NAME,
-  DEFAULT_SRV_DESTINATION,
 } from "../utils/constants";
 import {
   readMta,
   writeMta,
   hasPortalService,
   findContentModule,
-  detectSrvDestination,
   getMtaPath,
 } from "../utils/mtaHelper";
 
@@ -180,21 +182,11 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
     const mtaPath = getMtaPath();
     if (!mtaPath) return;
 
-    const mtaContent = await readMta();
-    if (!mtaContent) return;
-
-    // Detect destination for xs-app.json patching
-    const detectedDestination = await detectSrvDestination(mtaContent);
-    const needsDestinationPatch = detectedDestination !== DEFAULT_SRV_DESTINATION;
-
     try {
       // Step 1: Add the HTML5 module
       await cds.add
         .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
         .into(mtaPath, {
-          with: {
-            customDestination: needsDestinationPatch ? detectedDestination : null,
-          },
           additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
         });
 

@@ -19,7 +19,7 @@ interface ProjectOptions {
 }
 
 /**
- * Updates package.json to add data-inspector as a local dependency
+ * Updates package.json to add data-inspector as a dependency
  */
 function updateDependency(projectFolder: string): void {
   const packageJSONPath = join(projectFolder, "package.json");
