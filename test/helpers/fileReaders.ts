@@ -1,5 +1,8 @@
 /**
- * Helpers for reading and parsing test project files
+ * Helpers for reading and parsing test project files.
+ *
+ * Portal-related readers require a deployer path parameter so that tests
+ * always specify the exact path used in mta.yaml — no default is assumed.
  */
 import fs from "fs";
 import { join } from "path";
@@ -31,18 +34,20 @@ export function countScope(xsSecurity: any, scopeName: string): number {
 }
 
 /**
- * Read and parse CommonDataModel.json
+ * Read and parse CommonDataModel.json from {deployerPath}/portal-site/.
+ * @param deployerPath  The FLP deployer module path as declared in mta.yaml
  */
-export function readCommonDataModel(projectFolder: string): any {
-  const cdmPath = join(projectFolder, "flp", "portal-site", "CommonDataModel.json");
+export function readCommonDataModel(projectFolder: string, deployerPath: string): any {
+  const cdmPath = join(projectFolder, deployerPath, "portal-site", "CommonDataModel.json");
   return JSON.parse(fs.readFileSync(cdmPath, "utf8"));
 }
 
 /**
- * Check if CommonDataModel.json exists
+ * Check if CommonDataModel.json exists under {deployerPath}/portal-site/
+ * @param deployerPath  The FLP deployer module path as declared in mta.yaml
  */
-export function commonDataModelExists(projectFolder: string): boolean {
-  const cdmPath = join(projectFolder, "flp", "portal-site", "CommonDataModel.json");
+export function commonDataModelExists(projectFolder: string, deployerPath: string): boolean {
+  const cdmPath = join(projectFolder, deployerPath, "portal-site", "CommonDataModel.json");
   return fs.existsSync(cdmPath);
 }
 
@@ -56,33 +61,31 @@ export function readMta(projectFolder: string): any {
 }
 
 /**
- * Check if i18n file exists
+ * Check if i18n file exists under {deployerPath}/portal-site/
+ * @param deployerPath  The FLP deployer module path as declared in mta.yaml
  */
-export function i18nFileExists(projectFolder: string): boolean {
-  const i18nPath = join(projectFolder, "flp", "portal-site", "i18n", "capDataInspector.properties");
+export function i18nFileExists(projectFolder: string, deployerPath: string): boolean {
+  const i18nPath = join(
+    projectFolder,
+    deployerPath,
+    "portal-site",
+    "i18n",
+    "capDataInspector.properties"
+  );
   return fs.existsSync(i18nPath);
 }
 
 /**
- * Read i18n properties file
+ * Read i18n properties file from {deployerPath}/portal-site/
+ * @param deployerPath  The FLP deployer module path as declared in mta.yaml
  */
-export function readI18nFile(projectFolder: string): string {
-  const i18nPath = join(projectFolder, "flp", "portal-site", "i18n", "capDataInspector.properties");
+export function readI18nFile(projectFolder: string, deployerPath: string): string {
+  const i18nPath = join(
+    projectFolder,
+    deployerPath,
+    "portal-site",
+    "i18n",
+    "capDataInspector.properties"
+  );
   return fs.readFileSync(i18nPath, "utf8");
-}
-
-/**
- * Read and parse workzone/cdm.json
- */
-export function readWorkzoneCdm(projectFolder: string): any[] {
-  const cdmPath = join(projectFolder, "workzone", "cdm.json");
-  return JSON.parse(fs.readFileSync(cdmPath, "utf8"));
-}
-
-/**
- * Check if workzone/cdm.json exists
- */
-export function workzoneCdmExists(projectFolder: string): boolean {
-  const cdmPath = join(projectFolder, "workzone", "cdm.json");
-  return fs.existsSync(cdmPath);
 }

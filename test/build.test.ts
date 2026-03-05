@@ -1,16 +1,30 @@
 /**
- * Tests for CDS Build Plugin (lib/build.ts)
- * Tests UI5 app copying and destination patching during cds build.
+ * Tests for CDS Build Plugin (lib/build.ts).
  *
- * The build plugin operates independently of `cds add data-inspector`.
+ * The build plugin runs during `cds build` to copy the data-inspector UI5
+ * app into the build output (gen/cap-js-data-inspector-ui) and apply
+ * runtime-specific patches:
+ *
+ *   - xs-app.json destination:  resolved from cds.env, auto-detected
+ *     from an existing UI5 app's xs-app.json, or defaults to "srv-api".
+ *
+ *   - manifest.json sap.cloud.service:  resolved from cds.env or
+ *     auto-detected from an existing UI5 app's manifest.json.  When
+ *     neither source provides a value the patch is skipped silently.
+ *
+ * The plugin operates independently of `cds add data-inspector`.
  * It only requires the plugin to be installed as a dependency.
- * hasTask() always returns true — the build task runs whenever the plugin is present.
  */
 import { expect } from "chai";
 import fs from "fs";
 import { join } from "path";
 
-import { TempUtil, createTestProject, createHtml5AppWithDestination } from "./helpers";
+import {
+  TempUtil,
+  createTestProject,
+  createHtml5AppWithDestination,
+  createHtml5AppWithCloudService,
+} from "./helpers";
 
 const BUILD_OUTPUT_DIR = "gen/cap-js-data-inspector-ui";
 
@@ -30,6 +44,14 @@ function readBuildXsApp(projectFolder: string): any {
 }
 
 /**
+ * Read manifest.json from the build output
+ */
+function readBuildManifest(projectFolder: string): any {
+  const manifestPath = join(projectFolder, BUILD_OUTPUT_DIR, "webapp", "manifest.json");
+  return JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+}
+
+/**
  * Get the OData route destination from xs-app.json
  */
 function getODataDestination(xsApp: any): string | undefined {
@@ -38,35 +60,29 @@ function getODataDestination(xsApp: any): string | undefined {
 }
 
 /**
- * Set cds.env configuration for data_inspector.destination via .cdsrc.json
+ * Set cds.env configuration via .cdsrc.json
  */
-function setCdsrcDestination(projectFolder: string, destination: string): void {
+function setCdsrc(projectFolder: string, config: Record<string, any>): void {
   const cdsrcPath = join(projectFolder, ".cdsrc.json");
   let cdsrc: any = {};
   if (fs.existsSync(cdsrcPath)) {
     cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
   }
-  cdsrc.data_inspector = cdsrc.data_inspector || {};
-  cdsrc.data_inspector.destination = destination;
+  cdsrc.data_inspector = { ...cdsrc.data_inspector, ...config };
   fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
 }
 
 /**
- * Set cds.env configuration for data_inspector.destination via package.json "cds" section.
+ * Set cds.env configuration via package.json "cds" section.
  *
  * Both .cdsrc.json and package.json's "cds" section feed into cds.env.
- * The difference:
- * - package.json "cds": Standard place for project config, committed to repo
- * - .cdsrc.json: Standalone config file, can be used for local overrides (often in .gitignore)
- *
- * Precedence: package.json "cds" > .cdsrc.json (per CAP config resolution order)
+ * Precedence: package.json "cds" > .cdsrc.json (per CAP config resolution).
  */
-function setPackageJsonDestination(projectFolder: string, destination: string): void {
+function setPackageJsonConfig(projectFolder: string, config: Record<string, any>): void {
   const pkgPath = join(projectFolder, "package.json");
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
   pkg.cds = pkg.cds || {};
-  pkg.cds.data_inspector = pkg.cds.data_inspector || {};
-  pkg.cds.data_inspector.destination = destination;
+  pkg.cds.data_inspector = { ...pkg.cds.data_inspector, ...config };
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 }
 
@@ -77,32 +93,35 @@ describe("CDS Build Plugin", () => {
     await tempUtil.cleanUp();
   });
 
+  // -----------------------------------------------------------------------
+  //  Build output
+  // -----------------------------------------------------------------------
+
   describe("build output", () => {
     it("should copy UI5 app to build output directory with default destination", async () => {
       const project = await createTestProject(tempUtil);
 
-      // Run cds build — no cds add needed, build plugin runs independently
       runCdsBuild(project);
 
-      // Verify build output exists
       const buildOutputPath = join(project, BUILD_OUTPUT_DIR);
       expect(fs.existsSync(buildOutputPath)).to.be.true;
-
-      // Verify key files were copied
       expect(fs.existsSync(join(buildOutputPath, "xs-app.json"))).to.be.true;
       expect(fs.existsSync(join(buildOutputPath, "package.json"))).to.be.true;
 
-      // Verify xs-app.json has default destination (no patching needed)
       const xsApp = readBuildXsApp(project);
       expect(getODataDestination(xsApp)).to.equal("srv-api");
     });
   });
 
+  // -----------------------------------------------------------------------
+  //  Destination patching
+  // -----------------------------------------------------------------------
+
   describe("destination from .cdsrc.json", () => {
     it("should patch destination when set via .cdsrc.json", async () => {
       const project = await createTestProject(tempUtil);
 
-      setCdsrcDestination(project, "my-custom-srv-api");
+      setCdsrc(project, { destination: "my-custom-srv-api" });
       runCdsBuild(project);
 
       const xsApp = readBuildXsApp(project);
@@ -112,11 +131,8 @@ describe("CDS Build Plugin", () => {
     it("should use .cdsrc.json destination over auto-detected destination", async () => {
       const project = await createTestProject(tempUtil);
 
-      // Create an existing HTML5 app with one destination
       createHtml5AppWithDestination(project, "auto-detected-srv");
-
-      // But configure a different destination via .cdsrc.json (should take precedence)
-      setCdsrcDestination(project, "explicit-config-srv");
+      setCdsrc(project, { destination: "explicit-config-srv" });
 
       runCdsBuild(project);
 
@@ -129,7 +145,7 @@ describe("CDS Build Plugin", () => {
     it("should patch destination when set via package.json cds section", async () => {
       const project = await createTestProject(tempUtil);
 
-      setPackageJsonDestination(project, "pkg-json-srv-api");
+      setPackageJsonConfig(project, { destination: "pkg-json-srv-api" });
       runCdsBuild(project);
 
       const xsApp = readBuildXsApp(project);
@@ -139,13 +155,11 @@ describe("CDS Build Plugin", () => {
     it("should prefer package.json over .cdsrc.json (CAP config precedence)", async () => {
       const project = await createTestProject(tempUtil);
 
-      // Set different destinations in both config sources
-      setPackageJsonDestination(project, "from-package-json");
-      setCdsrcDestination(project, "from-cdsrc-json");
+      setPackageJsonConfig(project, { destination: "from-package-json" });
+      setCdsrc(project, { destination: "from-cdsrc-json" });
 
       runCdsBuild(project);
 
-      // Verify package.json "cds" section takes precedence over .cdsrc.json
       const xsApp = readBuildXsApp(project);
       expect(getODataDestination(xsApp)).to.equal("from-package-json");
     });
@@ -155,7 +169,6 @@ describe("CDS Build Plugin", () => {
     it("should auto-detect destination from existing UI5 app xs-app.json", async () => {
       const project = await createTestProject(tempUtil);
 
-      // Create an existing HTML5 app with custom destination
       createHtml5AppWithDestination(project, "bookshop-srv");
 
       runCdsBuild(project);
@@ -165,23 +178,97 @@ describe("CDS Build Plugin", () => {
     });
   });
 
+  // -----------------------------------------------------------------------
+  //  sap.cloud.service patching
+  // -----------------------------------------------------------------------
+
+  describe("sap.cloud.service from cds.env", () => {
+    it("should patch manifest.json when cloudService is set via .cdsrc.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setCdsrc(project, { cloudService: "my.cloud.service" });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.cloud"]).to.exist;
+      expect(manifest["sap.cloud"].service).to.equal("my.cloud.service");
+      expect(manifest["sap.cloud"].public).to.be.true;
+    });
+
+    it("should patch manifest.json when cloudService is set via package.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setPackageJsonConfig(project, { cloudService: "pkg.cloud.service" });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.cloud"].service).to.equal("pkg.cloud.service");
+    });
+
+    it("should prefer cds.env cloudService over auto-detected value", async () => {
+      const project = await createTestProject(tempUtil);
+
+      // Existing app has one value, cds.env has a different one.
+      createHtml5AppWithCloudService(project, "auto.detected.service");
+      setCdsrc(project, { cloudService: "explicit.service" });
+
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.cloud"].service).to.equal("explicit.service");
+    });
+  });
+
+  describe("sap.cloud.service auto-detection from existing UI5 apps", () => {
+    it("should auto-detect cloudService from existing UI5 app manifest.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      createHtml5AppWithCloudService(project, "detected.cloud.svc");
+
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.cloud"]).to.exist;
+      expect(manifest["sap.cloud"].service).to.equal("detected.cloud.svc");
+    });
+
+    it("should not patch manifest.json when no cloudService source is available", async () => {
+      const project = await createTestProject(tempUtil);
+
+      // No cds.env config, no existing app with sap.cloud.service
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      // sap.cloud should not exist (or should not have been patched)
+      expect(manifest["sap.cloud"]).to.not.exist;
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  //  Idempotency
+  // -----------------------------------------------------------------------
+
   describe("idempotency", () => {
     it("should produce same result when build is run multiple times", async () => {
       const project = await createTestProject(tempUtil);
 
-      setCdsrcDestination(project, "idempotent-srv");
+      setCdsrc(project, { destination: "idempotent-srv", cloudService: "idempotent.svc" });
 
-      // Run cds build twice
       runCdsBuild(project);
       const firstRunXsApp = readBuildXsApp(project);
+      const firstRunManifest = readBuildManifest(project);
 
       runCdsBuild(project);
       const secondRunXsApp = readBuildXsApp(project);
+      const secondRunManifest = readBuildManifest(project);
 
-      // Verify both runs produce the same result
       expect(getODataDestination(firstRunXsApp)).to.equal("idempotent-srv");
       expect(getODataDestination(secondRunXsApp)).to.equal("idempotent-srv");
       expect(firstRunXsApp).to.deep.equal(secondRunXsApp);
+
+      expect(firstRunManifest["sap.cloud"].service).to.equal("idempotent.svc");
+      expect(secondRunManifest["sap.cloud"].service).to.equal("idempotent.svc");
+      expect(firstRunManifest).to.deep.equal(secondRunManifest);
     });
   });
 });

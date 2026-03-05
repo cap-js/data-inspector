@@ -1,65 +1,89 @@
 /**
  * Configurator for SAP BTP Cloud Portal Service (FLP) integration.
- * Handles:
- * - CommonDataModel.json modification (adding catalog, group and site's groupsOrder)
- * - i18n properties file creation for catalog and group titles
- * - mta.yaml modification (if mta.yaml exists — inherited from FlpBaseConfigurator)
  *
- * Detection: Presence of flp/portal-site/CommonDataModel.json is sufficient.
- * MTA changes are conditional — only applied when mta.yaml exists.
+ * Detected by inspecting mta.yaml for an FLP deployer module — a
+ * com.sap.application.content module whose requires array targets
+ * a portal service resource (service: portal, service-plan: standard)
+ * with content-target: true.  The deployer module's "path" property
+ * gives the base directory containing portal-site/CommonDataModel.json.
  *
- * Destination patching (xs-app.json) is handled by the CDS build plugin (lib/build.ts).
+ * When detected, configures:
+ *
+ *   - CommonDataModel.json:  Adds a catalog and group entry for the
+ *     data-inspector UI5 app tile.  If the CDM contains exactly one
+ *     site, the group is also appended to that site's groupsOrder
+ *     array so the tile is visible by default.
+ *
+ *   - i18n properties file:  Creates an i18n file with translatable
+ *     titles for the catalog and group.
+ *
+ *   - mta.yaml:  Adds the HTML5 module and artifact.
+ *     Inherited from MtaConfigurator.
  */
 const cds = require("@sap/cds-dk");
 const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
-import { FlpBaseConfigurator } from "./FlpBaseConfigurator";
+import { MtaConfigurator } from "./MtaConfigurator";
 import {
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
   DATA_INSPECTOR_I18N_FILE,
   DATA_INSPECTOR_I18N_CONTENT,
 } from "../utils/constants";
-import { getMtaPath } from "../utils/mtaHelper";
+import { readMta, findPortalDeployerPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
 
-export class PortalServiceConfigurator extends FlpBaseConfigurator {
+export class PortalServiceConfigurator extends MtaConfigurator {
+  /**
+   * Resolved path to the portal-site directory (e.g. "flp/portal-site").
+   * Set during canRun() and used by run().
+   */
+  private portalSitePath: string | null = null;
+
   get name(): string {
     return "Cloud Portal Service";
   }
 
   /**
-   * Check if the host project uses cloud portal service.
-   * Returns true if flp/portal-site/CommonDataModel.json exists.
+   * Returns true when mta.yaml contains an FLP deployer module targeting
+   * a portal service resource, and the corresponding
+   * portal-site/CommonDataModel.json file exists on disk.
    */
   async canRun(): Promise<boolean> {
-    return exists("flp/portal-site/CommonDataModel.json");
+    const mtaContent = await readMta();
+    if (!mtaContent) return false;
+
+    const deployerPath = findPortalDeployerPath(mtaContent);
+    if (!deployerPath) return false;
+
+    const portalSitePath = join(deployerPath, "portal-site");
+    const cdmPath = join(portalSitePath, "CommonDataModel.json");
+
+    if (!exists(cdmPath)) return false;
+
+    this.portalSitePath = portalSitePath;
+    return true;
   }
 
-  /**
-   * Configure data inspector for Cloud Portal Service
-   */
   async run(): Promise<void> {
+    if (!this.portalSitePath) return;
+
     await this.updateCommonDataModel();
     await this.createI18nPropertiesFile();
-
-    // Only update mta.yaml if it exists
-    if (getMtaPath()) {
-      await this.updateMtaYaml();
-    }
+    await this.updateMtaYaml();
 
     log.debug("Cloud Portal service configured");
   }
 
   /**
-   * Update CommonDataModel.json with data inspector catalog and group.
-   * Uses cds.add.merge() for idempotent merging.
-   * Also adds the group to groupsOrder if there's exactly one site.
+   * Merges the data-inspector catalog and group into CommonDataModel.json
+   * using cds.add.merge() for idempotent array insertion, then appends
+   * the group to the site's groupsOrder when there is exactly one site.
    */
   private async updateCommonDataModel(): Promise<void> {
-    const cdmPath = "flp/portal-site/CommonDataModel.json";
+    const cdmPath = join(this.portalSitePath as string, "CommonDataModel.json");
 
     try {
       await cds.add.merge(__dirname, "../../templates/CommonDataModel.json.hbs").into(cdmPath, {
@@ -78,7 +102,11 @@ export class PortalServiceConfigurator extends FlpBaseConfigurator {
   }
 
   /**
-   * Add the data inspector group to the site's groupsOrder array.
+   * Appends the data-inspector group to the site's groupsOrder so that
+   * the tile appears by default in the Fiori Launchpad.
+   *
+   * Only applies when there is exactly one site.  With multiple sites
+   * the user must manually choose which site(s) should display the tile.
    */
   private async addGroupToGroupsOrder(cdmPath: string): Promise<void> {
     try {
@@ -122,10 +150,12 @@ export class PortalServiceConfigurator extends FlpBaseConfigurator {
   }
 
   /**
-   * Create i18n properties file for data inspector catalog and group titles
+   * Creates the i18n properties file with translatable titles for
+   * the catalog and group entries added to CommonDataModel.json.
+   * Skips creation if the file already exists (idempotent).
    */
   private async createI18nPropertiesFile(): Promise<void> {
-    const i18nPath = join("flp/portal-site", DATA_INSPECTOR_I18N_FILE);
+    const i18nPath = join(this.portalSitePath as string, DATA_INSPECTOR_I18N_FILE);
 
     if (exists(i18nPath)) {
       log.debug(`i18n file '${DATA_INSPECTOR_I18N_FILE}' already exists`);

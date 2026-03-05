@@ -1,8 +1,14 @@
 /**
- * Tests for lib/add.ts - the main CDS Add Plugin
- * Tests the orchestration of configurators
+ * Tests for lib/add.ts — the main CDS Add Plugin.
+ *
+ * Verifies that the plugin orchestrates the individual configurators
+ * correctly: XsSecurityConfigurator, PortalServiceConfigurator, and
+ * WorkzoneConfigurator.  Each configurator has its own dedicated test
+ * suite; these tests focus on end-to-end orchestration.
  */
 import { expect } from "chai";
+import fs from "fs";
+import { join } from "path";
 
 import {
   TempUtil,
@@ -27,21 +33,19 @@ describe("cds add data-inspector", () => {
 
   describe("orchestration", () => {
     it("should run all applicable configurators", async () => {
-      // Create a project with both xsuaa and portal service
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-      createMtaWithPortal(project);
-      createCommonDataModel(project);
+      createMtaWithPortal(project, "flp");
+      createCommonDataModel(project, "flp");
 
-      // Run cds add data-inspector
       runCdsAddDataInspector(project);
 
-      // Verify XsSecurityConfigurator ran (scope added)
+      // XsSecurityConfigurator should have added the scope.
       const xsSecurity = readXsSecurity(project);
       const scopeCount = countScope(xsSecurity, DATA_INSPECTOR_SCOPE);
       expect(scopeCount).to.equal(1, "XsSecurityConfigurator should have added scope");
 
-      // Verify PortalServiceConfigurator ran (catalog and group added)
-      const cdm = readCommonDataModel(project);
+      // PortalServiceConfigurator should have added catalog and group.
+      const cdm = readCommonDataModel(project, "flp");
       const hasCatalog = cdm.payload.catalogs.some(
         (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
       );
@@ -53,23 +57,18 @@ describe("cds add data-inspector", () => {
     });
 
     it("should skip configurators when preconditions are not met", async () => {
-      // Create a project with xsuaa but without CommonDataModel.json
       const project = await createTestProject(tempUtil, { xsuaa: true });
-      // Do NOT create CommonDataModel.json — PortalServiceConfigurator should be skipped
 
-      // Run cds add data-inspector
+      // No mta.yaml and no CommonDataModel.json → portal configurator is skipped.
       runCdsAddDataInspector(project);
 
-      // Verify XsSecurityConfigurator ran
+      // XsSecurityConfigurator should still have run.
       const xsSecurity = readXsSecurity(project);
       const scopeCount = countScope(xsSecurity, DATA_INSPECTOR_SCOPE);
       expect(scopeCount).to.equal(1, "XsSecurityConfigurator should have run");
 
-      // Verify PortalServiceConfigurator was skipped (no CommonDataModel.json)
-      // readCommonDataModel would fail since file doesn't exist, so just check file absence
-      const fs = require("fs");
-      const path = require("path");
-      const cdmPath = path.join(project, "flp", "portal-site", "CommonDataModel.json");
+      // CommonDataModel.json should not have been created.
+      const cdmPath = join(project, "flp", "portal-site", "CommonDataModel.json");
       expect(fs.existsSync(cdmPath)).to.be.false;
     });
   });

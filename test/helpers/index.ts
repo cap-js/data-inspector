@@ -12,8 +12,6 @@ export {
   readMta,
   i18nFileExists,
   readI18nFile,
-  readWorkzoneCdm,
-  workzoneCdmExists,
 } from "./fileReaders";
 export {
   createMtaWithPortal,
@@ -24,19 +22,16 @@ export {
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
+  createHtml5AppWithCloudService,
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,
   createMtaWithMultipleContentModules,
   createMtaWithWorkzone,
-  createWorkzoneCdm,
-  createEmptyWorkzoneCdm,
 } from "./mtaFixtures";
 
-// Test constants - these values must match what's in lib/utils/constants.ts
-// We define them here to avoid cross-importing between test and lib folders
+// Test constants — must match the values in lib/utils/constants.ts
 export const DATA_INSPECTOR_SCOPE = "$XSAPPNAME.capDataInspectorReadonly";
 export const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 export const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
 export const DATA_INSPECTOR_MTA_MODULE_NAME = "capjsdatainspectorapp";
 export const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
-export const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";

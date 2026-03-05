@@ -1,16 +1,12 @@
 /**
- * Constants for data inspector catalog and group configuration
+ * Constants for data inspector FLP and MTA configuration
  */
 
-// Data Inspector App identifiers
-export const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
-export const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";
-
-// FLP Catalog and Group IDs
+// FLP Catalog and Group IDs (used by Portal Service configurator)
 export const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 export const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
 
-// i18n file path (relative to flp/portal-site)
+// i18n file path (relative to portal-site directory)
 export const DATA_INSPECTOR_I18N_FILE = "i18n/capDataInspector.properties";
 
 // MTA module name for data inspector UI5 app
