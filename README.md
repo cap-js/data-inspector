@@ -71,14 +71,15 @@ Run the following command to add `@cap-js/data-inspector` configuration to your 
 cds add data-inspector
 ```
 
-It makes the following changes to your project.
+It makes the following changes to your project:
 
-- **XSUAA**: Adds the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json`. Make sure to use this scope in appropriate role collections. Also see [Authorization](#authorization).
-- **MTA configuration** (when `mta.yaml` exists): Adds the following configuration to your `mta.yaml`. Also see [MTA Deployment](#mta-deployment).
+- **XSUAA** (when `xs-security.json` exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. Also see [Authorization](#authorization).
+- **MTA** (when `mta.yaml` exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. This runs regardless of whether you use Cloud Portal Service, SAP Build Work Zone, or neither. Also see [MTA Deployment](#mta-deployment).
   - Adds `html5` module `capjsdatainspectorapp` pointing to the build output in `gen/cap-js-data-inspector-ui`.
   - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
-- **Cloud Portal Service** (when detected in `mta.yaml`): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json`. The file location is determined by inspecting `mta.yaml` for the portal content deployer module's `path` property — for example, if the module's path is `flp`, the file is at `flp/portal-site/CommonDataModel.json`. Also see [Using Cloud Portal Service](#using-cloud-portal-service).
-- **SAP Build Work Zone** (when `mta.yaml` exists): Adds the MTA module and artifact wiring only. The Workzone CDM configuration (`cdm.json`) must be edited manually because it uses project-specific entity IDs. An informational message is logged after the command runs. Also see [Using SAP Build Work Zone](#using-sap-build-work-zone).
+- **Cloud Portal Service** (when detected in `mta.yaml` and `CommonDataModel.json` exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json`, and creates an i18n properties file for translatable titles. The file location is determined by inspecting `mta.yaml` for the portal content deployer module's `path` property — for example, if the module's path is `flp`, the file is at `flp/portal-site/CommonDataModel.json`. Also see [Using Cloud Portal Service](#using-cloud-portal-service).
+
+> **Note:** If you use **SAP Build Work Zone**, the MTA configuration above is all that `cds add data-inspector` provides. The Workzone CDM configuration (`cdm.json`) must be edited manually because it uses project-specific entity IDs. See [Using SAP Build Work Zone](#using-sap-build-work-zone).
 
 ### UI5 App for Deployment to BTP
 
@@ -190,7 +191,11 @@ The Cloud Portal Service uses a `CommonDataModel.json` file inside a `portal-sit
 
 The `cds add data-inspector` command detects the portal deployer path by inspecting `mta.yaml` for a `com.sap.application.content` module whose `requires` section targets a portal service resource (`service: portal`, `service-plan: standard`) with `content-target: true`. The module's `path` property determines where to find `portal-site/CommonDataModel.json`. For example, if the module's path is `flp`, the file is at `flp/portal-site/CommonDataModel.json`.
 
-When detected, `cds add data-inspector` adds a **catalog** and **group** entry for the data-inspector tile to `CommonDataModel.json`. It also appends the group id `capDataInspectorGroupId` to the site's `groupsOrder` so the tile is visible by default in Fiori Launchpad — but only if exactly one `site` entity is found. If you have multiple sites, add the group id to `groupsOrder` in your preferred site manually.
+When detected, `cds add data-inspector`:
+
+- Adds a **catalog** and **group** entry for the data-inspector tile to `CommonDataModel.json`.
+- Creates an **i18n properties file** with translatable titles for the catalog and group entries.
+- Appends the group id `capDataInspectorGroupId` to the site's `groupsOrder` so the tile is visible by default in Fiori Launchpad — but only if exactly one `site` entity is found. If you have multiple sites, add the group id to `groupsOrder` in your preferred site manually.
 
 To configure the data-inspector tile manually instead, add the following entries to your `CommonDataModel.json`:
 
