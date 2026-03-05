@@ -1,7 +1,10 @@
 /**
- * Base class for configurators that modify mta.yaml.
+ * Configurator that updates mta.yaml for the data-inspector HTML5 module.
  *
- * Provides shared mta.yaml modification logic:
+ * Runs whenever mta.yaml exists in the project, regardless of whether
+ * Portal Service or Workzone is used.
+ *
+ * Responsibilities:
  *   - Adds the data-inspector HTML5 module via cds.add.merge()
  *   - Adds the module's ZIP artifact to the HTML5 content module's
  *     build-parameters.requires so it is included in the deployed
@@ -10,8 +13,6 @@
  * The content module is located by mtaHelper.findContentModule() which
  * matches the com.sap.application.content module that targets the
  * html5-apps-repo app-host resource (see mtaHelper.ts for details).
- *
- * Subclasses implement CDM-specific file handling and detection logic.
  */
 const cds = require("@sap/cds-dk");
 const { join } = cds.utils.path;
@@ -22,19 +23,22 @@ import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHe
 
 const log = cds.log("data-inspector");
 
-export abstract class MtaConfigurator extends AddPluginConfigurator {
+export class MtaConfigurator extends AddPluginConfigurator {
+  get name(): string {
+    return "MTA";
+  }
+
+  /**
+   * Returns true when mta.yaml exists — the MTA update can proceed.
+   */
+  async canRun(): Promise<boolean> {
+    return !!getMtaPath();
+  }
+
   /**
    * Adds the data-inspector HTML5 module and its ZIP artifact to mta.yaml.
-   *
-   * Step 1 — HTML5 module:  merged idempotently via cds.add.merge() using
-   *          templates/mta-html5-module.yaml.hbs.  The module points to
-   *          gen/cap-js-data-inspector-ui (produced by the build plugin).
-   *
-   * Step 2 — Content artifact:  the module's ZIP is added to the HTML5
-   *          content module's build-parameters.requires so that `mbt build`
-   *          bundles it for deployment to the HTML5 Application Repository.
    */
-  protected async updateMtaYaml(): Promise<void> {
+  async run(): Promise<void> {
     const mtaPath = getMtaPath();
     if (!mtaPath) return;
 

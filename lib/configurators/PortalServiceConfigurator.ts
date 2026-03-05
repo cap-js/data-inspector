@@ -17,14 +17,13 @@
  *   - i18n properties file:  Creates an i18n file with translatable
  *     titles for the catalog and group.
  *
- *   - mta.yaml:  Adds the HTML5 module and artifact.
- *     Inherited from MtaConfigurator.
+ * Note: mta.yaml updates are handled separately by MtaConfigurator.
  */
 const cds = require("@sap/cds-dk");
 const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
-import { MtaConfigurator } from "./MtaConfigurator";
+import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import {
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
@@ -35,7 +34,7 @@ import { readMta, findPortalDeployerPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
 
-export class PortalServiceConfigurator extends MtaConfigurator {
+export class PortalServiceConfigurator extends AddPluginConfigurator {
   /**
    * Resolved path to the portal-site directory (e.g. "flp/portal-site").
    * Set during canRun() and used by run().
@@ -72,7 +71,6 @@ export class PortalServiceConfigurator extends MtaConfigurator {
 
     await this.updateCommonDataModel();
     await this.createI18nPropertiesFile();
-    await this.updateMtaYaml();
 
     log.debug("Cloud Portal service configured");
   }

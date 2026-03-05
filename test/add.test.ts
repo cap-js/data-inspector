@@ -2,9 +2,9 @@
  * Tests for lib/add.ts — the main CDS Add Plugin.
  *
  * Verifies that the plugin orchestrates the individual configurators
- * correctly: XsSecurityConfigurator, PortalServiceConfigurator, and
- * WorkzoneConfigurator.  Each configurator has its own dedicated test
- * suite; these tests focus on end-to-end orchestration.
+ * correctly: XsSecurityConfigurator, MtaConfigurator, and
+ * PortalServiceConfigurator.  Each configurator has its own dedicated
+ * test suite; these tests focus on end-to-end orchestration.
  */
 import { expect } from "chai";
 import fs from "fs";
@@ -14,15 +14,29 @@ import {
   TempUtil,
   createTestProject,
   runCdsAddDataInspector,
-  readXsSecurity,
-  readCommonDataModel,
-  countScope,
   createMtaWithPortal,
   createCommonDataModel,
   DATA_INSPECTOR_SCOPE,
   DATA_INSPECTOR_CATALOG_ID,
   DATA_INSPECTOR_GROUP_ID,
 } from "./helpers";
+
+/** Read and parse xs-security.json */
+function readXsSecurity(projectFolder: string): any {
+  return JSON.parse(fs.readFileSync(join(projectFolder, "xs-security.json"), "utf8"));
+}
+
+/** Count occurrences of a scope in xs-security.json */
+function countScope(xsSecurity: any, scopeName: string): number {
+  if (!xsSecurity.scopes || !Array.isArray(xsSecurity.scopes)) return 0;
+  return xsSecurity.scopes.filter((s: any) => s.name === scopeName).length;
+}
+
+/** Read and parse CommonDataModel.json from {deployerPath}/portal-site/ */
+function readCommonDataModel(projectFolder: string, deployerPath: string): any {
+  const cdmPath = join(projectFolder, deployerPath, "portal-site", "CommonDataModel.json");
+  return JSON.parse(fs.readFileSync(cdmPath, "utf8"));
+}
 
 describe("cds add data-inspector", () => {
   const tempUtil = new TempUtil();

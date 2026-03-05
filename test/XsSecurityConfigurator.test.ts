@@ -10,11 +10,27 @@ import {
   TempUtil,
   createTestProject,
   runCdsAddDataInspector,
-  readXsSecurity,
-  xsSecurityExists,
-  countScope,
   DATA_INSPECTOR_SCOPE,
 } from "./helpers";
+
+/** Read and parse xs-security.json */
+function readXsSecurity(projectFolder: string): any {
+  const xsSecurityPath = join(projectFolder, "xs-security.json");
+  return JSON.parse(fs.readFileSync(xsSecurityPath, "utf8"));
+}
+
+/** Check if xs-security.json exists */
+function xsSecurityExists(projectFolder: string): boolean {
+  return fs.existsSync(join(projectFolder, "xs-security.json"));
+}
+
+/** Count occurrences of a scope in xs-security.json */
+function countScope(xsSecurity: any, scopeName: string): number {
+  if (!xsSecurity.scopes || !Array.isArray(xsSecurity.scopes)) {
+    return 0;
+  }
+  return xsSecurity.scopes.filter((s: any) => s.name === scopeName).length;
+}
 
 describe("XsSecurityConfigurator", () => {
   const tempUtil = new TempUtil();

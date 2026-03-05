@@ -4,20 +4,8 @@
 export { TempUtil } from "./TempUtil";
 export { createTestProject, runCdsAddDataInspector } from "./projectSetup";
 export {
-  readXsSecurity,
-  xsSecurityExists,
-  countScope,
-  readCommonDataModel,
-  commonDataModelExists,
-  readMta,
-  i18nFileExists,
-  readI18nFile,
-} from "./fileReaders";
-export {
   createMtaWithPortal,
-  createMtaWithoutPortal,
-  createMtaWithCustomDestination,
-  createMtaWithDefaultDestination,
+  createMta,
   createCommonDataModel,
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
@@ -27,7 +15,7 @@ export {
   createMtaWithContentModuleNoRequires,
   createMtaWithMultipleContentModules,
   createMtaWithWorkzone,
-} from "./mtaFixtures";
+} from "./fixtures";
 
 // Test constants — must match the values in lib/utils/constants.ts
 export const DATA_INSPECTOR_SCOPE = "$XSAPPNAME.capDataInspectorReadonly";

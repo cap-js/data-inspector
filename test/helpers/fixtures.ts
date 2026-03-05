@@ -1,6 +1,4 @@
 /**
- * MTA YAML fixtures and generators for testing.
- *
  * Provides factory functions that create mta.yaml, CommonDataModel.json,
  * cdm.json, and other project artefacts inside a temporary test project.
  */
@@ -8,7 +6,7 @@ import fs from "fs";
 import { join } from "path";
 
 // ---------------------------------------------------------------------------
-//  Portal Service fixtures
+//  MTA fixtures
 // ---------------------------------------------------------------------------
 
 /**
@@ -73,33 +71,9 @@ resources:
 }
 
 /**
- * Create a minimal mta.yaml without portal service
+ * Create a minimal mta.yaml with SAP Build Workzone service
  */
-export function createMtaWithoutPortal(projectFolder: string): void {
-  const mtaContent = `_schema-version: "3.1"
-ID: test-project
-version: 1.0.0
-modules:
-  - name: test-html5-app
-    type: html5
-    path: app/test-app
-resources:
-  - name: test-html5-repo-host
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: html5-apps-repo
-      service-plan: app-host
-`;
-  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
-}
-
-/**
- * Create mta.yaml with custom destination in content module config
- */
-export function createMtaWithCustomDestination(
-  projectFolder: string,
-  destinationName: string
-): void {
+export function createMtaWithWorkzone(projectFolder: string): void {
   const mtaContent = `_schema-version: "3.1"
 ID: test-project
 version: 1.0.0
@@ -116,16 +90,9 @@ modules:
     type: com.sap.application.content
     path: .
     requires:
-      - name: ${destinationName}
       - name: test-html5-repo-host
         parameters:
           content-target: true
-    parameters:
-      config:
-        destinations:
-          - forwardAuthToken: true
-            name: ${destinationName}
-            url: ~{${destinationName}/srv-url}
     build-parameters:
       build-result: resources
       requires:
@@ -133,13 +100,72 @@ modules:
             - testapp.zip
           name: test-html5-app
           target-path: resources/
-  - name: test-srv
-    type: nodejs
-    path: gen/srv
-    provides:
-      - name: ${destinationName}
-        properties:
-          srv-url: \${default-url}
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-workzone
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: build-workzone-standard
+      service-plan: local-entry-point
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create a minimal mta.yaml
+ */
+export function createMta(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+// ---------------------------------------------------------------------------
+//  MTA edge-case fixtures
+// ---------------------------------------------------------------------------
+
+/**
+ * Create mta.yaml with portal service and content module that has no build-parameters
+ */
+export function createMtaWithContentModuleNoBuildParams(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+  - name: test-flp-deployer
+    type: com.sap.application.content
+    path: flp
+    requires:
+      - name: test-portal
+        parameters:
+          content-target: true
+      - name: test-html5-repo-host
 resources:
   - name: test-html5-repo-host
     type: org.cloudfoundry.managed-service
@@ -156,10 +182,110 @@ resources:
 }
 
 /**
- * Create mta.yaml with default srv-api destination
+ * Create mta.yaml with portal service and content module that has
+ * build-parameters but no requires array
  */
-export function createMtaWithDefaultDestination(projectFolder: string): void {
-  createMtaWithCustomDestination(projectFolder, "srv-api");
+export function createMtaWithContentModuleNoRequires(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+  - name: test-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+  - name: test-flp-deployer
+    type: com.sap.application.content
+    path: flp
+    requires:
+      - name: test-portal
+        parameters:
+          content-target: true
+      - name: test-html5-repo-host
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
+}
+
+/**
+ * Create mta.yaml with portal service and multiple content modules (edge case)
+ */
+export function createMtaWithMultipleContentModules(projectFolder: string): void {
+  const mtaContent = `_schema-version: "3.1"
+ID: test-project
+version: 1.0.0
+modules:
+  - name: test-html5-app
+    type: html5
+    path: app/test-app
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands: []
+      supported-platforms: []
+  - name: first-content
+    type: com.sap.application.content
+    path: .
+    requires:
+      - name: test-html5-repo-host
+        parameters:
+          content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - testapp.zip
+          name: test-html5-app
+          target-path: resources/
+  - name: second-content
+    type: com.sap.application.content
+    path: .
+    build-parameters:
+      build-result: resources
+      requires:
+        - artifacts:
+            - otherapp.zip
+          name: other-html5-app
+          target-path: resources/
+  - name: test-flp-deployer
+    type: com.sap.application.content
+    path: flp
+    requires:
+      - name: test-portal
+        parameters:
+          content-target: true
+      - name: test-html5-repo-host
+resources:
+  - name: test-html5-repo-host
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: html5-apps-repo
+      service-plan: app-host
+  - name: test-portal
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: portal
+      service-plan: standard
+`;
+  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
 }
 
 // ---------------------------------------------------------------------------
@@ -320,205 +446,4 @@ export function createHtml5AppWithCloudService(
     },
   };
   fs.writeFileSync(join(webappDir, "manifest.json"), JSON.stringify(manifestContent, null, 2));
-}
-
-// ---------------------------------------------------------------------------
-//  MTA edge-case fixtures
-// ---------------------------------------------------------------------------
-
-/**
- * Create mta.yaml with portal service and content module that has no build-parameters
- */
-export function createMtaWithContentModuleNoBuildParams(projectFolder: string): void {
-  const mtaContent = `_schema-version: "3.1"
-ID: test-project
-version: 1.0.0
-modules:
-  - name: test-html5-app
-    type: html5
-    path: app/test-app
-  - name: test-content
-    type: com.sap.application.content
-    path: .
-    requires:
-      - name: test-html5-repo-host
-        parameters:
-          content-target: true
-  - name: test-flp-deployer
-    type: com.sap.application.content
-    path: flp
-    requires:
-      - name: test-portal
-        parameters:
-          content-target: true
-      - name: test-html5-repo-host
-resources:
-  - name: test-html5-repo-host
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: html5-apps-repo
-      service-plan: app-host
-  - name: test-portal
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: portal
-      service-plan: standard
-`;
-  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
-}
-
-/**
- * Create mta.yaml with portal service and content module that has
- * build-parameters but no requires array
- */
-export function createMtaWithContentModuleNoRequires(projectFolder: string): void {
-  const mtaContent = `_schema-version: "3.1"
-ID: test-project
-version: 1.0.0
-modules:
-  - name: test-html5-app
-    type: html5
-    path: app/test-app
-  - name: test-content
-    type: com.sap.application.content
-    path: .
-    requires:
-      - name: test-html5-repo-host
-        parameters:
-          content-target: true
-    build-parameters:
-      build-result: resources
-  - name: test-flp-deployer
-    type: com.sap.application.content
-    path: flp
-    requires:
-      - name: test-portal
-        parameters:
-          content-target: true
-      - name: test-html5-repo-host
-resources:
-  - name: test-html5-repo-host
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: html5-apps-repo
-      service-plan: app-host
-  - name: test-portal
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: portal
-      service-plan: standard
-`;
-  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
-}
-
-/**
- * Create mta.yaml with portal service and multiple content modules (edge case)
- */
-export function createMtaWithMultipleContentModules(projectFolder: string): void {
-  const mtaContent = `_schema-version: "3.1"
-ID: test-project
-version: 1.0.0
-modules:
-  - name: test-html5-app
-    type: html5
-    path: app/test-app
-    build-parameters:
-      build-result: dist
-      builder: custom
-      commands: []
-      supported-platforms: []
-  - name: first-content
-    type: com.sap.application.content
-    path: .
-    requires:
-      - name: test-html5-repo-host
-        parameters:
-          content-target: true
-    build-parameters:
-      build-result: resources
-      requires:
-        - artifacts:
-            - testapp.zip
-          name: test-html5-app
-          target-path: resources/
-  - name: second-content
-    type: com.sap.application.content
-    path: .
-    build-parameters:
-      build-result: resources
-      requires:
-        - artifacts:
-            - otherapp.zip
-          name: other-html5-app
-          target-path: resources/
-  - name: test-flp-deployer
-    type: com.sap.application.content
-    path: flp
-    requires:
-      - name: test-portal
-        parameters:
-          content-target: true
-      - name: test-html5-repo-host
-resources:
-  - name: test-html5-repo-host
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: html5-apps-repo
-      service-plan: app-host
-  - name: test-portal
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: portal
-      service-plan: standard
-`;
-  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
-}
-
-// ---------------------------------------------------------------------------
-//  Workzone fixtures
-// ---------------------------------------------------------------------------
-
-/**
- * Create a minimal mta.yaml with SAP Build Workzone service
- */
-export function createMtaWithWorkzone(projectFolder: string): void {
-  const mtaContent = `_schema-version: "3.1"
-ID: test-project
-version: 1.0.0
-modules:
-  - name: test-html5-app
-    type: html5
-    path: app/test-app
-    build-parameters:
-      build-result: dist
-      builder: custom
-      commands: []
-      supported-platforms: []
-  - name: test-content
-    type: com.sap.application.content
-    path: .
-    requires:
-      - name: test-html5-repo-host
-        parameters:
-          content-target: true
-    build-parameters:
-      build-result: resources
-      requires:
-        - artifacts:
-            - testapp.zip
-          name: test-html5-app
-          target-path: resources/
-resources:
-  - name: test-html5-repo-host
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: html5-apps-repo
-      service-plan: app-host
-  - name: test-workzone
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: build-workzone-standard
-      service-plan: local-entry-point
-`;
-  fs.writeFileSync(join(projectFolder, "mta.yaml"), mtaContent);
 }
