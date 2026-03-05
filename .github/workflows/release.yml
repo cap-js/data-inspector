@@ -5,6 +5,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   publish-npm:
@@ -21,7 +22,7 @@ jobs:
         run: |
           npm install
           npm run lint
-      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
+      - run: npm i -g @sap/cds-dk@latest
       - run: npm i
       - run: cds v
       - run: npm run build
