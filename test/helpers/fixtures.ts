@@ -45,7 +45,7 @@ modules:
         - artifacts:
             - testapp.zip
           name: test-html5-app
-          target-path: resources/
+          target-path: ui5-resources/
   - name: test-flp-deployer
     type: com.sap.application.content
     path: ${deployerPath}
@@ -72,6 +72,7 @@ resources:
 
 /**
  * Create a minimal mta.yaml with SAP Build Workzone service
+ * and a custom target-path to verify dynamic resolution.
  */
 export function createMtaWithWorkzone(projectFolder: string): void {
   const mtaContent = `_schema-version: "3.1"
@@ -99,7 +100,7 @@ modules:
         - artifacts:
             - testapp.zip
           name: test-html5-app
-          target-path: resources/
+          target-path: app-content/
 resources:
   - name: test-html5-repo-host
     type: org.cloudfoundry.managed-service

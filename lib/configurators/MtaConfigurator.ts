@@ -86,14 +86,33 @@ export class MtaConfigurator extends AddPluginConfigurator {
     );
 
     if (!artifactExists) {
+      const targetPath = this.resolveTargetPath(contentModule["build-parameters"].requires);
+
       contentModule["build-parameters"].requires.push({
         name: DATA_INSPECTOR_MTA_MODULE_NAME,
         artifacts: ["datainspectorapp.zip"],
-        "target-path": "resources/",
+        "target-path": targetPath,
       });
 
       await writeMta(mtaContent);
       log.debug("Added artifact to content module's build-parameters");
     }
+  }
+
+  /**
+   * Resolves the target-path for the new artifact entry by looking at
+   * existing entries in the content module's build-parameters.requires.
+   * Falls back to "resources/" if no existing entry provides a target-path.
+   */
+  private resolveTargetPath(requires: any[]): string {
+    const DEFAULT_TARGET_PATH = "resources/";
+
+    for (const req of requires) {
+      if (req["target-path"]) {
+        return req["target-path"];
+      }
+    }
+
+    return DEFAULT_TARGET_PATH;
   }
 }
