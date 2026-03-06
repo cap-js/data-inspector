@@ -68,7 +68,7 @@ function setCdsrc(projectFolder: string, config: Record<string, any>): void {
   if (fs.existsSync(cdsrcPath)) {
     cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
   }
-  cdsrc.data_inspector = { ...cdsrc.data_inspector, ...config };
+  cdsrc["data-inspector"] = { ...cdsrc["data-inspector"], ...config };
   fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
 }
 
@@ -82,7 +82,7 @@ function setPackageJsonConfig(projectFolder: string, config: Record<string, any>
   const pkgPath = join(projectFolder, "package.json");
   const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
   pkg.cds = pkg.cds || {};
-  pkg.cds.data_inspector = { ...pkg.cds.data_inspector, ...config };
+  pkg.cds["data-inspector"] = { ...pkg.cds["data-inspector"], ...config };
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2));
 }
 

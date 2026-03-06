@@ -120,12 +120,12 @@ The resulting `gen/cap-js-data-inspector-ui` folder is the single source of trut
 
 The default OData route destination is `srv-api`. If your project uses a different destination name, the build plugin resolves it automatically in this order:
 
-1. **Explicit configuration** — set `cds.data_inspector.destination` in your `.cdsrc.json` or `package.json`:
+1. **Explicit configuration** — set `cds.data-inspector.destination` in your `.cdsrc.json` or `package.json`:
 
    ```json
    {
      "cds": {
-       "data_inspector": {
+       "data-inspector": {
          "destination": "my-custom-srv-api"
        }
      }
@@ -140,12 +140,12 @@ The default OData route destination is `srv-api`. If your project uses a differe
 
 The `sap.cloud.service` property in the UI5 app's `manifest.json` is required for SAP Build Work Zone. The [`cds build`](#cds-build-plugin) plugin patches this value automatically when available:
 
-1. **Explicit configuration** — set `cds.data_inspector.cloudService` in your `.cdsrc.json` or `package.json`:
+1. **Explicit configuration** — set `cds.data-inspector.cloudService` in your `.cdsrc.json` or `package.json`:
 
    ```json
    {
      "cds": {
-       "data_inspector": {
+       "data-inspector": {
          "cloudService": "my.cloud.service"
        }
      }
@@ -154,7 +154,7 @@ The `sap.cloud.service` property in the UI5 app's `manifest.json` is required fo
 
 2. **Auto-detection** — the plugin scans your existing `app/*/webapp/manifest.json` for an existing `sap.cloud.service` value and uses it.
 
-3. **Skipped** — if neither source provides a value, `sap.cloud.service` is not patched.
+3. **Skipped** — if neither source provides a value, `sap.cloud.service` is not added in the UI5 app's manifest.json.
 
 
 #### MTA Deployment

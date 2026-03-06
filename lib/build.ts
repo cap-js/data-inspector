@@ -86,12 +86,12 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * Determines the backend destination name for OData routes.
    *
    * Resolution order:
-   *   1. cds.env.data_inspector.destination  (explicit config)
+   *   1. cds.env["data-inspector"].destination  (explicit config)
    *   2. Auto-detected from an existing UI5 app's xs-app.json
    *   3. "srv-api"  (CAP default)
    */
   private async resolveDestination(): Promise<string> {
-    const configured = cds.env.data_inspector?.destination;
+    const configured = cds.env["data-inspector"]?.destination;
     if (configured) return configured;
 
     const detected = await this.detectDestinationFromApps();
@@ -162,12 +162,12 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * Determines the sap.cloud.service value needed for Work Zone.
    *
    * Resolution order:
-   *   1. cds.env.data_inspector.cloudService  (explicit config)
+   *   1. cds.env["data-inspector"].cloudService  (explicit config)
    *   2. Auto-detected from an existing UI5 app's manifest.json
    *   3. null  (skipped silently)
    */
   private async resolveCloudService(): Promise<string | null> {
-    const configured = cds.env.data_inspector?.cloudService;
+    const configured = cds.env["data-inspector"]?.cloudService;
     if (configured) return configured;
 
     const detected = await this.detectCloudServiceFromApps();
