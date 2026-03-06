@@ -156,7 +156,6 @@ The `sap.cloud.service` property in the UI5 app's `manifest.json` is required fo
 
 3. **Skipped** — if neither source provides a value, `sap.cloud.service` is not added in the UI5 app's manifest.json.
 
-
 #### MTA Deployment
 
 The UI5 app produced by [`cds build`](#cds-build-plugin) in `gen/cap-js-data-inspector-ui` must be referenced by an `html5` module in your `mta.yaml` and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service. Running `cds add data-inspector` configures this automatically.
@@ -197,14 +196,13 @@ The UI5 app produced by [`cds build`](#cds-build-plugin) in `gen/cap-js-data-ins
 
 #### @sap/html5-app-deployer
 
-For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the UI5 app produced by [`cds build`](#cds-build-plugin) in `gen/cap-js-data-inspector-ui` to include it when creating your `html5-app-deployer` image. 
+For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the UI5 app produced by [`cds build`](#cds-build-plugin) in `gen/cap-js-data-inspector-ui` to include it when creating your `html5-app-deployer` image.
 
 1. Run `cds build` to produce the patched UI5 app in `gen/cap-js-data-inspector-ui`.
 2. Build the UI5 app for production: `cd gen/cap-js-data-inspector-ui && npm install && npm run build:cf`.
 3. Include the resulting `dist/` contents (specifically `datainspectorapp.zip`) in your `html5-app-deployer` image alongside your other UI5 apps.
 
 The exact steps depend on your deployment pipeline. Refer to the [SAP BTP documentation on HTML5 Application Deployer](https://help.sap.com/docs/btp/sap-business-technology-platform/deploy-content-using-html5-application-deployer) for details.
-
 
 #### Cloud Portal Service Configuration
 
@@ -378,7 +376,3 @@ We as members, contributors, and leaders pledge to make participation in our com
 ## Licensing
 
 Copyright 2025 SAP SE or an SAP affiliate company and data-inspector contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available [via the REUSE tool](https://api.reuse.software/info/github.com/cap-js/<your-project>)
-
-
-
-
