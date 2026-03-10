@@ -16,8 +16,6 @@ const logger = cds.log("data-inspector");
 type Entity = cds.entity;
 
 export class DataReader {
-  private _recordKeyElementsCache: string[] = undefined;
-
   /**
    * Implements GET handler for DataInspectorService.Data.
    *
@@ -203,7 +201,8 @@ export class DataReader {
    * @returns boolean
    */
   private _validateRecordKeys(entity: Entity, recordKey: string): boolean {
-    const recordKeyElements = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const recordKeyElements = entity.keyElements4DataInspector;
     const entityKeys: Set<string> = new Set<string>(recordKeyElements);
 
     // Each of the key elements must be present in an OData Query by ID request
@@ -302,30 +301,6 @@ export class DataReader {
   }
 
   /**
-   * Determines and returns the keys of an Entity.
-   * @param entity cds LinkedDefinition
-   * @returns list of key element names
-   */
-  private _getRecordKeyElements(entity: Entity): string[] {
-    if (this._recordKeyElementsCache) {
-      return this._recordKeyElementsCache;
-    }
-    // Keys could be composite - identify all key elements
-    const entityKeys: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        // @ts-expect-error
-        if (element.key && !CDS_ELEMENTS.includes(name)) {
-          entityKeys.push(name);
-        }
-      }
-    );
-    this._recordKeyElementsCache = entityKeys;
-    return entityKeys;
-  }
-
-  /**
    * Determines and returns all the elements of an Entity, excluding ones with HIDDEN_ANNOTATION.
    * @param entity cds LinkedDefinition
    * @returns list of all element names
@@ -364,7 +339,8 @@ export class DataReader {
    */
   private _constructRecordKey(entity: Entity, record): string {
     const keys: string[] = [];
-    const keyElements: string[] = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const keyElements = entity.keyElements4DataInspector;
     for (const key of keyElements) {
       keys.push(`${key}=${record[key]}`);
     }
@@ -402,7 +378,8 @@ export class DataReader {
       let r_select: string = req.req.query?.r_select;
       if (isSelectOnlyKeys) {
         // Select only the key elements
-        const recordKeyElements = this._getRecordKeyElements(entity);
+        // @ts-expect-error
+        const recordKeyElements = entity.keyElements4DataInspector;
         r_select = recordKeyElements.join(",");
       } else if (r_select === undefined) {
         // Identify columns to be selected to exclude hidden ones with HIDDEN_ANNOTATION
@@ -418,7 +395,8 @@ export class DataReader {
 
         // For data source service, key elements are automatically returned by CDS even if not explicitly specified in the select statement
         // For data source db, that is not the case, so explicitly add key elements to select statement if they don't come as part of the request
-        const recordKeyElements = this._getRecordKeyElements(entity);
+        // @ts-expect-error
+        const recordKeyElements = entity.keyElements4DataInspector;
         let missingKeys: string = "";
         for (const key of recordKeyElements) {
           if (!selectedRecordElements.includes(key)) {
@@ -559,7 +537,8 @@ export class DataReader {
     /**
      * Provide columns for SELECT; selecting only the key elements
      */
-    const recordKeyElements = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const recordKeyElements = entity.keyElements4DataInspector;
     const elements = recordKeyElements.map((el) => el.trim());
     cqn = cqn.columns(
       elements.map((el) => {
@@ -661,7 +640,8 @@ export class DataReader {
       return;
     }
 
-    const keyElements: string[] = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const keyElements = entity.keyElements4DataInspector;
 
     const auditLogService: AuditLogService = await cds.connect.to("audit-log");
     for (const record of records) {

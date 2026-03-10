@@ -52,14 +52,16 @@ export class EntityDefinitionReader {
         if (col === "*") {
           entityDefinition["name"] = entity.name;
           entityDefinition["title"] = entity["@title"] ?? null;
-          entityDefinition["dataSource"] = this._getDataSource(entity);
+          // @ts-expect-error
+          entityDefinition["dataSource"] = entity.dataSource4DataInspector;
           entityDefinition["elements"] = this._getEntityElements(entity);
         } else if (col?.ref[0] === "name") {
           entityDefinition["name"] = entity.name;
         } else if (col?.ref[0] === "title") {
           entityDefinition["title"] = entity["@title"] ?? null;
         } else if (col?.ref[0] === "dataSource") {
-          entityDefinition["dataSource"] = this._getDataSource(entity);
+          // @ts-expect-error
+          entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         } else if (col?.ref[0] === "elements") {
           entityDefinition["elements"] = this._getEntityElements(entity);
         }
@@ -107,7 +109,8 @@ export class EntityDefinitionReader {
       if (selectedColumns.includes("*")) {
         entityDefinition["name"] = entity.name;
         entityDefinition["title"] = entity["@title"] ?? null;
-        entityDefinition["dataSource"] = this._getDataSource(entity);
+        // @ts-expect-error
+        entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         entityDefinition["elements"] = this._getEntityElements(entity);
       } else {
         if (selectedColumns.includes("name")) {
@@ -117,7 +120,8 @@ export class EntityDefinitionReader {
           entityDefinition["title"] = entity["@title"] ?? null;
         }
         if (selectedColumns.includes("dataSource")) {
-          entityDefinition["dataSource"] = this._getDataSource(entity);
+          // @ts-expect-error
+          entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         }
         if (selectedColumns.includes("elements")) {
           entityDefinition["elements"] = this._getEntityElements(entity);
@@ -190,7 +194,8 @@ export class EntityDefinitionReader {
           );
         if (column === "dataSource")
           return (
-            this._getDataSource(entity).includes(value) &&
+            // @ts-expect-error
+            entity.dataSource4DataInspector.includes(value) &&
             entity[HIDDEN_ANNOTATION] !== true &&
             !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
             !CDS_ENTITIES.includes(entity["name"])
@@ -222,7 +227,8 @@ export class EntityDefinitionReader {
           );
         if (column === "dataSource")
           return (
-            this._getDataSource(entity) === value &&
+            // @ts-expect-error
+            entity.dataSource4DataInspector.includes(value) &&
             entity[HIDDEN_ANNOTATION] !== true &&
             !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
             !CDS_ENTITIES.includes(entity["name"])
@@ -244,7 +250,8 @@ export class EntityDefinitionReader {
       const nameValue = cqn["xpr"][4]["args"][1]["val"];
       const filterFunction = (entity: Entity) => {
         return (
-          this._getDataSource(entity) === dataSourceValue &&
+          // @ts-expect-error
+          entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
           !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
@@ -267,7 +274,8 @@ export class EntityDefinitionReader {
       const nameValue = cqn["xpr"][0]["args"][1]["val"];
       const filterFunction = (entity: Entity) => {
         return (
-          this._getDataSource(entity) === dataSourceValue &&
+          // @ts-expect-error
+          entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
           !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
@@ -340,29 +348,6 @@ export class EntityDefinitionReader {
         // @ts-expect-error
         e2[sortingColumn].localeCompare(e1[sortingColumn]);
     }
-  }
-
-  /**
-   * Returns the dataSource of the entity
-   * @param entity cds LinkedDefinition
-   * @returns dataSource of entity ["db" | "service"]
-   */
-  private _getDataSource(entity: Entity) {
-    if (!this._srvPrefixesCache) {
-      // Get all service name prefixes (with trailing dot) and keep it cached for data source determination
-      this._srvPrefixesCache = cds.model.all("service").map((srv) => srv.name + ".");
-    }
-
-    // If entity name starts with any service prefix, it's a service entity
-    if (this._srvPrefixesCache.some((srvName) => entity.name.startsWith(srvName))) {
-      return EntityDefinition.dataSource.Service;
-    }
-    // For DB: exclude entities with @cds.persistence.skip === true
-    if (entity["@cds.persistence.skip"] !== true) {
-      return EntityDefinition.dataSource.Db;
-    }
-    // If entity is defined inside the db schema cds file and annotated with @cds.persistence.skip then return unknown
-    return EntityDefinition.dataSource.Unknown;
   }
 
   /**

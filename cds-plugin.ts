@@ -1,4 +1,5 @@
 import cds from "@sap/cds";
+import "./srv/CsnRuntimeExtensions";
 
 const log = cds.log("data-inspector");
 
