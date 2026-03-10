@@ -1,0 +1,40 @@
+/**
+ * Configurator for xs-security.json scope management.
+ * Adds the data-inspector readonly scope to the host project's xs-security.json.
+ */
+const cds = require("@sap/cds-dk");
+const { exists } = cds.utils;
+
+import { AddPluginConfigurator } from "./AddPluginConfigurator";
+
+const log = cds.log("data-inspector");
+
+export class XsSecurityConfigurator extends AddPluginConfigurator {
+  get name(): string {
+    return "xs-security.json";
+  }
+
+  /**
+   * Check if xs-security.json exists.
+   */
+  async canRun(): Promise<boolean> {
+    return exists("xs-security.json");
+  }
+
+  /**
+   * Add data-inspector scope to xs-security.json using cds.add.merge
+   */
+  async run(): Promise<void> {
+    try {
+      await cds.add
+        .merge(__dirname, "../../templates/xs-security.json.hbs")
+        .into("xs-security.json", {
+          additions: [{ in: "scopes", where: { name: "$XSAPPNAME.capDataInspectorReadonly" } }],
+        });
+      log.debug("Added data-inspector scope to xs-security.json");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log.error(`Failed to update xs-security.json: ${message}`);
+    }
+  }
+}

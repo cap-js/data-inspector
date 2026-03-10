@@ -1,7 +1,7 @@
 {
   "name": "data-inspector-ui",
   "version": "0.0.1",
-  "description": "An SAP Fiori application.",
+  "description": "@cap-js/data-inspector plugin's own UI5 app, included as source code in the npm package, intended to be built during MTA build of dependent apps. Run cds add data-inspector for mta.yaml configuration or see plugin's README.",
   "keywords": [
     "ui5",
     "openui5",
@@ -21,7 +21,6 @@
   "scripts": {
     "deploy-config": "npx -p @sap/ux-ui5-tooling fiori add deploy-config cf",
     "build": "rimraf dist && ui5 build --include-task=generateCachebusterInfo",
-    "postbuild": "cpx xs-app.json dist/",
     "build:cf": "rimraf dist && ui5 build preload --clean-dest --config ui5-deploy.yaml --include-task=generateCachebusterInfo"
   }
 }
