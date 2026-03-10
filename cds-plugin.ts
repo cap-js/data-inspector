@@ -32,3 +32,6 @@ cds.on("bootstrap", (app) => {
 
 // @ts-ignore missing type
 cds.add?.register?.("data-inspector", require("./lib/add"));
+
+// @ts-ignore missing type
+cds.build?.register?.("data-inspector", require("./lib/build"));

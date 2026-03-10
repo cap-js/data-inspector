@@ -351,33 +351,6 @@ export class EntityDefinitionReader {
   }
 
   /**
-   * Returns the dataSource of the entity
-   * @param entity cds LinkedDefinition
-   * @returns dataSource of entity ["db" | "service"]
-   */
-  // private _getDataSource(entity: Entity) {
-  //   if (!this._srvPrefixesCache) {
-  //     // Get all service name prefixes (with trailing dot) and keep it cached for data source determination
-  //     this._srvPrefixesCache = cds.model
-  //       .all("service")
-  //       .map((srv) => srv.name + ".");
-  //   }
-
-  //   // If entity name starts with any service prefix, it's a service entity
-  //   if (
-  //     this._srvPrefixesCache.some((srvName) => entity.name.startsWith(srvName))
-  //   ) {
-  //     return EntityDefinition.dataSource.Service;
-  //   }
-  //   // For DB: exclude entities with @cds.persistence.skip === true
-  //   if (entity["@cds.persistence.skip"] !== true) {
-  //     return EntityDefinition.dataSource.Db;
-  //   }
-  //   // If entity is defined inside the db schema cds file and annotated with @cds.persistence.skip then return unknown
-  //   return EntityDefinition.dataSource.Unknown;
-  // }
-
-  /**
    * Constructs and returns a list of EntityColumn representing each element of the given entity
    * @param entity cds LinkedDefinition
    * @returns A list of EntityColumn
