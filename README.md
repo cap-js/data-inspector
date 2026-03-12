@@ -3,8 +3,10 @@
 # Data Inspector
 
 - [Data Inspector](#data-inspector)
-  - [About This Project](#about-this-project)
+  - [About this Project](#about-this-project)
     - [Features](#features)
+  - [Testing the Plugin Directly](#testing-the-plugin-directly)
+  - [The Data Inspector UI At A Glance](#the-data-inspector-ui-at-a-glance)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
     - [Installation](#installation)
@@ -21,7 +23,6 @@
       - [Cloud Portal Service Configuration](#cloud-portal-service-configuration)
       - [SAP Build Work Zone Configuration](#sap-build-work-zone-configuration)
     - [(Optional) flpSandbox.html Configuration for the SAPUI5 App Tile for Local Testing](#optional-flpsandboxhtml-configuration-for-the-sapui5-app-tile-for-local-testing)
-  - [Testing the Plugin Directly](#testing-the-plugin-directly)
   - [Support, Feedback, and Contribution](#support-feedback-and-contribution)
   - [Security / Disclosure](#security--disclosure)
   - [Code of Conduct](#code-of-conduct)
@@ -36,6 +37,68 @@
 - Provide `xsuaa` scope for access control. See [Authorization](#authorization).
 - Exclude specific entities and elements from being exposed by the plugin. See [Excluding Entities and Elements](#excluding-entities-and-elements).
 - Automatically log access to sensitive personal data using [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme). See [Audit Logging](#audit-logging).
+
+## Testing the Plugin Directly
+
+To quickly test and experience the plugin directly without a host CAP Node.js project in your local machine, use the NPM test workspace included in this repository.
+
+1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
+2. Install the dependencies: `npm i`
+3. Generate CDS model types by saving any .cds file from VS Code. For more details, refer to [CDS Typer](https://cap.cloud.sap/docs/tools/cds-typer).
+4. Create the test sqlite db:
+   1. `cd test`
+   2. `cds deploy -2 sqlite:db/testservice.db`
+   3. `cd ..`
+5. Run the test server: `npm run dev` 
+
+   The SAPUI5 app is launched in a web browser.
+7. Use the following credentials: 
+
+   Username: `alice`
+
+   Password: keep empty
+
+## The Data Inspector UI At A Glance
+
+1. **The landing**
+
+![landing](./screenshots/1-landing.png)
+
+2. **Selecting a data source**: Use the `Data Source` drop down menu. `Database` = raw data as existing in the database; `Service` = data as served by the CDS services.
+
+![data source](./screenshots/2-data-source.png)
+
+3. **Searching for an entity**: Use the `Entity Name` search field.
+
+![searching entity](./screenshots/3-search-by-entity-name.png)
+
+4. **Selecting an entity for inspection**: Press an entity, and the second column will appear, displaying its available elements.
+
+![selecting entity](./screenshots/4-selecting-entity.png)
+
+5. **Selecting elements of an entity for inspection**: Use the checkboxes to select the elements and press `Show Data`.
+
+![selection elements](./screenshots/5-selecting-elements.png)
+
+6. **Viewing the data content of the selected elements**: After pressing `Show Data`, the third column appears, showing the data of the selected elements. Press `More` to load the next page of the data.
+
+![viewing data](./screenshots/6-viewing-data-content.png)
+
+7. **Viewing the next page**: The next page is loaded after pressing `More`.
+
+![viewing more data](./screenshots/7-viewing-more.png)
+
+8. **Applying filter**: Press `Advanced Filter` to bring up the filter dialog.
+
+![applying filter](./screenshots/8-advanced-filter.png)
+
+9. **Putting filter condition in the Advanced Filter dialog**: Put your filter condition in the filter dialog and press `Apply`.
+
+![advanced filter dialog](./screenshots/9-advanced-filter-dialog.png)
+
+10. **Viewing filtered data**: After pressing `Apply`, the filtered data will be displayed.
+
+![viewing filtered data](./screenshots/10-viewing-filtered-data.png)
 
 ## Prerequisites
 
@@ -348,26 +411,6 @@ CAPDataInspectorDisplay: {
   ]
 }
 ```
-
-## Testing the Plugin Directly
-
-To quickly test the plugin directly without a host CAP Node.js project in your local machine, use the NPM test workspace included in this repository.
-
-1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
-2. Install the dependencies: `npm i`
-3. Generate CDS model types by saving any .cds file from VS Code. For more details, refer to [CDS Typer](https://cap.cloud.sap/docs/tools/cds-typer).
-4. Create the test sqlite db:
-   1. `cd test`
-   2. `cds deploy -2 sqlite:db/testservice.db`
-   3. `cd ..`
-5. Run the test server: `npm run dev` 
-
-   The SAPUI5 app is launched in a web browser.
-7. Use the following credentials: 
-
-   Username: `alice`
-
-   Password: keep empty
 
 ## Support, Feedback, and Contribution
 

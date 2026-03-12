@@ -1,7 +1,7 @@
 {
   "name": "data-inspector-ui",
   "version": "0.0.1",
-  "description": "@cap-js/data-inspector plugin's own UI5 app, included as source code in the npm package, intended to be built during MTA build of dependent apps. Run cds add data-inspector for mta.yaml configuration or see plugin's README.",
+  "description": "@cap-js/data-inspector plugin's own UI5 app, included as source code in the npm package, intended to be built and included in the dependent app's MTAR file (for deployment using MTA) or the HTML5 apps content image (for deployment using @sap/html5-app-deployer). See the @cap-js/data-inspector README for detail.",
   "keywords": [
     "ui5",
     "openui5",
