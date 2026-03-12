@@ -49,10 +49,11 @@ To quickly test and experience the plugin directly without a host CAP Node.js pr
    1. `cd test`
    2. `cds deploy -2 sqlite:db/testservice.db`
    3. `cd ..`
-5. Run the test server: `npm run dev` 
+5. Run the test server: `npm run dev`
 
    The SAPUI5 app is launched in a web browser.
-7. Use the following credentials: 
+
+6. Use the following credentials:
 
    Username: `alice`
 
@@ -118,7 +119,7 @@ Install the plugin in your CAP Node.js project.
 npm install @cap-js/data-inspector
 ```
 
-Running your CAP project locally with `cds serve` or `cds watch` serves the SAPUI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`. Make sure to add neccessary authorizataion scope to your mock user. See [Authorization](#authorization).
+Running your CAP project locally with `cds serve` or `cds watch` serves the SAPUI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`. Make sure to add necessary authorization scope to your mock user. See [Authorization](#authorization).
 
 ### Setup with `cds add data-inspector`
 
@@ -142,7 +143,7 @@ Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security
 
 To hide entities or elements from the Data Inspector, annotate them with `@HideFromDataInspector` in your CDS definitions.
 
-**Example** 
+**Example**
 
 Using `@HideFromDataInspector` annotation in the CDS entity definitions:
 
