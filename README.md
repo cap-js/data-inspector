@@ -93,13 +93,15 @@ To quickly test and experience the plugin directly without a host CAP Node.js pr
 
 ![applying filter](./screenshots/8-advanced-filter.png)
 
-9. **Putting filter condition in the Advanced Filter dialog**: Put your filter condition in the filter dialog and press `Apply`.
+9. **Adding filter condition in the Advanced Filter dialog**: Add your filter condition in the filter dialog and press `Apply`. 
 
 ![advanced filter dialog](./screenshots/9-advanced-filter-dialog.png)
 
 10. **Viewing filtered data**: After pressing `Apply`, the filtered data will be displayed.
 
 ![viewing filtered data](./screenshots/10-viewing-filtered-data.png)
+
+**Recommendation**: Select only the required columns and add filters to limit the displayed data. 
 
 ## Prerequisites
 
