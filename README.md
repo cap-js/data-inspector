@@ -125,6 +125,8 @@ The following changes are applied by `cds add data-inspector`:
 
 Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` file to grant read access to the plugin's SAPUI5 app and the underlying OData service. For local development and testing, add the scope `capDataInspectorReadonly` to your mock user. For setting up a mock user, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication).
 
+> Note: Running `cds add data-inspector` adds the scope `capDataInspectorReadonly` in your `xs-security.json` automatically. Make sure to use this in your prefered `roles` and `role-collections`.
+
 > Note: `@cap-js/data-inspector` reads data only through the available CDS services, exposing data based on `xsuaa` scopes granted to the entities and the user. It doesn't implement own access control. It doesn't perform any direct SQL queries.
 
 ### Excluding Entities and Elements
@@ -212,9 +214,9 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 
 #### MTA Deployment
 
-The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-js-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
+> Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` automatically. Make sure to review the produced changes before committing.
 
-> Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` automatically.
+The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-js-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
 
 1. Add an `html5` module as follows:
 
@@ -262,13 +264,11 @@ The exact steps depend on your deployment pipeline. For details, refer to [Deplo
 
 #### Cloud Portal Service Configuration
 
-If Cloud Portal service is detected in your `mta.yaml` file (`service: portal`, `service-plan: standard`) when running `cds add data-inspector`, it adds the following configuration automatically:
+> Note: Running `cds add data-inspector` adds the following required configurations in your `portal-site/CommonDataModel.json` automatically if Cloud Portal service is detected in your `mta.yaml` file (`service: portal`, `service-plan: standard`). Make sure to review the produced changes before committing.
 
-- Add a **catalog** and **group** entry for the data-inspector plugin's SAPUI5 application tile to `portal-site/CommonDataModel.json`.
-- Create an **i18n properties file** with translatable titles for the catalog and group entries.
-- Append the `capDataInspectorGroupId` group id to the site's `groupsOrder` so that the tile is visible by default in SAP Fiori launchpad. This applies only if exactly one `site` entity is found. If you have multiple sites, manually add the group ID to `groupsOrder` in your preferred site.
+Perform the following steps to configure the data-inspector tile:
 
-To configure the data-inspector tile manually without running `cds add data-inspector`, add the following entries to your `CommonDataModel.json`:
+1. Add a **catalog** and a **group** entry for the data-inspector plugin's SAPUI5 application tile to your `portal-site/CommonDataModel.json`.
 
 In an existing `catalog` (`payload.catalogs[*].payload.viz`):
 
@@ -336,6 +336,9 @@ You can also create a new `catalog` and `group` for the data-inspector tile. `cd
   }
 }
 ```
+
+2. Create an **i18n properties file** with translatable titles for the catalog and group entries. `cds add data-inspector` does this automatically.
+3. Append the `capDataInspectorGroupId` group id to your preferred site's `groupsOrder` so that the tile is visible by default in SAP Fiori launchpad. `cds add data-inspector` does this automatically only if exactly one `site` entity is found. If you have multiple sites, manually add the group ID to `groupsOrder` in your preferred site after running `cds add data-inspector`.
 
 #### SAP Build Work Zone Configuration
 
