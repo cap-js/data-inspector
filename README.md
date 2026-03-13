@@ -85,7 +85,7 @@ To quickly test and experience the plugin directly without a dependent project i
 
 ![viewing filtered data](./screenshots/6-viewing-filtered-data.png)
 
-**Recommendation**: Select only the required columns and add filters to limit the displayed data. 
+**Recommendation**: Select only the required columns and add filters to limit the displayed data.
 
 ## Prerequisites
 
