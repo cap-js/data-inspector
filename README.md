@@ -30,7 +30,7 @@
 
 ## About this Project
 
-`@cap-js/data-inspector` is an SAP Cloud Application Programming Model Node.js plugin to view data content of core data services (CDS) [`entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a SAP Cloud Application Programming Model Node.js application. It comes with an SAPUI5 app consumable out of the box.
+`@cap-js/data-inspector` is an SAP Cloud Application Programming Model Node.js plugin to view data content of core data services (CDS) [`entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in an SAP Cloud Application Programming Model Node.js application. It comes with an SAPUI5 app consumable out of the box.
 
 ### Features
 
@@ -65,41 +65,25 @@ To quickly test and experience the plugin directly without a dependent project i
 
 ![landing](./screenshots/1-landing.png)
 
-2. **Selecting a data source**: Use the `Data Source` drop down menu. `Database` = raw data as existing in the database; `Service` = data as served by the CDS services.
+2. **Finding an entity**: (1) Use the `Data Source` drop down menu. `Database` = raw data as existing in the database; `Service` = data as served by the CDS services. (2) Use the `Entity Name` search field.
 
-![data source](./screenshots/2-data-source.png)
+![data source](./screenshots/2-finding-entity.png)
 
-3. **Searching for an entity**: Use the `Entity Name` search field.
+3. **Selecting elements of an entity for inspection**: (1) Press the entity to bring up the second column. (2) Use the checkboxes to select your desired elements. (3) Press `Show Data` to display the data content.
 
-![searching entity](./screenshots/3-search-by-entity-name.png)
+![selection elements](./screenshots/3-selecting-target-data.png)
 
-4. **Selecting an entity for inspection**: Press an entity, and the second column will appear, displaying its available elements.
+4. **Viewing the data content of the selected elements**: After pressing `Show Data`, the third column appears and automatically expands into fullscreen, showing the data of the selected elements. Press `More` to load the next page of the data. Press `Advanced Filter` to bring up the filter dialog.
 
-![selecting entity](./screenshots/4-selecting-entity.png)
+![viewing data](./screenshots/4-viewing-data.png)
 
-5. **Selecting elements of an entity for inspection**: Use the checkboxes to select the elements and press `Show Data`.
+5. **Putting filter condition in the Advanced Filter dialog**: Put your filter condition in the filter dialog and press `Apply`.
 
-![selection elements](./screenshots/5-selecting-elements.png)
+![advanced filter dialog](./screenshots/5-advanced-filter-dialog.png)
 
-6. **Viewing the data content of the selected elements**: After pressing `Show Data`, the third column appears, showing the data of the selected elements. Press `More` to load the next page of the data.
+6. **Viewing filtered data**: After pressing `Apply`, the filtered data will be displayed.
 
-![viewing data](./screenshots/6-viewing-data-content.png)
-
-7. **Viewing the next page**: The next page is loaded after pressing `More`.
-
-![viewing more data](./screenshots/7-viewing-more.png)
-
-8. **Applying filter**: Press `Advanced Filter` to bring up the filter dialog.
-
-![applying filter](./screenshots/8-advanced-filter.png)
-
-9. **Putting filter condition in the Advanced Filter dialog**: Put your filter condition in the filter dialog and press `Apply`.
-
-![advanced filter dialog](./screenshots/9-advanced-filter-dialog.png)
-
-10. **Viewing filtered data**: After pressing `Apply`, the filtered data will be displayed.
-
-![viewing filtered data](./screenshots/10-viewing-filtered-data.png)
+![viewing filtered data](./screenshots/6-viewing-filtered-data.png)
 
 ## Prerequisites
 
