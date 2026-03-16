@@ -66,33 +66,29 @@ To quickly test and experience the plugin directly without a dependent project i
 ![landing](./screenshots/1-landing.png)
 
 2. **Finding an entity**:
-     
-    1. Use the `Data Source` drop down menu. 
-     
-      > `Database` is raw data that exists in the database. 
-      > `Service` is data that is served by the CDS services.
-     
-    2. Use the `Entity Name` search field.
+   1. Use the `Data Source` drop down menu.
+   > `Database` is raw data that exists in the database.
+   > `Service` is data that is served by the CDS services.
+   2. Use the `Entity Name` search field.
 
 ![data source](./screenshots/2-finding-entity.png)
 
 3. **Selecting elements of an entity for inspection**:
-
-    1. Select the entity to show the elements. They appear as a second column on the screen.
-    2. Use the checkboxes to select your desired elements.
-    3. Choose `Show Data` to display the data content.
+   1. Select the entity to show the elements. They appear as a second column on the screen.
+   2. Use the checkboxes to select your desired elements.
+   3. Choose `Show Data` to display the data content.
 
 ![selection elements](./screenshots/3-selecting-target-data.png)
 
 4. **Viewing the data content of the selected elements**:
 
-    After choosing `Show Data`, the third column appears and automatically expands into fullscreen, showing the data of the selected elements. Choose `More` to load the next page of the data. Choose `Advanced Filter` to bring up the filter dialog.
+   After choosing `Show Data`, the third column appears and automatically expands into fullscreen, showing the data of the selected elements. Choose `More` to load the next page of the data. Choose `Advanced Filter` to bring up the filter dialog.
 
 ![viewing data](./screenshots/4-viewing-data.png)
 
 5. **Adding filter conditions in the Advanced Filter dialog**:
 
-    Add your filter conditions in the filter dialog and choose `Apply`.
+   Add your filter conditions in the filter dialog and choose `Apply`.
 
 ![advanced filter dialog](./screenshots/5-advanced-filter-dialog.png)
 
@@ -102,7 +98,7 @@ To quickly test and experience the plugin directly without a dependent project i
 
 ![viewing filtered data](./screenshots/6-viewing-filtered-data.png)
 
-**Recommendation**: 
+**Recommendation**:
 
 Select only the required columns and add filters to limit the data that is displayed.
 
