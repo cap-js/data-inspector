@@ -16,8 +16,6 @@ const logger = cds.log("data-inspector");
 type Entity = cds.entity;
 
 export class DataReader {
-  private _recordKeyElementsCache: string[] = undefined;
-
   /**
    * Implements GET handler for DataInspectorService.Data.
    *
@@ -60,9 +58,7 @@ export class DataReader {
       // Validate recordKey
       const recordKey = req.params[0]["recordKey"]; // 'keyElementName=value', 'keyElement1Name=value&keyElement2Name=value', etc.
       if (!this._validateRecordKeys(entity, recordKey)) {
-        req.reject(HttpStatusCode.BadRequest, `INVALID_RECORD_KEY`, [
-          recordKey,
-        ]);
+        req.reject(HttpStatusCode.BadRequest, `INVALID_RECORD_KEY`, [recordKey]);
       }
 
       // Transform the supplied recordKey to r_filter condition for building CQN
@@ -96,18 +92,12 @@ export class DataReader {
     const service = cds.model
       .all("service")
       .find((service) => entity.name.startsWith(service.name + "."));
-    const dataSource =
-      service !== undefined ? cds.services[service.name] : cds.services.db;
+    const dataSource = service !== undefined ? cds.services[service.name] : cds.services.db;
 
     /**
      * Select data from the determined data source
      */
-    const cqn = this._constructCqn(
-      req,
-      entity,
-      isSelectOnlyKeys,
-      r_filterFromRecordKey
-    );
+    const cqn = this._constructCqn(req, entity, isSelectOnlyKeys, r_filterFromRecordKey);
 
     let records;
     try {
@@ -132,8 +122,7 @@ export class DataReader {
      * Case 5: $top = 0 => no nextLink
      */
     const maxPageSize = entity[SELECT_MAX_PAGE_ANNOTATION] ?? MAX_PAGE_SIZE; // Respect @cds.query.limit.max if defined on the entity or the service
-    const defaultPageSize =
-      entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
+    const defaultPageSize = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
     // @ts-expect-error
     const top = req.req.query.$top;
     if (
@@ -145,13 +134,8 @@ export class DataReader {
       if (top) {
         limit = Number(top) > maxPageSize ? maxPageSize : Number(top);
       }
-      const nextTokenOffset =
-        Number(cqn.SELECT.limit.offset.val) + Number(limit);
-      const nextPageProbeCqn = this._constructNextPageProbeCqn(
-        req,
-        entity,
-        nextTokenOffset
-      );
+      const nextTokenOffset = Number(cqn.SELECT.limit.offset.val) + Number(limit);
+      const nextPageProbeCqn = this._constructNextPageProbeCqn(req, entity, nextTokenOffset);
 
       let result;
       try {
@@ -178,10 +162,7 @@ export class DataReader {
     }
 
     // Process /$count request (plain count)
-    if (
-      req.query.SELECT.columns?.length === 1 &&
-      req.query.SELECT.columns[0].as === "$count"
-    ) {
+    if (req.query.SELECT.columns?.length === 1 && req.query.SELECT.columns[0].as === "$count") {
       return [{ $count: records[0].$count }];
     }
 
@@ -220,7 +201,8 @@ export class DataReader {
    * @returns boolean
    */
   private _validateRecordKeys(entity: Entity, recordKey: string): boolean {
-    const recordKeyElements = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const recordKeyElements = entity.keyElements4DataInspector;
     const entityKeys: Set<string> = new Set<string>(recordKeyElements);
 
     // Each of the key elements must be present in an OData Query by ID request
@@ -246,9 +228,7 @@ export class DataReader {
    * @param req Request object
    * @returns Entity name
    */
-  private _determineEntityFromFilterParam(
-    req: cds.Request
-  ): Entity | undefined {
+  private _determineEntityFromFilterParam(req: cds.Request): Entity | undefined {
     // @ts-expect-error
     const filterString = req.req.query?.$filter;
 
@@ -302,10 +282,7 @@ export class DataReader {
     const selectColumns: string[] = [];
 
     // Process /$count request (plain count)
-    if (
-      req.query.SELECT.columns?.length === 1 &&
-      req.query.SELECT.columns[0].as === "$count"
-    ) {
+    if (req.query.SELECT.columns?.length === 1 && req.query.SELECT.columns[0].as === "$count") {
       return [];
     }
     for (const col of req.query.SELECT.columns) {
@@ -321,30 +298,6 @@ export class DataReader {
       }
     }
     return selectColumns;
-  }
-
-  /**
-   * Determines and returns the keys of an Entity.
-   * @param entity cds LinkedDefinition
-   * @returns list of key element names
-   */
-  private _getRecordKeyElements(entity: Entity): string[] {
-    if (this._recordKeyElementsCache) {
-      return this._recordKeyElementsCache;
-    }
-    // Keys could be composite - identify all key elements
-    const entityKeys: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        // @ts-expect-error
-        if (element.key && !CDS_ELEMENTS.includes(name)) {
-          entityKeys.push(name);
-        }
-      }
-    );
-    this._recordKeyElementsCache = entityKeys;
-    return entityKeys;
   }
 
   /**
@@ -386,7 +339,8 @@ export class DataReader {
    */
   private _constructRecordKey(entity: Entity, record): string {
     const keys: string[] = [];
-    const keyElements: string[] = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const keyElements = entity.keyElements4DataInspector;
     for (const key of keyElements) {
       keys.push(`${key}=${record[key]}`);
     }
@@ -414,10 +368,7 @@ export class DataReader {
     /**
      * Handle plain /$count
      */
-    if (
-      req.query.SELECT.columns?.length === 1 &&
-      req.query.SELECT.columns[0].as === "$count"
-    ) {
+    if (req.query.SELECT.columns?.length === 1 && req.query.SELECT.columns[0].as === "$count") {
       cqn = cqn.columns({ func: "count", as: "$count", args: [{ val: 1 }] });
     } else {
       /**
@@ -427,7 +378,8 @@ export class DataReader {
       let r_select: string = req.req.query?.r_select;
       if (isSelectOnlyKeys) {
         // Select only the key elements
-        const recordKeyElements = this._getRecordKeyElements(entity);
+        // @ts-expect-error
+        const recordKeyElements = entity.keyElements4DataInspector;
         r_select = recordKeyElements.join(",");
       } else if (r_select === undefined) {
         // Identify columns to be selected to exclude hidden ones with HIDDEN_ANNOTATION
@@ -437,17 +389,14 @@ export class DataReader {
         const selectedRecordElements = r_select.split(",");
         for (const elementName of selectedRecordElements) {
           if (!entityElements.includes(elementName)) {
-            req.reject(
-              HttpStatusCode.BadRequest,
-              `INVALID_ELEMENT_IN_R_SELECT`,
-              [r_select]
-            );
+            req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_SELECT`, [r_select]);
           }
         }
 
         // For data source service, key elements are automatically returned by CDS even if not explicitly specified in the select statement
         // For data source db, that is not the case, so explicitly add key elements to select statement if they don't come as part of the request
-        const recordKeyElements = this._getRecordKeyElements(entity);
+        // @ts-expect-error
+        const recordKeyElements = entity.keyElements4DataInspector;
         let missingKeys: string = "";
         for (const key of recordKeyElements) {
           if (!selectedRecordElements.includes(key)) {
@@ -499,16 +448,10 @@ export class DataReader {
         // This will have a limitation of returning HTTP 500 error instead of HTTP 400 when invalid element names are supplied in r_filter
         cqn = cqn.where(expr);
       } catch (error) {
-        logger.error(
-          "Failed to parse the r_filter query parameter",
-          r_filter,
-          error
-        );
+        logger.error("Failed to parse the r_filter query parameter", r_filter, error);
         req.reject(
           HttpStatusCode.BadRequest,
-          cds["i18n"].messages.at("INVALID_R_FILTER_QUERY_PARAM") +
-            ":" +
-            error.message
+          cds["i18n"].messages.at("INVALID_R_FILTER_QUERY_PARAM") + ":" + error.message
         );
       }
     }
@@ -530,11 +473,7 @@ export class DataReader {
       // validate the supplied element names for r_orderby
       for (const element of orderbyElements) {
         if (!entityElements.includes(element)) {
-          req.reject(
-            HttpStatusCode.BadRequest,
-            `INVALID_ELEMENT_IN_R_ORDERBY`,
-            [r_orderby]
-          );
+          req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_ORDERBY`, [r_orderby]);
         }
       }
       // @ts-expect-error
@@ -545,8 +484,7 @@ export class DataReader {
      * Handle $skip and $top - https://cap.cloud.sap/docs/guides/providing-services#pagination-sorting
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
-    let limit: number =
-      entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
+    let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
     // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
@@ -593,17 +531,14 @@ export class DataReader {
    * @param nextTokenOffset Next page offset value
    * @returns cds CQN
    */
-  private _constructNextPageProbeCqn(
-    req: cds.Request,
-    entity: Entity,
-    nextTokenOffset: number
-  ) {
+  private _constructNextPageProbeCqn(req: cds.Request, entity: Entity, nextTokenOffset: number) {
     let cqn = cds.ql.SELECT.from(entity);
 
     /**
      * Provide columns for SELECT; selecting only the key elements
      */
-    const recordKeyElements = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const recordKeyElements = entity.keyElements4DataInspector;
     const elements = recordKeyElements.map((el) => el.trim());
     cqn = cqn.columns(
       elements.map((el) => {
@@ -654,8 +589,7 @@ export class DataReader {
      * Handle $skip and $top - https://cap.cloud.sap/docs/guides/providing-services#pagination-sorting
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
-    let limit: number =
-      entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
+    let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
     // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
@@ -701,13 +635,13 @@ export class DataReader {
       return;
     }
 
-    const sensitiveElements: string[] =
-      this._getRecordSensitiveElements(entity);
+    const sensitiveElements: string[] = this._getRecordSensitiveElements(entity);
     if (sensitiveElements.length === 0) {
       return;
     }
 
-    const keyElements: string[] = this._getRecordKeyElements(entity);
+    // @ts-expect-error
+    const keyElements = entity.keyElements4DataInspector;
 
     const auditLogService: AuditLogService = await cds.connect.to("audit-log");
     for (const record of records) {

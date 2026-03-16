@@ -8,6 +8,8 @@
   "private": true,
   "main": "cds-plugin.js",
   "scripts": {
+    "lint": "npx eslint .",
+    "prettier:check": "npx prettier --check .",
     "dev": "cds watch test/ --include .. --open data-inspector-ui",
     "prebuild": "rimraf gen && rimraf @cds-models",
     "build": "npm run generate-types && tsc && npm run copy:cds && npm run copy:package.json",
@@ -15,16 +17,17 @@
     "copy:cds": "node -e \"require('fs').copyFileSync('srv/DataInspectorService.cds', 'gen/srv/DataInspectorService.cds')\" && node -e \"require('fs').copyFileSync('srv/DataInspectorServiceAnnotations.cds', 'gen/srv/DataInspectorServiceAnnotations.cds')\" && node -e \"require('fs').copyFileSync('srv/index.cds', 'gen/srv/index.cds')\" && node -e \"require('fs').copyFileSync('index.cds', 'gen/index.cds')\"",
     "copy:package.json": "node -e \"require('fs').copyFileSync('package.json', 'gen/package.json')\"",
     "copy:i18n": "node -e \"require('fs').cpSync('_i18n', 'gen/_i18n', { recursive: true })\"",
-    "postbuild": "npm run build:ui && npm run copy:ui && npm run copy:i18n",
-    "build:ui": "cd app/data-inspector-ui && npm install && npm run build:cf",
-    "copy:ui": "node -e \"require('fs').cpSync('app/data-inspector-ui/dist', 'gen/app/data-inspector-ui', { recursive: true })\"",
+    "copy:templates": "node -e \"require('fs').cpSync('templates', 'gen/templates/', { recursive: true })\"",
+    "postbuild": "npm run copy:ui && npm run copy:i18n && npm run copy:templates",
+    "copy:ui": "node -e \"require('fs').cpSync('app/data-inspector-ui', 'gen/app/data-inspector-ui', { recursive: true })\"",
     "tar": "npm run build && cd gen && npm pack",
     "watch-data-inspector-ui": "cds watch --open data-inspector-ui/webapp/index.html?sap-ui-xx-viewCache=false",
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
   "peerDependencies": {
-    "@sap/cds": ">=9"
+    "@sap/cds": ">=9",
+    "@sap/cds-dk": ">=9"
   },
   "devDependencies": {
     "@cap-js/audit-logging": "^1.1.1",
@@ -37,7 +40,9 @@
     "c8": "^10.1.3",
     "chai": "^4.5.0",
     "cross-env": "^10.1.0",
+    "eslint": "^10.0.0",
     "mocha": "^11.7.5",
+    "prettier": "^3.8.1",
     "rimraf": "^6.1.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
@@ -47,6 +52,8 @@
     "@cds-models",
     "srv",
     "app",
+    "lib",
+    "templates",
     "cds-plugin.js",
     "index.cds",
     "package.json",

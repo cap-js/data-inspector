@@ -1,0 +1,11 @@
+modules:
+  - name: capjsdatainspectorapp
+    type: html5
+    path: gen/cap-js-data-inspector-ui
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+        - npm install
+        - npm run build:cf
+      supported-platforms: []
