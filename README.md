@@ -6,7 +6,7 @@
   - [About this Project](#about-this-project)
     - [Features](#features)
   - [Testing the Plugin Directly](#testing-the-plugin-directly)
-  - [The Data Inspector Plugin UI At A Glance](#the-data-inspector-plugin-ui-at-a-glance)
+  - [Data Inspector Plugin UI at a Glance](#data-inspector-plugin-ui-at-a-glance)
   - [Prerequisites](#prerequisites)
   - [Setup](#setup)
     - [Installation](#installation)
@@ -30,7 +30,7 @@
 
 ## About this Project
 
-`@cap-js/data-inspector` is an SAP Cloud Application Programming Model Node.js plugin to view data content of core data services (CDS) [`entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in an SAP Cloud Application Programming Model Node.js application. It comes with an SAPUI5 app consumable out of the box.
+`@cap-js/data-inspector` is an SAP Cloud Application Programming Model (CAP) Node.js plugin to view data content of core data services (CDS) [`entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a SAP Cloud Application Programming Model Node.js application. It comes with an SAPUI5 app consumable out of the box.
 
 ### Features
 
@@ -59,39 +59,58 @@ To quickly test and experience the plugin directly without a dependent project i
 
    Password: keep empty
 
-## The Data Inspector Plugin UI At A Glance
+## Data Inspector Plugin UI at a Glance
 
-1. **The landing**
+1. **The landing page:**
 
 ![landing](./screenshots/1-landing.png)
 
-2. **Finding an entity**: (1) Use the `Data Source` drop down menu. `Database` = raw data as existing in the database; `Service` = data as served by the CDS services. (2) Use the `Entity Name` search field.
+2. **Finding an entity**:
+     
+    1. Use the `Data Source` drop down menu. 
+     
+      > `Database` is raw data that exists in the database. 
+      > `Service` is data that is served by the CDS services.
+     
+    2. Use the `Entity Name` search field.
 
 ![data source](./screenshots/2-finding-entity.png)
 
-3. **Selecting elements of an entity for inspection**: (1) Press the entity to bring up the second column. (2) Use the checkboxes to select your desired elements. (3) Press `Show Data` to display the data content.
+3. **Selecting elements of an entity for inspection**:
+
+    1. Select the entity to show the elements. They appear as a second column on the screen.
+    2. Use the checkboxes to select your desired elements.
+    3. Choose `Show Data` to display the data content.
 
 ![selection elements](./screenshots/3-selecting-target-data.png)
 
-4. **Viewing the data content of the selected elements**: After pressing `Show Data`, the third column appears and automatically expands into fullscreen, showing the data of the selected elements. Press `More` to load the next page of the data. Press `Advanced Filter` to bring up the filter dialog.
+4. **Viewing the data content of the selected elements**:
+
+    After choosing `Show Data`, the third column appears and automatically expands into fullscreen, showing the data of the selected elements. Choose `More` to load the next page of the data. Choose `Advanced Filter` to bring up the filter dialog.
 
 ![viewing data](./screenshots/4-viewing-data.png)
 
-5. **Putting filter condition in the Advanced Filter dialog**: Put your filter condition in the filter dialog and press `Apply`.
+5. **Adding filter conditions in the Advanced Filter dialog**:
+
+    Add your filter conditions in the filter dialog and choose `Apply`.
 
 ![advanced filter dialog](./screenshots/5-advanced-filter-dialog.png)
 
-6. **Viewing filtered data**: After pressing `Apply`, the filtered data will be displayed.
+6. **Viewing filtered data**:
+
+   The filtered data is displayed.
 
 ![viewing filtered data](./screenshots/6-viewing-filtered-data.png)
 
-**Recommendation**: Select only the required columns and add filters to limit the displayed data.
+**Recommendation**: 
+
+Select only the required columns and add filters to limit the data that is displayed.
 
 ## Prerequisites
 
 1. Ensure your project uses `@sap/cds` version 9.
 2. Set up the `xsuaa` SAP BTP service for authorization.
-3. Optionally add [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) and the `auditlog` SAP BTP service for audit logging.
+3. Optionally, add [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) and the `auditlog` SAP BTP service for audit logging.
 
 ## Setup
 
@@ -111,7 +130,7 @@ Running your project locally with `cds serve` or `cds watch` serves the SAPUI5 a
 
 Run `cds add data-inspector` to automatically add `@cap-js/data-inspector` configuration to your project.
 
-> Note: Running `cds add data-inspector` is optional. To add the required configuration manually, refer the relevant sections in this document.
+> Note: Running `cds add data-inspector` is optional. To add the required configuration manually, refer to the relevant sections in this document.
 
 The following changes are applied by `cds add data-inspector`:
 
@@ -131,7 +150,7 @@ Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security
 
 ### Excluding Entities and Elements
 
-To hide entities or elements from the Data Inspector, annotate them with `@HideFromDataInspector` in your core data services (CDS) definitions.
+To hide entities or elements from the Data Inspector, annotate them with `@HideFromDataInspector` in your CDS definitions.
 
 **Example**
 
@@ -164,11 +183,11 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 
 #### CDS Build Plugin
 
-`@cap-js/data-inspector` ships a core data services (CDS) build plugin that runs during your `cds build`. The plugin:
+`@cap-js/data-inspector` ships a CDS build plugin that runs during your `cds build`. The plugin:
 
 1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-js-data-inspector-ui` directory.
-2. **Patches the SAPUI5 app's `xs-app.json` file** with your Node.js OData server destination name when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. See [Custom Destination Name](#custom-destination-name).
-3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. See [sap.cloud.service Configuration](#sapcloudservice-configuration).
+2. **Patches the SAPUI5 app's `xs-app.json` file** with your Node.js OData server destination name when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [Custom Destination Name](#custom-destination-name).
+3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [sap.cloud.service Configuration](#sapcloudservice-configuration).
 
 The resulting `gen/cap-js-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
 
@@ -214,7 +233,7 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 
 #### MTA Deployment
 
-> Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` automatically. Make sure to review the produced changes before committing.
+> Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` file automatically. Make sure to review the produced changes before committing.
 
 The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-js-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
 
@@ -268,7 +287,7 @@ The exact steps depend on your deployment pipeline. For details, refer to [Deplo
 
 Perform the following steps to configure the data-inspector tile:
 
-1. Add a **catalog** and a **group** entry for the data-inspector plugin's SAPUI5 application tile to your `portal-site/CommonDataModel.json`.
+1. Add a **catalog** and a **group** entry for the data-inspector plugin's SAPUI5 application tile to your `portal-site/CommonDataModel.json` file.
 
 In an existing `catalog` (`payload.catalogs[*].payload.viz`):
 
@@ -338,7 +357,7 @@ You can also create a new `catalog` and `group` for the data-inspector tile. `cd
 ```
 
 2. Create an **i18n properties file** with translatable titles for the catalog and group entries. `cds add data-inspector` does this automatically.
-3. Append the `capDataInspectorGroupId` group id to your preferred site's `groupsOrder` so that the tile is visible by default in SAP Fiori launchpad. `cds add data-inspector` does this automatically only if exactly one `site` entity is found. If you have multiple sites, manually add the group ID to `groupsOrder` in your preferred site after running `cds add data-inspector`.
+3. Append the `capDataInspectorGroupId` group ID to your preferred site's `groupsOrder` so that the tile is visible by default in SAP Fiori launchpad. `cds add data-inspector` does this automatically only if exactly one `site` entity is found. If you have multiple sites, manually add the group ID to `groupsOrder` in your preferred site after running `cds add data-inspector`.
 
 #### SAP Build Work Zone Configuration
 
