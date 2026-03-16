@@ -67,8 +67,8 @@ To quickly test and experience the plugin directly without a dependent project i
 
 2. **Finding an entity**:
    1. Use the `Data Source` drop down menu.
-   > `Database` is raw data that exists in the database.
-   > `Service` is data that is served by the CDS services.
+      > `Database` is raw data that exists in the database.
+      > `Service` is data that is served by the CDS services.
    2. Use the `Entity Name` search field.
 
 ![data source](./screenshots/2-finding-entity.png)
