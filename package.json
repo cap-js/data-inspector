@@ -73,6 +73,7 @@
           "users": {
             "alice": {
               "roles": [
+                "admin",
                 "capDataInspectorReadonly"
               ]
             }
