@@ -51,7 +51,11 @@ export async function createTestProject(
   if (options.mta) addOptions.push("mta");
 
   const addFlag = addOptions.length > 0 ? `--add ${addOptions.join(",")}` : "";
-  execSync(`${cdsBin} init project ${addFlag} --nodejs`, { cwd: tempFolder });
+  try {
+    execSync(`${cdsBin} init project ${addFlag} --nodejs`, { cwd: tempFolder, stdio: "pipe" });
+  } catch (error) {
+    throw new Error(`Failed to run '${cdsBin} init project' in: ${tempFolder}`, { cause: error });
+  }
 
   // Set up data-inspector plugin
   updateDependency(project);
