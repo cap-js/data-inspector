@@ -20,7 +20,7 @@ cds.on("bootstrap", (app) => {
       app
         // @ts-ignore missing type for `serve`
         .serve("/data-inspector-ui")
-        .from(__dirname, "/app/data-inspector-ui");
+        .from(__dirname, "/app/data-inspector-ui/webapp");
 
     log.debug("UI5 app served at static route /data-inspector-ui");
     log.debug("bootstrapped");
