@@ -19,7 +19,7 @@
  *
  * Note: mta.yaml updates are handled separately by MtaConfigurator.
  */
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 const { exists, read, write, path } = cds.utils;
 const { join } = path;
 

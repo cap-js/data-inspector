@@ -25,7 +25,7 @@ import {
 /** Read and parse mta.yaml */
 function readMta(projectFolder: string): any {
   const mtaPath = join(projectFolder, "mta.yaml");
-  const yaml = require("@sap/cds-dk").utils.yaml;
+  const yaml = require("@sap/cds").utils.yaml;
   return yaml.load(fs.readFileSync(mtaPath, "utf8"));
 }
 

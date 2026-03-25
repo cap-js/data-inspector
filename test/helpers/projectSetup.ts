@@ -9,6 +9,8 @@ import { TempUtil } from "./TempUtil";
 
 // Get the absolute path to the data-inspector gen directory (compiled output)
 const DATA_INSPECTOR_ROOT = resolve(__dirname, "..", "..", "gen");
+const CDS_ROOT = resolve(require.resolve("@sap/cds/package.json"), "..");
+export const cdsBin = require.resolve("@sap/cds-dk/bin/cds.js");
 
 /**
  * Options for creating a test project
@@ -26,19 +28,11 @@ function updateDependency(projectFolder: string): void {
   const packageJSON = JSON.parse(fs.readFileSync(packageJSONPath, "utf8"));
   packageJSON.dependencies = packageJSON.dependencies || {};
   packageJSON.dependencies["@cap-js/data-inspector"] = `file:${DATA_INSPECTOR_ROOT}`;
+  packageJSON.dependencies["@sap/cds"] = `file:${CDS_ROOT}`; // also link our cds to ensure the test app sees the same
+  // make sure we also work w/o the app having a cds-dk dependency
+  delete packageJSON.dependencies["@sap/cds-dk"];
+  delete packageJSON.devDependencies?.["@sap/cds-dk"];
   fs.writeFileSync(packageJSONPath, JSON.stringify(packageJSON, null, 4));
-}
-
-/**
- * Hack to replace @sap/cds with @sap/cds-dk in the installed plugin file
- * This is required because cds.add is only available in @sap/cds-dk
- */
-function setupHack(projectFolder: string): void {
-  const pluginDir = join(projectFolder, "node_modules/@cap-js/data-inspector");
-  const cdsPluginPath = join(pluginDir, "cds-plugin.js");
-  const cdsPlugin = fs.readFileSync(cdsPluginPath, "utf8");
-  const updatedCdsPlugin = cdsPlugin.replace(/require\("@sap\/cds"\)/g, 'require("@sap/cds-dk")');
-  fs.writeFileSync(cdsPluginPath, updatedCdsPlugin);
 }
 
 /**
@@ -57,12 +51,11 @@ export async function createTestProject(
   if (options.mta) addOptions.push("mta");
 
   const addFlag = addOptions.length > 0 ? `--add ${addOptions.join(",")}` : "";
-  execSync(`cds init project ${addFlag} --nodejs`, { cwd: tempFolder });
+  execSync(`${cdsBin} init project ${addFlag} --nodejs`, { cwd: tempFolder });
 
   // Set up data-inspector plugin
   updateDependency(project);
   execSync(`npm install`, { cwd: project });
-  setupHack(project);
 
   return project;
 }
@@ -71,5 +64,11 @@ export async function createTestProject(
  * Run cds add data-inspector on a project
  */
 export function runCdsAddDataInspector(projectFolder: string): void {
-  execSync(`cds add data-inspector`, { cwd: projectFolder });
+  try {
+    execSync(`${cdsBin} add data-inspector`, { cwd: projectFolder });
+  } catch (error) {
+    throw new Error(`Failed to run '${cdsBin} add data-inspector' in: ${projectFolder}`, {
+      cause: error,
+    });
+  }
 }

@@ -14,7 +14,7 @@
  * matches the com.sap.application.content module that targets the
  * html5-apps-repo app-host resource (see mtaHelper.ts for details).
  */
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";

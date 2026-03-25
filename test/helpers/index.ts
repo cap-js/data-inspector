@@ -2,7 +2,7 @@
  * Export all test helpers from a single entry point
  */
 export { TempUtil } from "./TempUtil";
-export { createTestProject, runCdsAddDataInspector } from "./projectSetup";
+export { createTestProject, runCdsAddDataInspector, cdsBin } from "./projectSetup";
 export {
   createMtaWithPortal,
   createMta,

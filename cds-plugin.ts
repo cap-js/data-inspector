@@ -31,7 +31,13 @@ cds.on("bootstrap", (app) => {
 });
 
 // @ts-ignore missing type
-cds.add?.register?.("data-inspector", require("./lib/add"));
+if (cds.add?.register) {
+  // @ts-ignore missing type
+  cds.add.register("data-inspector", require("./lib/add"));
+}
 
 // @ts-ignore missing type
-cds.build?.register?.("data-inspector", require("./lib/build"));
+if (cds.build?.register) {
+  // @ts-ignore missing type
+  cds.build?.register?.("data-inspector", require("./lib/build"));
+}
