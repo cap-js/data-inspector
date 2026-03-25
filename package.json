@@ -67,14 +67,16 @@
       "@cap-js/data-inspector": {
         "model": "@cap-js/data-inspector"
       },
-      "auth": {
-        "kind": "mocked",
-        "users": {
-          "alice": {
-            "roles": [
-              "admin",
-              "capDataInspectorReadonly"
-            ]
+      "[development]": {
+        "auth": {
+          "kind": "mocked",
+          "users": {
+            "alice": {
+              "roles": [
+                "admin",
+                "capDataInspectorReadonly"
+              ]
+            }
           }
         }
       }
