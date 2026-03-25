@@ -31,14 +31,15 @@ cds watch
 ```
 
 The UI is served at http://localhost:4004/data-inspector-ui/.
+When asked for a user, use `alice` without password.
 
-## The UI at a Glance
+## Features
 
-### Features
-
-- Provide `xsuaa` scope for access control. See [Authorization](#authorization).
 - Exclude specific entities and elements from being exposed by the plugin. See [Excluding Entities and Elements](#excluding-entities-and-elements).
 - Automatically log access to sensitive personal data using [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme). See [Audit Logging](#audit-logging).
+- Provide `xsuaa` scope for access control. See [Authorization](#authorization).
+
+## The UI at a Glance
 
 1. **The landing page:**
 
@@ -142,7 +143,7 @@ Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security
 
 If your SAP Cloud Application Programming Model Node.js application uses the [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) plugin, `@cap-js/data-inspector` automatically emits audit logs for read access to sensitive data elements annotated with `@PersonalData.IsPotentiallySensitive`. For audit logging in SAP Cloud Application Programming Model, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/data-privacy/annotations).
 
-### UI Deployment to SAP BTP
+### UI Configuration for SAP BTP
 
 #### CDS Build Plugin
 
