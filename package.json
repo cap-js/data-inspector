@@ -26,7 +26,13 @@
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
   "peerDependencies": {
+    "@cap-js/audit-logging": ">=1.1.1",
     "@sap/cds": ">=9"
+  },
+  "peerDependenciesMeta": {
+    "@cap-js/audit-logging": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@cap-js/audit-logging": "^1.1.1",
