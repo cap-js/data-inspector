@@ -16,7 +16,7 @@ Install the plugin in your CAP Node.js project:
 npm install @cap-js/data-inspector
 ```
 
-> [!note] As long as the package is not published, install a preview like so
+> [!NOTE] As long as the package is not published, install a preview like so
 >
 > ```sh
 > npm install https://github.com/cap-js/data-inspector/releases/download/v0.0.1/cap-js-data-inspector-0.0.1.tgz
