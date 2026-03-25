@@ -66,6 +66,18 @@
     "requires": {
       "@cap-js/data-inspector": {
         "model": "@cap-js/data-inspector"
+      },
+      "[development]": {
+        "auth": {
+          "kind": "mocked",
+          "users": {
+            "alice": {
+              "roles": [
+                "capDataInspectorReadonly"
+              ]
+            }
+          }
+        }
       }
     }
   },

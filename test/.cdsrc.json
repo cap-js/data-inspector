@@ -3,9 +3,6 @@
     "auth": {
       "kind": "mocked",
       "users": {
-        "alice": {
-          "roles": ["admin", "capDataInspectorReadonly"]
-        },
         "test": {
           "password": "12345",
           "roles": ["capDataInspectorReadonly"]
