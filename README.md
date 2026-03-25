@@ -2,64 +2,44 @@
 
 # SAP Cloud Application Programming Model Data Inspector Plugin for Node.js
 
-- [SAP Cloud Application Programming Model Data Inspector Plugin for Node.js](#sap-cloud-application-programming-model-data-inspector-plugin-for-nodejs)
-  - [About this Project](#about-this-project)
-    - [Features](#features)
-  - [Testing the Plugin Directly](#testing-the-plugin-directly)
-  - [Data Inspector Plugin UI at a Glance](#data-inspector-plugin-ui-at-a-glance)
-  - [Prerequisites](#prerequisites)
-  - [Setup](#setup)
-    - [Installation](#installation)
-    - [Setup with `cds add data-inspector`](#setup-with-cds-add-data-inspector)
-    - [Authorization](#authorization)
-    - [Excluding Entities and Elements](#excluding-entities-and-elements)
-    - [Audit Logging](#audit-logging)
-    - [Data Inspector SAPUI5 App Deployment to SAP BTP](#data-inspector-sapui5-app-deployment-to-sap-btp)
-      - [CDS Build Plugin](#cds-build-plugin)
-        - [Custom Destination Name](#custom-destination-name)
-        - [sap.cloud.service Configuration](#sapcloudservice-configuration)
-      - [MTA Deployment](#mta-deployment)
-      - [@sap/html5-app-deployer](#saphtml5-app-deployer)
-      - [Cloud Portal Service Configuration](#cloud-portal-service-configuration)
-      - [SAP Build Work Zone Configuration](#sap-build-work-zone-configuration)
-    - [(Optional) flpSandbox.html Configuration for Data Inspector Plugin's SAPUI5 App Tile for Local Testing](#optional-flpsandboxhtml-configuration-for-data-inspector-plugins-sapui5-app-tile-for-local-testing)
-  - [Support, Feedback, and Contribution](#support-feedback-and-contribution)
-  - [Security / Disclosure](#security--disclosure)
-  - [Code of Conduct](#code-of-conduct)
-  - [Licensing](#licensing)
-
 ## About this Project
 
-`@cap-js/data-inspector` is an SAP Cloud Application Programming Model (CAP) Node.js plugin to view data content of core data services (CDS) [`entities`](https://cap.cloud.sap/docs/cds/cdl#entity-definitions) defined in a SAP Cloud Application Programming Model Node.js application. It comes with an SAPUI5 app consumable out of the box.
+`@cap-js/data-inspector` is a plugin to **view data** of CAP Node.js applications. It comes with an SAPUI5 app consumable out of the box.
 
-### Features
+## Quick Start
 
-- Provide `xsuaa` scope for access control. See [Authorization](#authorization).
+### Installation
+
+Install the plugin in your CAP Node.js project:
+
+```sh
+npm install @cap-js/data-inspector
+```
+
+> [!NOTE] As long as the package is not published, install a preview like so
+>
+> ```sh
+> npm install https://github.com/cap-js/data-inspector/releases/download/v0.0.1/cap-js-data-inspector-0.0.1.tgz
+> ```
+
+### Run
+
+Run it with
+
+```sh
+cds watch
+```
+
+The UI is served at http://localhost:4004/data-inspector-ui/.
+When asked for a user, use `alice` without password.
+
+## Features
+
 - Exclude specific entities and elements from being exposed by the plugin. See [Excluding Entities and Elements](#excluding-entities-and-elements).
 - Automatically log access to sensitive personal data using [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme). See [Audit Logging](#audit-logging).
+- Provide `xsuaa` scope for access control. See [Authorization](#authorization).
 
-## Testing the Plugin Directly
-
-To quickly test and experience the plugin directly without a dependent project in your local machine, use the NPM test workspace included in this repository.
-
-1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
-2. Install the dependencies: `npm i`
-3. Generate core data services (CDS) model types by saving any `.cds` file from VS Code. For more details, refer to [CDS Typer](https://cap.cloud.sap/docs/tools/cds-typer).
-4. Create the test sqlite db:
-   1. `cd test`
-   2. `cds deploy -2 sqlite:db/testservice.db`
-   3. `cd ..`
-5. Run the test server: `npm run dev`
-
-   The SAPUI5 app is launched in a web browser.
-
-6. Use the following credentials:
-
-   Username: `alice`
-
-   Password: keep empty
-
-## Data Inspector Plugin UI at a Glance
+## The UI at a Glance
 
 1. **The landing page:**
 
@@ -102,48 +82,6 @@ To quickly test and experience the plugin directly without a dependent project i
 
 Select only the required columns and add filters to limit the data that is displayed.
 
-## Prerequisites
-
-1. Ensure your project uses `@sap/cds` version 9.
-2. Set up the `xsuaa` SAP BTP service for authorization.
-3. Optionally, add [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) and the `auditlog` SAP BTP service for audit logging.
-
-## Setup
-
-### Installation
-
-_Internal npm registry detail to be added until publishing at npmjs.com_
-
-Install the plugin in your SAP Cloud Application Programming Model Node.js project.
-
-```sh
-npm install @cap-js/data-inspector
-```
-
-Running your project locally with `cds serve` or `cds watch` serves the SAPUI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`.
-
-### Setup with `cds add data-inspector`
-
-Run `cds add data-inspector` to automatically add `@cap-js/data-inspector` configuration to your project.
-
-> Note: Running `cds add data-inspector` is optional. To add the required configuration manually, refer to the relevant sections in this document.
-
-The following changes are applied by `cds add data-inspector`:
-
-- **XSUAA** (when a `xs-security.json` file exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. See [Authorization](#authorization).
-- **MTA** (when a `mta.yaml` file exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. See [MTA Deployment](#mta-deployment).
-  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-js-data-inspector-ui`.
-  - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
-- **Cloud Portal Service** (when detected in a `mta.yaml` file and a `portal-site/CommonDataModel.json` file exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json` file, and creates an i18n properties file for translatable titles. See [Cloud Portal Service Configuration](#cloud-portal-service-configuration).
-
-### Authorization
-
-Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` file to grant read access to the plugin's SAPUI5 app and the underlying OData service. For local development and testing, the scope `capDataInspectorReadonly` is added automatically to the default `alice` mock user. For setting up other mock users, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication).
-
-> Note: Running `cds add data-inspector` adds the scope `capDataInspectorReadonly` in your `xs-security.json` automatically. Make sure to use this in your prefered `roles` and `role-collections`.
-
-> Note: `@cap-js/data-inspector` reads data only through the available CDS services, exposing data based on `xsuaa` scopes granted to the entities and the user. It doesn't implement own access control. It doesn't perform any direct SQL queries.
-
 ### Excluding Entities and Elements
 
 To hide entities or elements from the Data Inspector, annotate them with `@HideFromDataInspector` in your CDS definitions.
@@ -171,11 +109,41 @@ entity Bar {
 
 The `Bar` entity is not revealed by `@cap-js/data-inspector`.
 
+## Setup for BTP
+
+### Prerequisites
+
+1. Ensure your project uses `@sap/cds` version 9.
+2. Set up the `xsuaa` SAP BTP service for authorization.
+3. Optionally, add [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) and the `auditlog` SAP BTP service for audit logging.
+
+### Setup with `cds add data-inspector`
+
+Run `cds add data-inspector` to automatically add `@cap-js/data-inspector` configuration to your project.
+
+> Note: Running `cds add data-inspector` is optional. To add the required configuration manually, refer to the relevant sections in this document.
+
+The following changes are applied by `cds add data-inspector`:
+
+- **XSUAA** (when a `xs-security.json` file exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. See [Authorization](#authorization).
+- **MTA** (when a `mta.yaml` file exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. See [MTA Deployment](#mta-deployment).
+  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-js-data-inspector-ui`.
+  - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
+- **Cloud Portal Service** (when detected in a `mta.yaml` file and a `portal-site/CommonDataModel.json` file exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json` file, and creates an i18n properties file for translatable titles. See [Cloud Portal Service Configuration](#cloud-portal-service-configuration).
+
+### Authorization
+
+Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` file to grant read access to the plugin's SAPUI5 app and the underlying OData service. For local development and testing, the scope `capDataInspectorReadonly` is added automatically to the default `alice` mock user. For setting up other mock users, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication).
+
+> Note: Running `cds add data-inspector` adds the scope `capDataInspectorReadonly` in your `xs-security.json` automatically. Make sure to use this in your prefered `roles` and `role-collections`.
+
+> Note: `@cap-js/data-inspector` reads data only through the available CDS services, exposing data based on `xsuaa` scopes granted to the entities and the user. It doesn't implement own access control. It doesn't perform any direct SQL queries.
+
 ### Audit Logging
 
 If your SAP Cloud Application Programming Model Node.js application uses the [`@cap-js/audit-logging`](https://github.com/cap-js/audit-logging#readme) plugin, `@cap-js/data-inspector` automatically emits audit logs for read access to sensitive data elements annotated with `@PersonalData.IsPotentiallySensitive`. For audit logging in SAP Cloud Application Programming Model, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/data-privacy/annotations).
 
-### Data Inspector SAPUI5 App Deployment to SAP BTP
+### UI Configuration for SAP BTP
 
 #### CDS Build Plugin
 
@@ -423,11 +391,32 @@ In `LaunchPage.adapter.config.groups`:
 
 ## Support, Feedback, and Contribution
 
-This project is open to feature requests, suggestions, and bug reports through [GitHub issues](https://github.com/cap-js/<your-project>/issues). We encourage and welcome contribution and feedback. For more information about how to contribute, the project structure, and additional contribution information, see the [Contribution Guidelines](CONTRIBUTING.md).
+This project is open to feature requests, suggestions, and bug reports through [GitHub issues](https://github.com/cap-js/data-inspector/issues). We encourage and welcome contribution and feedback. For more information about how to contribute, the project structure, and additional contribution information, see the [Contribution Guidelines](CONTRIBUTING.md).
+
+### Development Setup
+
+To quickly test and experience the plugin directly without a dependent project in your local machine, use the NPM test workspace included in this repository.
+
+1. Clone the repository: `git clone https://github.com/cap-js/data-inspector.git`
+2. Install the dependencies: `npm i`
+3. Generate core data services (CDS) model types by saving any `.cds` file from VS Code. For more details, refer to [CDS Typer](https://cap.cloud.sap/docs/tools/cds-typer).
+4. Create the test sqlite db:
+   1. `cd test`
+   2. `cds deploy -2 sqlite:db/testservice.db`
+   3. `cd ..`
+5. Run the test server: `npm run dev`
+
+   The SAPUI5 app is launched in a web browser.
+
+6. Use the following credentials:
+
+   Username: `alice`
+
+   Password: keep empty
 
 ## Security / Disclosure
 
-If you find a bug that might be a security problem, follow the instructions in our [security policy](https://github.com/cap-js/<your-project>/security/policy) to report it. Don't create GitHub issues for security-related questions or problems.
+If you find a bug that might be a security problem, follow the instructions in our [security policy](https://github.com/cap-js/data-inspector/security/policy) to report it. Don't create GitHub issues for security-related questions or problems.
 
 ## Code of Conduct
 
@@ -435,4 +424,4 @@ Members, contributors, and leaders pledge to make participation in our community
 
 ## Licensing
 
-Copyright 2025 SAP SE or an SAP affiliate company and data-inspector contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available through the [REUSE tool](https://api.reuse.software/info/github.com/cap-js/<your-project>)
+Copyright 2025-2026 SAP SE or an SAP affiliate company and data-inspector contributors. Please see our [LICENSE](LICENSE) for copyright and license information. Detailed information including third-party components and their licensing/copyright information is available through the [REUSE tool](https://api.reuse.software/info/github.com/cap-js/data-inspector)
