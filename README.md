@@ -120,7 +120,7 @@ Install the plugin in your SAP Cloud Application Programming Model Node.js proje
 npm install @cap-js/data-inspector
 ```
 
-Running your project locally with `cds serve` or `cds watch` serves the SAPUI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`. Make sure to add necessary authorization scope to your mock user. See [Authorization](#authorization).
+Running your project locally with `cds serve` or `cds watch` serves the SAPUI5 app on the `@sap/cds` web application endpoint `/data-inspector-ui`.
 
 ### Setup with `cds add data-inspector`
 
@@ -138,7 +138,7 @@ The following changes are applied by `cds add data-inspector`:
 
 ### Authorization
 
-Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` file to grant read access to the plugin's SAPUI5 app and the underlying OData service. For local development and testing, add the scope `capDataInspectorReadonly` to your mock user. For setting up a mock user, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication).
+Define and use the `xsuaa` scope `capDataInspectorReadonly` in your `xs-security.json` file to grant read access to the plugin's SAPUI5 app and the underlying OData service. For local development and testing, the scope `capDataInspectorReadonly` is added automatically to the default `alice` mock user. For setting up other mock users, refer to the [Capire documentation](https://cap.cloud.sap/docs/guides/security/authentication#mock-user-authentication).
 
 > Note: Running `cds add data-inspector` adds the scope `capDataInspectorReadonly` in your `xs-security.json` automatically. Make sure to use this in your prefered `roles` and `role-collections`.
 
