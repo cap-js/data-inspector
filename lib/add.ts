@@ -8,7 +8,7 @@
  *
  * Each integration is handled by a separate configurator for maintainability.
  */
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 
 import {
   AddPluginConfigurator,

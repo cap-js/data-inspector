@@ -1,4 +1,4 @@
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 const { exists, read, write, path, yaml } = cds.utils;
 
 const log = cds.log("data-inspector");

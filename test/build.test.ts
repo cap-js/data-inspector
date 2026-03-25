@@ -24,6 +24,7 @@ import {
   createTestProject,
   createHtml5AppWithDestination,
   createHtml5AppWithCloudService,
+  cdsBin,
 } from "./helpers";
 
 const BUILD_OUTPUT_DIR = "gen/cap-js-data-inspector-ui";
@@ -32,7 +33,7 @@ const BUILD_OUTPUT_DIR = "gen/cap-js-data-inspector-ui";
  * Run cds build on a project
  */
 function runCdsBuild(projectFolder: string): void {
-  require("child_process").execSync(`cds build --production`, { cwd: projectFolder });
+  require("child_process").execSync(`${cdsBin} build --production`, { cwd: projectFolder });
 }
 
 /**

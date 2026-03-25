@@ -2,7 +2,7 @@
  * Configurator for xs-security.json scope management.
  * Adds the data-inspector readonly scope to the host project's xs-security.json.
  */
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 const { exists } = cds.utils;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";

@@ -24,7 +24,7 @@
  * expected to include the contents of gen/cap-js-data-inspector-ui in
  * their own html5 content image.  See README for details.
  */
-const cds = require("@sap/cds-dk");
+const cds = require("@sap/cds");
 const { exists, path } = cds.utils;
 const { join } = path;
 const fs = require("fs");
