@@ -42,7 +42,7 @@ describe("cds add data-inspector", () => {
   const tempUtil = new TempUtil();
 
   after(async () => {
-    // await tempUtil.cleanUp();
+    await tempUtil.cleanUp();
   });
 
   describe("orchestration", () => {
