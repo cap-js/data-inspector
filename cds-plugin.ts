@@ -39,5 +39,5 @@ if (cds.add?.register) {
 // @ts-ignore missing type
 if (cds.build?.register) {
   // @ts-ignore missing type
-  cds.build?.register?.("data-inspector", require("./lib/build"));
+  cds.build.register("data-inspector", require("./lib/build"));
 }
