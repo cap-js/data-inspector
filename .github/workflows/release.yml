@@ -41,4 +41,8 @@ jobs:
         with:
           tag: "v${{ steps.package-version.outputs.current-version }}"
           body: "${{ steps.parse-changelog.outputs.body }}"
-      - run: npm publish gen/cap-js-data-inspector-*.tgz --access public --provenance --dry-run
+
+      - name: Publish to npm
+        run: |
+          cd gen
+          npm publish cap-js-data-inspector-*.tgz --access public --provenance --dry-run
