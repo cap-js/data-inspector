@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Tests
         run: |
-          cd test && cds deploy -2 sqlite:db/testservice.db
+          cd test && npx cds deploy -2 sqlite:db/testservice.db
           npm run test
 
       - name: get-version
