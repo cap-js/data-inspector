@@ -19,7 +19,7 @@ npm install @cap-js/data-inspector
 > [!NOTE] As long as the package is not published, install a preview like so
 >
 > ```sh
-> npm install https://github.com/cap-js/data-inspector/releases/download/v0.0.1/cap-js-data-inspector-0.0.1.tgz
+> npm install https://github.com/cap-js/data-inspector/releases/download/v0.0.1-test/cap-js-data-inspector-0.0.1.tgz
 > ```
 
 ### Run
