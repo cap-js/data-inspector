@@ -45,4 +45,4 @@ jobs:
       - name: Publish to npm
         run: |
           cd gen
-          npm publish cap-js-data-inspector-*.tgz --access public --provenance --dry-run
+          npm publish cap-js-data-inspector-*.tgz --access public --provenance
