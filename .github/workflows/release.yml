@@ -26,6 +26,7 @@ jobs:
       - name: Run Tests
         run: |
           # npm run lint
+          cd test && cds deploy -2 sqlite:db/testservice.db
           npm run test
 
       - name: get-version
