@@ -12,35 +12,33 @@ jobs:
     runs-on: ubuntu-latest
     environment: npm
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
+
+      - name: Build
+        run: |
+          npm ci
+          npm run tar
 
       - name: Run Tests
         run: |
-          npm install
           npm run lint
-      - run: npm i -g @sap/cds-dk@latest
-      - run: npm i
-      - run: cds v
-      - run: npm run build
-      - name: Deploy test SQLite database
-        run: cd test && cds deploy -2 sqlite:db/testservice.db
-      - run: npm run test
+          npm run test
 
-      # - name: get-version
-      #   id: package-version
-      #   uses: martinbeentjes/npm-get-version-action@v1.2.3
-      # - name: Parse changelog
-      #   id: parse-changelog
-      #   uses: schwma/parse-changelog-action@v1.0.0
-      #   with:
-      #     version: "${{ steps.package-version.outputs.current-version }}"
-      # - name: Create a GitHub release
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #     tag: "v${{ steps.package-version.outputs.current-version }}"
-      #     body: "${{ steps.parse-changelog.outputs.body }}"
-      # - run: npm publish --access public --provenance
+      - name: get-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@v1.2.3
+      - name: Parse changelog
+        id: parse-changelog
+        uses: schwma/parse-changelog-action@v1.0.0
+        with:
+          version: "${{ steps.package-version.outputs.current-version }}"
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: "v${{ steps.package-version.outputs.current-version }}"
+          body: "${{ steps.parse-changelog.outputs.body }}"
+      - run: npm publish gen/cap-js-data-inspector-*.tgz --access public --provenance --dry-run
