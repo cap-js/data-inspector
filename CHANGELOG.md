@@ -9,11 +9,3 @@
 ### Added
 
 - Initial release
-
-### Added
-
-### Changed
-
-### Fixed
-
-### Removed
