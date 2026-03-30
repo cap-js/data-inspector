@@ -25,6 +25,7 @@
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
     "test:performance": "cross-env CDS_TYPESCRIPT=true PERF_TESTS=1 mocha --config test/performance/.mocharc.performance.json",
     "test:performance:update-baseline": "cross-env CDS_TYPESCRIPT=true PERF_TESTS=1 PERF_UPDATE_BASELINE=1 mocha --config test/performance/.mocharc.performance.json",
+    "test:performance:check-drift": "node test/performance/check-baseline-drift.js",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
   "peerDependencies": {
