@@ -23,6 +23,8 @@
     "tar": "npm run build && cd gen && npm pack",
     "watch-data-inspector-ui": "cds watch --open data-inspector-ui/webapp/index.html?sap-ui-xx-viewCache=false",
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
+    "test:performance": "cross-env CDS_TYPESCRIPT=true PERF_TESTS=1 mocha --config test/performance/.mocharc.performance.json",
+    "test:performance:update-baseline": "cross-env CDS_TYPESCRIPT=true PERF_TESTS=1 PERF_UPDATE_BASELINE=1 mocha --config test/performance/.mocharc.performance.json",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
   "peerDependencies": {

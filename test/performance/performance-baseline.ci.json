@@ -1,0 +1,62 @@
+{
+  "EntityDefinitionReader.read (collection)": {
+    "sizes": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "perItemMsAtMax": 0.0008664794999999686,
+    "slopeRatio": 1.0563725392233307,
+    "r2": 0.9991454243695702
+  },
+  "EntityDefinitionReader.read (filtered)": {
+    "sizes": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "perItemMsAtMax": 0.000915937500000041,
+    "slopeRatio": 0.8465581902233116,
+    "r2": 0.9997151636234601
+  },
+  "EntityDefinitionReader._getEntityElements (via read)": {
+    "sizes": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "perItemMsAtMax": 0.00030279100000001334,
+    "slopeRatio": 0.9524803034682242,
+    "r2": 0.997822499293361
+  },
+  "DataReader.read (response construction, DB stubbed)": {
+    "sizes": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "perItemMsAtMax": 0.00016691650000001345,
+    "slopeRatio": 0.5997224934519662,
+    "r2": 0.9979562674639578
+  },
+  "DataReader._emitAuditlogs (stubbed audit-log)": {
+    "sizes": [
+      10,
+      50,
+      100,
+      500,
+      1000
+    ],
+    "perItemMsAtMax": 0.0007755829999999832,
+    "slopeRatio": 0.40819046558119343,
+    "r2": 0.9743144804610471
+  }
+}
