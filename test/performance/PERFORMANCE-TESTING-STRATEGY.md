@@ -8,30 +8,9 @@ This document describes the performance testing strategy for the `@cap-js/data-i
 
 `data-inspector` is a CDS plugin that is consumed by host CAP applications. End-to-end latency depends heavily on the host application's database, network, and authentication stack — none of which are under this plugin's control. Testing at the class/method level isolates the plugin's own computational work and produces **stable, reproducible, CI-friendly** measurements.
 
-## 2. Product Standards Coverage
+## 2. Architecture
 
-The SAP Performance Product Standards comprise 7 requirements: PERF-01, PERF-03, PERF-04, PERF-11, PERF-13, PERF-20, PERF-21. This section maps each standard to how it is addressed (or why it is not applicable) for this plugin.
-
-### Standards addressed by this testing strategy
-
-| Standard    | Title                                                                                                                             | How Addressed                                                                                                                                                                                                                                                                                                                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PERF-01** | A performance test strategy shall be in place                                                                                     | **This document itself** fulfils PERF-01. It defines the test environment (local Node.js with synthetic data, CI via GitHub Actions), test data (synthetic CDS models and records), test cases (5 benchmarks across scaling sizes), test types (unit-level regression and scaling tests), test tools (Mocha + custom measurement helpers), and test results (JSON + Markdown reports in `coverage/`). |
-| **PERF-04** | Competitive average and maximum throughput or end-to-end response time for a UIS shall be planned, recorded, and verified         | Per-item processing time is recorded at each input size and compared against baseline targets. As a plugin (not a standalone UI), we measure **server-side processing time** contributed by the plugin's handlers. The benchmarks record median, mean, CI, and per-item cost, providing the "planned, recorded, and verified" data required by PERF-04.                                               |
-| **PERF-11** | As long as the functionality remains identical there shall be no regression of the resource consumption for subsequent deliveries | Baseline comparison with configurable regression threshold (default 30%) for both per-item time and slope ratio. CI workflow runs on every PR. Memory delta (heap usage before/after) is tracked per benchmark to detect resource consumption regressions. Baseline drift detection script analyses git history of CI baselines to catch gradual degradation.                                         |
-| **PERF-13** | Enable throughput and response time optimization by utilizing available resources for scale up and scale out                      | Slope-ratio analysis across 5 input sizes (10→1000) verifies that processing scales linearly — i.e., CPU and memory consumption grow at most linearly with input size (O(n)). R² coefficient of determination confirms linearity. This proves the plugin's processing will not become a bottleneck as CDS models grow, supporting the scalability requirement.                                        |
-
-### Standards not applicable to this plugin (first release)
-
-| Standard    | Title                                                                                                                               | Reason                                                                                                                                                                                                                                                                                                                                                                                          |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **PERF-03** | An application or service shall be cost- and resource-consumption aware; a procedure for capacity modelling/sizing shall be defined | As a CDS plugin, `data-inspector` does not provision or consume cloud infrastructure independently. It runs within the host CAP application's process. Capacity modelling and sizing are the responsibility of the host application. The plugin's own resource footprint is characterised by the benchmarks (per-item time, memory delta), but a standalone sizing procedure is not applicable. |
-| **PERF-20** | Enforce and support quota management                                                                                                | The plugin does not manage tenants, users, or request quotas. It runs as an in-process CDS service handler. Quota management (rate limiting, resource limits) is the responsibility of the host CAP application and the cloud platform (e.g., BTP). The plugin does not make independent outbound network calls that would require rate limiting.                                               |
-| **PERF-21** | Enable elastic scale out/in based on demand levels, in and among clouds                                                             | Elastic scalability is an infrastructure and platform concern. The plugin is stateless and runs within the host application's Node.js process. It does not manage instances, scaling rules, or cloud resources. Horizontal/vertical scaling is handled by the CAP runtime and the deployment platform.                                                                                          |
-
-## 3. Architecture
-
-### 3.1 Test location
+### 2.1 Test location
 
 ```
 test/performance/
@@ -43,7 +22,7 @@ test/performance/
 └── PERFORMANCE-TESTING-STRATEGY.md # This file
 ```
 
-### 3.2 What is benchmarked
+### 2.2 What is benchmarked
 
 | Group  | Benchmark                                              | What it measures                                                                                                                  |
 | ------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -53,7 +32,7 @@ test/performance/
 | **B1** | `DataReader.read (response construction, DB stubbed)`  | Response loop after DB query: entity resolution, key construction, record transformation. DB returns pre-built synthetic records. |
 | **B2** | `DataReader._emitAuditlogs (stubbed audit-log)`        | Audit log emission with sensitive data fields. Audit-log service is stubbed; measures per-record processing overhead.             |
 
-### 3.3 Measurement methodology
+### 2.3 Measurement methodology
 
 For each benchmark, measurements are taken across 5 input sizes: **10, 50, 100, 500, 1000**.
 
@@ -63,7 +42,7 @@ For each size:
 3. **Outlier removal** — Runs are sorted by distance from preliminary mean; the 50% extra runs furthest from the mean are discarded
 4. **Statistics** — Median, mean, standard deviation, 95% confidence interval, CV%
 
-### 3.4 Scaling analysis
+### 2.4 Scaling analysis
 
 Three complementary metrics detect non-linear scaling:
 
@@ -73,7 +52,7 @@ Three complementary metrics detect non-linear scaling:
 | **R² (coefficient of determination)** | How well medians fit a straight line. 1.0 = perfect linear | 🟢 ≥ 0.995 / 🟡 0.98–0.995 / 🔴 < 0.98  |
 | **Per-item time**                     | Time per item at max size; detects absolute overhead       | Compared to baseline (30% tolerance) |
 
-### 3.5 Baseline management
+### 2.5 Baseline management
 
 Two baselines are maintained, following the same pattern as `ai-log-analyzer`:
 
@@ -88,7 +67,7 @@ Two baselines are maintained, following the same pattern as `ai-log-analyzer`:
 - The CI baseline is **committed** so it is reproducible, auditable via `git log`, and immune to cache eviction
 - The first run without a baseline gracefully skips (no failure)
 
-### 3.6 Regression detection
+### 2.6 Regression detection
 
 When a baseline exists, each benchmark result is compared:
 
@@ -97,7 +76,7 @@ When a baseline exists, each benchmark result is compared:
 
 #### Warn-only behavior (by design)
 
-Regressions are surfaced via `console.warn` — **they do not fail the test**. The test only fails if no benchmarks run at all. This is intentional and consistent with [ai-log-analyzer](https://github.tools.sap/erp4sme/ai-log-analyzer)'s approach, for the following reasons:
+Regressions are surfaced via `console.warn` — **they do not fail the test**. The test only fails if no benchmarks run at all. This is intentional for the following reasons:
 
 - **CI hardware variance**: GitHub Actions shared runners have noisy neighbors, variable CPU clock speeds, and occasional GC pauses. Even with a 30% threshold and outlier trimming, hard failures would produce flaky CI.
 - **Primary value is scaling detection**: The slope ratio and R² metrics detect O(n²) bugs, which produce dramatic regressions (10x+). These are obvious even in warn-only mode.
@@ -112,7 +91,7 @@ If a hard gate is desired in the future:
 2. Consider increasing the threshold to 50% for CI to absorb more noise
 3. Alternatively, add a separate CI job with `continue-on-error: true` so it shows as a yellow check (not a red X) — signaling "review needed" without blocking merge
 
-## 4. Running the Tests
+## 3. Running the Tests
 
 ### Local development
 
@@ -147,7 +126,7 @@ npm run test:performance:check-drift
 | `performance-tests.yml`      | PR to `main` (when srv/, lib/, test/performance/ change) | Run benchmarks, compare to committed CI baseline, log warnings |
 | `performance-rebaseline.yml` | Manual dispatch                                          | Run benchmarks on CI and commit `performance-baseline.ci.json` |
 
-## 5. Reports
+## 4. Reports
 
 After each run, two report files are generated in `coverage/`:
 
@@ -161,7 +140,7 @@ The markdown report includes:
 - Results table with timing medians, CV%, per-item times, memory deltas, slope ratios, R², and baseline comparisons
 - Legend explaining all indicators
 
-## 6. Synthetic Data Design
+## 5. Synthetic Data Design
 
 All benchmarks use **synthetic data** rather than real CDS models:
 
@@ -175,7 +154,7 @@ This approach ensures:
 - Configurable scaling (the `sizes` array can be adjusted)
 - Fast execution (no CDS server boot required)
 
-## 7. Baseline Drift Detection
+## 6. Baseline Drift Detection
 
 The `check-baseline-drift.js` script detects **gradual performance degradation** that no single run would catch. It reads the git history of `performance-baseline.ci.json` and analyzes how `perItemMsAtMax` values have changed across commits.
 
@@ -208,11 +187,11 @@ The `check-baseline-drift.js` script detects **gradual performance degradation**
 - As part of periodic performance health checks
 - Before major releases, to verify no gradual cost drift has occurred
 
-## 8. Future Enhancements
+## 7. Future Enhancements
 
 As the plugin evolves, consider adding:
 
-1. **Memory profiling benchmarks** — Track heap growth across repeated operations to detect memory leaks (deeper PERF-11 resource consumption coverage)
+1. **Memory profiling benchmarks** — Track heap growth across repeated operations to detect memory leaks and unexpected resource consumption growth
 2. **Concurrent simulation** — If the plugin adds stateful processing, add benchmarks that simulate concurrent request patterns
 3. **Larger scale tests** — Extend the sizes array to [100, 500, 1000, 5000, 10000] if real-world deployments involve very large CDS models
 4. **UI rendering benchmarks** — If the SAPUI5 frontend becomes a performance concern, add browser-based benchmarks using Puppeteer
