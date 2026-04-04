@@ -671,6 +671,7 @@ export class DataReader {
       for (const keyElement of keyElements) {
         id[keyElement] = record[keyElement];
       }
+      // eslint-disable-next-line no-await-in-loop
       await auditLogService.log("SensitiveDataRead", {
         data_subject: {
           id: id,

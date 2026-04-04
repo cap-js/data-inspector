@@ -132,7 +132,7 @@ describe("Data entity tests", async () => {
 
     //*********************************************************************//
 
-    let response = await GET(
+    const response = await GET(
       SERVICE_ENDPOINT + "/Data?$filter=entityName eq 'datainspector.test.db.Products'",
       AXIOS_REQ_CONFIG
     );

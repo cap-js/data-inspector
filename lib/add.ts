@@ -31,9 +31,12 @@ module.exports = class DataInspectorAddPlugin extends cds.add.Plugin {
   ];
 
   async run() {
+    // Configurators must run sequentially as they may depend on each other's state
     for (const configurator of this.configurators) {
+      // eslint-disable-next-line no-await-in-loop
       if (await configurator.canRun()) {
         log.debug(`Running ${configurator.name} configurator...`);
+        // eslint-disable-next-line no-await-in-loop
         await configurator.run();
       }
     }
