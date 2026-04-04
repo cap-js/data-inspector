@@ -658,6 +658,7 @@ export class DataReader {
     for (const record of records) {
       const attributes: { name: string }[] = [];
       // checking if sensitive element is exposed for each record is the safest way
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const [elementName, _] of Object.entries(record)) {
         if (sensitiveElements.includes(elementName)) {
           attributes.push({ name: elementName });

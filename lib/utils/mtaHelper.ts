@@ -8,6 +8,8 @@ export function getMtaPath(): string | null {
   return null;
 }
 
+// MTA YAML has dynamic structure - 'any' is appropriate for parsed content
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function readMta(): Promise<any | null> {
   const mtaPath = getMtaPath();
   if (!mtaPath) return null;
@@ -21,6 +23,8 @@ export async function readMta(): Promise<any | null> {
   }
 }
 
+// MTA YAML has dynamic structure - 'any' is appropriate for parsed content
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function writeMta(mtaContent: any): Promise<void> {
   const mtaPath = getMtaPath();
   if (!mtaPath) return;
@@ -37,6 +41,8 @@ export async function writeMta(mtaContent: any): Promise<void> {
  * 2. Return the first com.sap.application.content module whose requires
  *    array targets one of those resources with content-target: true.
  */
+// MTA YAML has dynamic structure - 'any' is appropriate for parsed content
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function findContentModule(mtaContent: any): any | null {
   const resources = mtaContent?.resources || [];
   const modules = mtaContent?.modules || [];
@@ -44,21 +50,25 @@ export function findContentModule(mtaContent: any): any | null {
   const html5RepoHostNames = new Set(
     resources
       .filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (r: any) =>
           r.type === "org.cloudfoundry.managed-service" &&
           r.parameters?.service === "html5-apps-repo" &&
           r.parameters?.["service-plan"] === "app-host"
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((r: any) => r.name)
   );
 
   if (html5RepoHostNames.size === 0) return null;
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     modules.find((m: any) => {
       if (m.type !== "com.sap.application.content") return false;
       const requires = m.requires || [];
       return requires.some(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (req: any) =>
           html5RepoHostNames.has(req.name) && req.parameters?.["content-target"] === true
       );
@@ -77,6 +87,8 @@ export function findContentModule(mtaContent: any): any | null {
  *
  * Returns the module's path (e.g. "flp") or null if not found.
  */
+// MTA YAML has dynamic structure - 'any' is appropriate for parsed content
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function findPortalDeployerPath(mtaContent: any): string | null {
   const resources = mtaContent?.resources || [];
   const modules = mtaContent?.modules || [];
@@ -84,20 +96,24 @@ export function findPortalDeployerPath(mtaContent: any): string | null {
   const portalResourceNames = new Set(
     resources
       .filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (r: any) =>
           r.type === "org.cloudfoundry.managed-service" &&
           r.parameters?.service === "portal" &&
           r.parameters?.["service-plan"] === "standard"
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((r: any) => r.name)
   );
 
   if (portalResourceNames.size === 0) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const flpDeployer = modules.find((m: any) => {
     if (m.type !== "com.sap.application.content") return false;
     const requires = m.requires || [];
     return requires.some(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (req: any) => portalResourceNames.has(req.name) && req.parameters?.["content-target"] === true
     );
   });

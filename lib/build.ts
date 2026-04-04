@@ -119,6 +119,8 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
         try {
           const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
           const odataRoute = xsApp.routes?.find(
+            // xs-app.json routes have dynamic structure
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (r: any) => r.destination && (r.source?.includes("odata") || r.source?.includes("api"))
           );
           if (odataRoute?.destination) {
