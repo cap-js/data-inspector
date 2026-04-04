@@ -642,14 +642,14 @@ describe("Data entity tests", async () => {
       );
     } catch (error) {
       expect(error.status).to.be.equal(
-        500,
-        "Failed to return HTTP 500 error on r_filter 'eq' operation with invalid record element"
+        400,
+        "Failed to return HTTP 400 error on r_filter 'eq' operation with invalid record element"
       );
       hasError = true;
     }
     expect(hasError).to.be.equal(
       true,
-      "Failed to return HTTP 500 error on r_filter 'eq' operation with invalid record element"
+      "Failed to return HTTP 400 error on r_filter 'eq' operation with invalid record element"
     );
 
     //*********************************************************************//
@@ -663,14 +663,14 @@ describe("Data entity tests", async () => {
       );
     } catch (error) {
       expect(error.status).to.be.equal(
-        500,
-        "Failed to return HTTP 500 error on r_filter 'contains' operation with invalid record element"
+        400,
+        "Failed to return HTTP 400 error on r_filter 'contains' operation with invalid record element"
       );
       hasError = true;
     }
     expect(hasError).to.be.equal(
       true,
-      "Failed to return HTTP 500 error on r_filter 'contains' operation with invalid record element"
+      "Failed to return HTTP 400 error on r_filter 'contains' operation with invalid record element"
     );
 
     //*********************************************************************//
