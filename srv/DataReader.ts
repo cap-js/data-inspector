@@ -58,7 +58,11 @@ export class DataReader {
       // Validate recordKey
       const recordKey = req.params[0]["recordKey"]; // 'keyElementName=value', 'keyElement1Name=value&keyElement2Name=value', etc.
       if (!this._validateRecordKeys(entity, recordKey)) {
-        req.reject(HttpStatusCode.BadRequest, `INVALID_RECORD_KEY`, [recordKey]);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_RECORD_KEY`,
+          args: [recordKey],
+        });
       }
 
       // Transform the supplied recordKey to r_filter condition for building CQN
@@ -104,11 +108,10 @@ export class DataReader {
       records = await dataSource.run(cqn);
     } catch (e) {
       logger.error("Failed to select records:", cqn, e);
-
-      req.reject(
-        HttpStatusCode.InternalServerError,
-        cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-      );
+      req.reject({
+        status: HttpStatusCode.InternalServerError,
+        code: `ERROR_RUNNING_DB_QUERY`,
+      });
     }
 
     /**
@@ -389,7 +392,11 @@ export class DataReader {
         const selectedRecordElements = r_select.split(",");
         for (const elementName of selectedRecordElements) {
           if (!entityElements.includes(elementName)) {
-            req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_SELECT`, [r_select]);
+            req.reject({
+              status: HttpStatusCode.BadRequest,
+              code: `INVALID_ELEMENT_IN_R_SELECT`,
+              args: [r_select],
+            });
           }
         }
 
@@ -473,7 +480,11 @@ export class DataReader {
       // validate the supplied element names for r_orderby
       for (const element of orderbyElements) {
         if (!entityElements.includes(element)) {
-          req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_ORDERBY`, [r_orderby]);
+          req.reject({
+            status: HttpStatusCode.BadRequest,
+            code: `INVALID_ELEMENT_IN_R_ORDERBY`,
+            args: [r_orderby],
+          });
         }
       }
       // @ts-expect-error
