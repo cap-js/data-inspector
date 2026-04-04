@@ -172,7 +172,10 @@ export class EntityDefinitionReader {
       // operation is 'contains'
       const column = cqn["args"][0]["ref"][0];
       if (column === "elements") {
-        req.reject(HttpStatusCode.BadRequest, "CANNOT_FILTER_BY_COLUMN");
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `CANNOT_FILTER_BY_COLUMN`,
+        });
       }
       const value = cqn["args"][1]["val"];
 
@@ -206,7 +209,10 @@ export class EntityDefinitionReader {
       // operation is 'eq'
       const column = cqn["xpr"][0]["ref"][0];
       if (column === "elements") {
-        req.reject(HttpStatusCode.BadRequest, "CANNOT_FILTER_BY_COLUMN");
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `CANNOT_FILTER_BY_COLUMN`,
+        });
       }
       const value = cqn["xpr"][2]["val"];
       const filterFunction = (entity: Entity) => {
@@ -288,7 +294,10 @@ export class EntityDefinitionReader {
         "Invalid $filter parameter: a singular 'contains' or 'eq' operation is accepted",
         filterString
       );
-      req.reject(HttpStatusCode.BadRequest, "INVALID_FILTER_PARAM_SINGULAR");
+      req.reject({
+        status: HttpStatusCode.BadRequest,
+        code: `INVALID_FILTER_PARAM_SINGULAR`,
+      });
     }
   }
 
@@ -334,7 +343,10 @@ export class EntityDefinitionReader {
       sortingColumn === "dataSource" || // doable, but don't see the necessity at the time of writing this
       sortingColumn === "elements" // arrayed type, cannot sort by arrays
     ) {
-      req.reject(HttpStatusCode.BadRequest, "CANNOT_ORDER_BY_COLUMN");
+      req.reject({
+        status: HttpStatusCode.BadRequest,
+        code: `CANNOT_ORDER_BY_COLUMN`,
+      });
     }
 
     const sortingOrder = req.query.SELECT.orderBy[0]["sort"];

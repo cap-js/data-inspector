@@ -106,8 +106,8 @@ export class DataReader {
     let records;
     try {
       records = await dataSource.run(cqn);
-    } catch (e) {
-      logger.error("Failed to select records:", cqn, e);
+    } catch (error) {
+      logger.error("Failed to select records with CQN:", cqn, error.message);
       req.reject({
         status: HttpStatusCode.InternalServerError,
         code: `ERROR_RUNNING_DB_QUERY`,
@@ -143,13 +143,12 @@ export class DataReader {
       let result;
       try {
         result = await dataSource.run(nextPageProbeCqn);
-      } catch (e) {
-        logger.error("Failed to probe next page:", nextPageProbeCqn, e);
-
-        req.reject(
-          HttpStatusCode.InternalServerError,
-          cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-        );
+      } catch (error) {
+        logger.error("Failed to probe next page:", nextPageProbeCqn, error.message);
+        req.reject({
+          status: HttpStatusCode.InternalServerError,
+          code: `ERROR_RUNNING_DB_QUERY`,
+        });
       }
 
       // Provide nextLink if next page exists
@@ -455,11 +454,11 @@ export class DataReader {
         // This will have a limitation of returning HTTP 500 error instead of HTTP 400 when invalid element names are supplied in r_filter
         cqn = cqn.where(expr);
       } catch (error) {
-        logger.error("Failed to parse the r_filter query parameter", r_filter, error);
-        req.reject(
-          HttpStatusCode.BadRequest,
-          cds["i18n"].messages.at("INVALID_R_FILTER_QUERY_PARAM") + ":" + error.message
-        );
+        logger.error("Failed to parse the r_filter query parameter", r_filter, error.message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_R_FILTER_QUERY_PARAM`,
+        });
       }
     }
 

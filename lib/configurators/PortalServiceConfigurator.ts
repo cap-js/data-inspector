@@ -143,7 +143,11 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
       log.debug("Added data inspector group to groupsOrder for default visibility");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      log.error(`Failed to update groupsOrder: ${message}`);
+      log.error(
+        `Failed to update groupsOrder: ${message}` +
+          `To display the Data Inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+          `to the groupsOrder array in your preferred site.`
+      );
     }
   }
 
