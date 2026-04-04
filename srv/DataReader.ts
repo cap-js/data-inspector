@@ -107,7 +107,22 @@ export class DataReader {
     try {
       records = await dataSource.run(cqn);
     } catch (error) {
-      logger.error("Failed to select records with CQN:", cqn, error.message);
+      // First check if the error is due to invalid element name supplied in r_filter, if so return HTTP 400 with specific message; otherwise return generic HTTP 500 error
+      // Note: Following pattern of error message thrown by @sap/cds could change in a future release, in which case it needs to be updated accordingly
+      const pattern = /^"([^"]*)" not found in the elements of "([^"]*)"$/;
+      const message = error instanceof Error ? error.message : String(error);
+      const match = message.match(pattern);
+      if (match) {
+        const invalidElement = match[1]; // supplied element name that is not found in the entity
+        logger.error("Invalid element name supplied in r_filter:", invalidElement, message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_ELEMENT_IN_R_FILTER`,
+          args: [invalidElement],
+        });
+      }
+
+      logger.error("Failed to select records with CQN:", JSON.stringify(cqn), message);
       req.reject({
         status: HttpStatusCode.InternalServerError,
         code: `ERROR_RUNNING_DB_QUERY`,
@@ -451,7 +466,6 @@ export class DataReader {
 
         // NOTE: Validating the supplied element names for r_filter is not trivial
         // Therefore at this point this is left to be handled by the database query itself
-        // This will have a limitation of returning HTTP 500 error instead of HTTP 400 when invalid element names are supplied in r_filter
         cqn = cqn.where(expr);
       } catch (error) {
         logger.error("Failed to parse the r_filter query parameter", r_filter, error.message);
