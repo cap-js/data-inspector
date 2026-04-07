@@ -61,7 +61,9 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       "data-inspector-ui"
     );
     if (!exists(uiAppSrc)) {
-      log.warn("Could not locate data-inspector UI5 app source, skipping build task");
+      log.warn(
+        "Could not locate data-inspector UI5 app source, skipping build task; See README for detail on build task"
+      );
       return;
     }
 
@@ -71,14 +73,14 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     const destination = await this.resolveDestination();
     if (destination !== DEFAULT_SRV_DESTINATION) {
       await this.patchXsAppDestination(destination);
-      log.info(`Patched xs-app.json destination to '${destination}'`);
+      log.debug(`Patched xs-app.json destination to '${destination}'`);
     }
 
     // Patch manifest.json with sap.cloud.service when a value is available
     const cloudService = await this.resolveCloudService();
     if (cloudService) {
       await this.patchManifestCloudService(cloudService);
-      log.info(`Patched manifest.json sap.cloud.service to '${cloudService}'`);
+      log.debug(`Patched manifest.json sap.cloud.service to '${cloudService}'`);
     }
   }
 
@@ -119,6 +121,8 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
         try {
           const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
           const odataRoute = xsApp.routes?.find(
+            // xs-app.json routes have dynamic structure
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (r: any) => r.destination && (r.source?.includes("odata") || r.source?.includes("api"))
           );
           if (odataRoute?.destination) {
@@ -143,7 +147,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   private async patchXsAppDestination(destination: string): Promise<void> {
     const xsAppPath = join(this.task.dest, "xs-app.json");
     if (!exists(xsAppPath)) {
-      log.warn("xs-app.json not found in build output, cannot patch destination");
+      log.debug("xs-app.json not found in build output, cannot patch destination");
       return;
     }
 
@@ -214,7 +218,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   private async patchManifestCloudService(cloudService: string): Promise<void> {
     const manifestPath = join(this.task.dest, "webapp", "manifest.json");
     if (!exists(manifestPath)) {
-      log.warn("manifest.json not found in build output, cannot patch sap.cloud.service");
+      log.debug("manifest.json not found in build output, cannot patch sap.cloud.service");
       return;
     }
 

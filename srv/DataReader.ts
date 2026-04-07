@@ -58,7 +58,11 @@ export class DataReader {
       // Validate recordKey
       const recordKey = req.params[0]["recordKey"]; // 'keyElementName=value', 'keyElement1Name=value&keyElement2Name=value', etc.
       if (!this._validateRecordKeys(entity, recordKey)) {
-        req.reject(HttpStatusCode.BadRequest, `INVALID_RECORD_KEY`, [recordKey]);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_RECORD_KEY`,
+          args: [recordKey],
+        });
       }
 
       // Transform the supplied recordKey to r_filter condition for building CQN
@@ -102,13 +106,27 @@ export class DataReader {
     let records;
     try {
       records = await dataSource.run(cqn);
-    } catch (e) {
-      logger.error("Failed to select records:", cqn, e);
+    } catch (error) {
+      // First check if the error is due to invalid element name supplied in r_filter, if so return HTTP 400 with specific message; otherwise return generic HTTP 500 error
+      // Note: Following pattern of error message thrown by @sap/cds could change in a future release, in which case it needs to be updated accordingly
+      const pattern = /^"([^"]*)" not found in the elements of "([^"]*)"$/;
+      const message = error instanceof Error ? error.message : String(error);
+      const match = message.match(pattern);
+      if (match) {
+        const invalidElement = match[1]; // supplied element name that is not found in the entity
+        logger.error("Invalid element name supplied in r_filter:", invalidElement, message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_ELEMENT_IN_R_FILTER`,
+          args: [invalidElement],
+        });
+      }
 
-      req.reject(
-        HttpStatusCode.InternalServerError,
-        cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-      );
+      logger.error("Failed to select records with CQN:", JSON.stringify(cqn), message);
+      req.reject({
+        status: HttpStatusCode.InternalServerError,
+        code: `ERROR_RUNNING_DB_QUERY`,
+      });
     }
 
     /**
@@ -140,13 +158,12 @@ export class DataReader {
       let result;
       try {
         result = await dataSource.run(nextPageProbeCqn);
-      } catch (e) {
-        logger.error("Failed to probe next page:", nextPageProbeCqn, e);
-
-        req.reject(
-          HttpStatusCode.InternalServerError,
-          cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-        );
+      } catch (error) {
+        logger.error("Failed to probe next page:", nextPageProbeCqn, error.message);
+        req.reject({
+          status: HttpStatusCode.InternalServerError,
+          code: `ERROR_RUNNING_DB_QUERY`,
+        });
       }
 
       // Provide nextLink if next page exists
@@ -389,7 +406,11 @@ export class DataReader {
         const selectedRecordElements = r_select.split(",");
         for (const elementName of selectedRecordElements) {
           if (!entityElements.includes(elementName)) {
-            req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_SELECT`, [r_select]);
+            req.reject({
+              status: HttpStatusCode.BadRequest,
+              code: `INVALID_ELEMENT_IN_R_SELECT`,
+              args: [r_select],
+            });
           }
         }
 
@@ -445,14 +466,13 @@ export class DataReader {
 
         // NOTE: Validating the supplied element names for r_filter is not trivial
         // Therefore at this point this is left to be handled by the database query itself
-        // This will have a limitation of returning HTTP 500 error instead of HTTP 400 when invalid element names are supplied in r_filter
         cqn = cqn.where(expr);
       } catch (error) {
-        logger.error("Failed to parse the r_filter query parameter", r_filter, error);
-        req.reject(
-          HttpStatusCode.BadRequest,
-          cds["i18n"].messages.at("INVALID_R_FILTER_QUERY_PARAM") + ":" + error.message
-        );
+        logger.error("Failed to parse the r_filter query parameter", r_filter, error.message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_R_FILTER_QUERY_PARAM`,
+        });
       }
     }
 
@@ -473,7 +493,11 @@ export class DataReader {
       // validate the supplied element names for r_orderby
       for (const element of orderbyElements) {
         if (!entityElements.includes(element)) {
-          req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_ORDERBY`, [r_orderby]);
+          req.reject({
+            status: HttpStatusCode.BadRequest,
+            code: `INVALID_ELEMENT_IN_R_ORDERBY`,
+            args: [r_orderby],
+          });
         }
       }
       // @ts-expect-error
@@ -647,6 +671,7 @@ export class DataReader {
     for (const record of records) {
       const attributes: { name: string }[] = [];
       // checking if sensitive element is exposed for each record is the safest way
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const [elementName, _] of Object.entries(record)) {
         if (sensitiveElements.includes(elementName)) {
           attributes.push({ name: elementName });
@@ -660,6 +685,7 @@ export class DataReader {
       for (const keyElement of keyElements) {
         id[keyElement] = record[keyElement];
       }
+      // eslint-disable-next-line no-await-in-loop
       await auditLogService.log("SensitiveDataRead", {
         data_subject: {
           id: id,
