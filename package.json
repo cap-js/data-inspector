@@ -42,7 +42,7 @@
     "@cap-js/sqlite": "2.2.0",
     "@sap/cds-dk": "9.8.3",
     "@types/mocha": "10.0.10",
-    "@types/node": "24.12.0",
+    "@types/node": "25.5.2",
     "c8": "11.0.0",
     "chai": "6.2.2",
     "cross-env": "10.1.0",
