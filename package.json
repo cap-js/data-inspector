@@ -5,7 +5,6 @@
   "author": "SAP SE (https://www.sap.com)",
   "repository": "https://github.com/cap-js/data-inspector.git",
   "license": "SEE LICENSE IN LICENSE",
-  "private": true,
   "main": "cds-plugin.js",
   "scripts": {
     "lint": "npx eslint .",
