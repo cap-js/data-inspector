@@ -16,12 +16,6 @@ Install the plugin in your CAP Node.js project:
 npm install @cap-js/data-inspector
 ```
 
-> [!NOTE] As long as the package is not published, install a preview like so
->
-> ```sh
-> npm install https://github.com/cap-js/data-inspector/releases/download/v0.0.1-test/cap-js-data-inspector-0.0.1.tgz
-> ```
-
 ### Run
 
 Run it with
@@ -32,6 +26,8 @@ cds watch
 
 The UI is served at http://localhost:4004/data-inspector-ui/.
 When asked for a user, use `alice` without password.
+
+> **Note:** The `alice` user is for local testing only. For production deployments, always configure proper authentication via XSUAA as described later in the document.
 
 ## Features
 
