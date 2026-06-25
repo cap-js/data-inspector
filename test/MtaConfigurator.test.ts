@@ -37,9 +37,12 @@ describe("MtaConfigurator", () => {
   });
 
   it("should skip when mta.yaml does not exist", async () => {
-    // Project without mta.yaml — configurator should not run (no error thrown).
+    // Project without mta.yaml — configurator should not run and must not create one as a side effect.
     const project = await createTestProject(tempUtil, { xsuaa: true });
     runCdsAddDataInspector(project);
+
+    // The configurator must not have created an mta.yaml.
+    expect(fs.existsSync(join(project, "mta.yaml"))).to.be.false;
   });
 
   it("should add HTML5 module when mta.yaml with workzone setup exists", async () => {
