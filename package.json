@@ -25,6 +25,9 @@
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
+  "dependencies": {
+    "yaml": "2.9.0"
+  },
   "peerDependencies": {
     "@cap-js/audit-logging": ">=1",
     "@sap/cds": ">=9"
@@ -40,7 +43,7 @@
     "@cap-js/cds-typer": "0.38.0",
     "@cap-js/cds-types": "0.16.0",
     "@cap-js/sqlite": "2.2.0",
-    "@sap/cds-dk": "9.8.3",
+    "@sap/cds-dk": "9.9.2",
     "@types/mocha": "10.0.10",
     "@types/node": "24.12.0",
     "c8": "11.0.0",

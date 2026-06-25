@@ -8,6 +8,7 @@
 import { expect } from "chai";
 import fs from "fs";
 import { join } from "path";
+import YAML from "yaml";
 
 import {
   TempUtil,
@@ -25,8 +26,7 @@ import {
 /** Read and parse mta.yaml */
 function readMta(projectFolder: string): any {
   const mtaPath = join(projectFolder, "mta.yaml");
-  const yaml = require("@sap/cds").utils.yaml;
-  return yaml.load(fs.readFileSync(mtaPath, "utf8"));
+  return YAML.parse(fs.readFileSync(mtaPath, "utf8"));
 }
 
 describe("MtaConfigurator", () => {
