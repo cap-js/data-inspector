@@ -1,5 +1,7 @@
+import YAML from "yaml";
+
 const cds = require("@sap/cds");
-const { exists, read, write, yaml } = cds.utils;
+const { exists, read, write } = cds.utils;
 
 const log = cds.log("data-inspector");
 
@@ -15,7 +17,7 @@ export async function readMta(): Promise<any | null> {
   if (!mtaPath) return null;
 
   try {
-    return cds.parse.yaml(await read(mtaPath));
+    return YAML.parse(await read(mtaPath));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     log.error(`Failed to parse MTA file: ${message}`);
@@ -29,7 +31,7 @@ export async function writeMta(mtaContent: any): Promise<void> {
   const mtaPath = getMtaPath();
   if (!mtaPath) return;
 
-  await write(yaml.dump(mtaContent)).to(mtaPath);
+  await write(YAML.stringify(mtaContent)).to(mtaPath);
 }
 
 /**

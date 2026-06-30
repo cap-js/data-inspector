@@ -8,6 +8,7 @@
 import { expect } from "chai";
 import fs from "fs";
 import { join } from "path";
+import YAML from "yaml";
 
 import {
   TempUtil,
@@ -25,8 +26,7 @@ import {
 /** Read and parse mta.yaml */
 function readMta(projectFolder: string): any {
   const mtaPath = join(projectFolder, "mta.yaml");
-  const yaml = require("@sap/cds").utils.yaml;
-  return yaml.load(fs.readFileSync(mtaPath, "utf8"));
+  return YAML.parse(fs.readFileSync(mtaPath, "utf8"));
 }
 
 describe("MtaConfigurator", () => {
@@ -37,9 +37,12 @@ describe("MtaConfigurator", () => {
   });
 
   it("should skip when mta.yaml does not exist", async () => {
-    // Project without mta.yaml — configurator should not run (no error thrown).
+    // Project without mta.yaml — configurator should not run and must not create one as a side effect.
     const project = await createTestProject(tempUtil, { xsuaa: true });
     runCdsAddDataInspector(project);
+
+    // The configurator must not have created an mta.yaml.
+    expect(fs.existsSync(join(project, "mta.yaml"))).to.be.false;
   });
 
   it("should add HTML5 module when mta.yaml with workzone setup exists", async () => {
