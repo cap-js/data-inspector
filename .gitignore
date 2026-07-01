@@ -40,3 +40,6 @@ mta_archives/
 coverage/
 TEST-mocha.xml
 .nyc_output/
+
+# Performance baselines (machine-specific)
+test/performance/performance-baseline.json

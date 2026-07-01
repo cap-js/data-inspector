@@ -1,0 +1,59 @@
+name: Update CI Performance Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for re-baselining"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  rebaseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance tests (update baseline)
+        run: npm run test:performance:update-baseline
+        env:
+          CI: true
+          PERF_TESTS: "1"
+          PERF_UPDATE_BASELINE: "1"
+          PERF_BASELINE_FILE: "performance-baseline.ci.json"
+
+      - name: Commit CI baseline
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add test/performance/performance-baseline.ci.json
+          git commit -m "chore: update CI performance baseline
+
+          Reason: ${{ github.event.inputs.reason }}
+          Triggered by: @${{ github.actor }}
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          git push
+
+      - name: Summary
+        run: |
+          echo "## Performance Baseline Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The CI baseline has been committed to \`test/performance/performance-baseline.ci.json\`." >> $GITHUB_STEP_SUMMARY
+          echo "Future performance test runs will compare against this baseline." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat coverage/performance-report.md >> $GITHUB_STEP_SUMMARY
