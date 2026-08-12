@@ -18,16 +18,33 @@ npm install @cap-js/data-inspector
 
 ### Run
 
-Run it with
+Start your CAP server with
 
 ```sh
 cds watch
 ```
 
-The UI is served at http://localhost:4004/data-inspector-ui/.
+The Data Inspector OData service is served under `/odata/v4/data-inspector/`.
+The SAPUI5 app is **not** served by the CAP server; run it locally as a separate
+process against your running server (see [Accessing the UI Locally](#accessing-the-ui-locally)),
+or deploy it to the HTML5 Application Repository for BTP (see [Setup for BTP](#setup-for-btp)).
 When asked for a user, use `alice` without password.
 
 > **Note:** The `alice` user is for local testing only. For production deployments, always configure proper authentication via XSUAA as described later in the document.
+
+### Accessing the UI Locally
+
+The SAPUI5 app source ships with this package under `app/data-inspector-ui`. For
+local development, run it as its own process against your running CAP server
+(`http://localhost:4004`):
+
+- **`ui5 serve`** (simplest, for UI iteration): from the UI app folder, run
+  `npm install && npm start`, and configure the UI5 tooling proxy to forward
+  `/odata/v4/*` to `http://localhost:4004`.
+- **Local approuter** (closest to production routing/auth): run
+  [`@sap/approuter`](https://www.npmjs.com/package/@sap/approuter) with the app's
+  `xs-app.json`, routing `/odata/v4/*` to the CAP server and the UI paths to the
+  local UI.
 
 ## Features
 
@@ -400,11 +417,17 @@ To quickly test and experience the plugin directly without a dependent project i
    1. `cd test`
    2. `cds deploy -2 sqlite:db/testservice.db`
    3. `cd ..`
-5. Run the test server: `npm run dev`
+5. Start the CAP server: `npm run dev`
 
-   The SAPUI5 app is launched in a web browser.
+   This serves the Data Inspector OData service at `http://localhost:4004/odata/v4/data-inspector/`.
 
-6. Use the following credentials:
+6. In a second terminal, start the SAPUI5 app: `npm run dev:ui`
+
+   This runs `ui5 serve` for `app/data-inspector-ui` and opens it in a web
+   browser. Its OData requests are proxied to the CAP server on port 4004 (see
+   `app/data-inspector-ui/ui5.yaml`).
+
+7. Use the following credentials:
 
    Username: `alice`
 
