@@ -177,6 +177,7 @@ sap.ui.define(
                 try {
                   oRecord = JSON.parse(oRecord);
                 } catch (e) {
+                  console.error("Failed to parse record JSON string:", e);
                   oRecord = {};
                 }
               }
