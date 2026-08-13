@@ -10,7 +10,7 @@
  *     xs-app.json OData route target the CAP server's OData V4 endpoint.
  *     For CAP Java hosts this base path may be customized (e.g. /api via
  *     cds.odata-v4.endpoint.path); for Node.js it stays /odata/v4. The
- *     effective base path is resolved (see lib/utils/projectType) and
+ *     effective base path is resolved (see lib/utils/hostResolver) and
  *     patched into both files.
  *
  *   - xs-app.json destination:  The OData route destination defaults to
@@ -44,7 +44,7 @@ import {
   buildMainServiceUri,
   normalizeBasePath,
   DEFAULT_ODATA_V4_BASE_PATH,
-} from "./utils/projectType";
+} from "./utils/hostResolver";
 
 const log = cds.log("data-inspector");
 
