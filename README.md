@@ -38,13 +38,9 @@ The SAPUI5 app source ships with this package under `app/data-inspector-ui`. For
 local development, run it as its own process against your running CAP server
 (`http://localhost:4004`):
 
-- **`ui5 serve`** (simplest, for UI iteration): from the UI app folder, run
-  `npm install && npm start`, and configure the UI5 tooling proxy to forward
-  `/odata/v4/*` to `http://localhost:4004`.
-- **Local approuter** (closest to production routing/auth): run
-  [`@sap/approuter`](https://www.npmjs.com/package/@sap/approuter) with the app's
-  `xs-app.json`, routing `/odata/v4/*` to the CAP server and the UI paths to the
-  local UI.
+From the UI app folder, run `npm install && npm start`. This starts `ui5 serve`,
+which opens the app in a browser and proxies OData requests to the CAP server
+(configured in `ui5.yaml`).
 
 ## Features
 
