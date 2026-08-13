@@ -29,7 +29,7 @@ export const DEFAULT_ODATA_V4_BASE_PATH = "/odata/v4";
  *
  * Detection is intentionally simple and dependency-free: a CAP Java project has
  * a `pom.xml` at its root (and typically an `srv/pom.xml`). CAP Node.js projects
- * do not. This mirrors how other tooling distinguishes the two runtimes.
+ * do not.
  */
 export function isJavaProject(): boolean {
   return exists(join(cds.root, "pom.xml")) || exists(join(cds.root, "srv", "pom.xml"));
