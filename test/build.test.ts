@@ -246,6 +246,103 @@ describe("CDS Build Plugin", () => {
   });
 
   // -----------------------------------------------------------------------
+  //  OData base path patching (Java host support)
+  // -----------------------------------------------------------------------
+
+  describe("OData base path patching", () => {
+    /**
+     * Helper: make the test project look like a Java project by adding a pom.xml.
+     * The build task detects Java via the presence of pom.xml at project root.
+     */
+    function makeJavaProject(projectFolder: string): void {
+      fs.writeFileSync(join(projectFolder, "pom.xml"), "<project></project>");
+    }
+
+    /**
+     * Read ui5.yaml from the build output
+     */
+    function readBuildUi5Yaml(projectFolder: string): any {
+      const YAML = require("yaml");
+      const ui5Path = join(projectFolder, BUILD_OUTPUT_DIR, "ui5.yaml");
+      return YAML.parse(fs.readFileSync(ui5Path, "utf8"));
+    }
+
+    function getMainServiceUri(manifest: any): string | undefined {
+      return manifest?.["sap.app"]?.dataSources?.mainService?.uri;
+    }
+
+    function getODataRouteSource(xsApp: any): string | undefined {
+      const route = xsApp.routes?.find((r: any) => r.destination);
+      return route?.source;
+    }
+
+    function getUi5BackendProxy(ui5Doc: any): { path: string; url: string } | undefined {
+      const proxy = ui5Doc?.server?.customMiddleware?.find(
+        (m: any) => m?.name === "fiori-tools-proxy"
+      );
+      return proxy?.configuration?.backend?.[0];
+    }
+
+    it("should keep defaults for a Node.js project (no base-path patch, proxy at :4004)", async () => {
+      const project = await createTestProject(tempUtil);
+      runCdsBuild(project);
+
+      // manifest.json: mainService.uri stays at the default
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/odata/v4/data-inspector/");
+
+      // ui5.yaml: proxy stays at Node.js defaults
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.path).to.equal("/odata");
+      expect(backend!.url).to.equal("http://localhost:4004");
+    });
+
+    it("should patch all artifacts for a Java project with odataBasePath", async () => {
+      const project = await createTestProject(tempUtil);
+      makeJavaProject(project);
+      setCdsrc(project, { odataBasePath: "/api" });
+      runCdsBuild(project);
+
+      // manifest.json: mainService.uri patched
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/api/data-inspector/");
+
+      // xs-app.json: OData route rewritten to /api
+      const xsApp = readBuildXsApp(project);
+      const source = getODataRouteSource(xsApp);
+      expect(source).to.include("/api");
+      expect(source).to.not.include("/odata");
+
+      // ui5.yaml: proxy defaults to Java :8080, path to /api
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.path).to.equal("/api");
+      expect(backend!.url).to.equal("http://localhost:8080");
+    });
+
+    it("should use explicit localServerUrl and odataBasePath from config", async () => {
+      const project = await createTestProject(tempUtil);
+      makeJavaProject(project);
+      setCdsrc(project, { odataBasePath: "/custom-path", localServerUrl: "http://localhost:9090" });
+      runCdsBuild(project);
+
+      // manifest.json: custom base path
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/custom-path/data-inspector/");
+
+      // ui5.yaml: custom server URL and path
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.path).to.equal("/custom-path");
+      expect(backend!.url).to.equal("http://localhost:9090");
+    });
+  });
+
+  // -----------------------------------------------------------------------
   //  Idempotency
   // -----------------------------------------------------------------------
 
