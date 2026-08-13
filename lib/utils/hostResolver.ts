@@ -95,12 +95,12 @@ export const DEFAULT_JAVA_SERVER_URL = "http://localhost:8080";
  * forward OData requests to.
  *
  * Resolution order:
- *   1. `cds.env["data-inspector"].serverUrl`  (explicit override)
+ *   1. `cds.env["data-inspector"].localServerUrl`  (explicit override)
  *   2. Java hosts → {@link DEFAULT_JAVA_SERVER_URL} (`http://localhost:8080`)
  *   3. Node.js hosts → {@link DEFAULT_NODE_SERVER_URL} (`http://localhost:4004`)
  */
 export function resolveLocalServerUrl(): string {
-  const configured = cds.env["data-inspector"]?.serverUrl;
+  const configured = cds.env["data-inspector"]?.localServerUrl;
   if (configured) return String(configured);
   return isJavaProject() ? DEFAULT_JAVA_SERVER_URL : DEFAULT_NODE_SERVER_URL;
 }

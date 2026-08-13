@@ -204,6 +204,20 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 
 3. **Skipped** — If neither source provides a value, `sap.cloud.service` is not added in the SAPUI5 app's `manifest.json` file.
 
+##### Local Server URL (ui5 serve proxy)
+
+The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js) or `http://localhost:8080` (Java, detected via `pom.xml`). Override it with `cds.data-inspector.localServerUrl` if your server runs on a different port:
+
+```json
+{
+  "cds": {
+    "data-inspector": {
+      "localServerUrl": "http://localhost:9090"
+    }
+  }
+}
+```
+
 #### MTA Deployment
 
 > Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` file automatically. Make sure to review the produced changes before committing.
