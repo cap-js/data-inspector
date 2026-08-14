@@ -25,12 +25,10 @@
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
-  "dependencies": {
-    "yaml": "2.9.0"
-  },
   "peerDependencies": {
     "@cap-js/audit-logging": ">=1",
-    "@sap/cds": ">=9"
+    "@sap/cds": ">=9",
+    "yaml": "^2"
   },
   "peerDependenciesMeta": {
     "@cap-js/audit-logging": {
@@ -57,7 +55,8 @@
     "ts-node": "10.9.2",
     "tsx": "4.21.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.58.0"
+    "typescript-eslint": "8.58.0",
+    "yaml": "2.9.0"
   },
   "files": [
     "@cds-models",
