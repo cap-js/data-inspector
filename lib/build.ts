@@ -3,7 +3,7 @@
  *
  * Runs as part of `cds build` to prepare the UI5 app for deployment.
  * The plugin copies the bundled UI5 app source from the plugin's own
- * package into the build output folder (gen/cap-js-data-inspector-ui)
+ * package into the build output folder (gen/cap-data-inspector-ui)
  * and applies runtime-specific patches:
  *
  *   - OData V4 base path:  The UI's manifest.json (mainService.uri) and
@@ -28,7 +28,7 @@
  * folder to produce the deployable ZIP.
  *
  * For Kyma / @sap/html5-app-deployer deployments the consumer is
- * expected to include the contents of gen/cap-js-data-inspector-ui in
+ * expected to include the contents of gen/cap-data-inspector-ui in
  * their own html5 content image.  See README for details.
  */
 const cds = require("@sap/cds");
@@ -57,14 +57,14 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
 
   static taskDefaults = {
     src: ".",
-    dest: "cap-js-data-inspector-ui",
+    dest: "cap-data-inspector-ui",
   };
 
   init() {
     this.task.dest = join(
       cds.root,
       cds.env.build.target !== "." ? cds.env.build.target : "gen",
-      "cap-js-data-inspector-ui"
+      "cap-data-inspector-ui"
     );
   }
 

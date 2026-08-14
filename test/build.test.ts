@@ -2,7 +2,7 @@
  * Tests for CDS Build Plugin (lib/build.ts).
  *
  * The build plugin runs during `cds build` to copy the data-inspector UI5
- * app into the build output (gen/cap-js-data-inspector-ui) and apply
+ * app into the build output (gen/cap-data-inspector-ui) and apply
  * runtime-specific patches:
  *
  *   - xs-app.json destination:  resolved from cds.env, auto-detected
@@ -27,7 +27,7 @@ import {
   cdsBin,
 } from "./helpers";
 
-const BUILD_OUTPUT_DIR = "gen/cap-js-data-inspector-ui";
+const BUILD_OUTPUT_DIR = "gen/cap-data-inspector-ui";
 
 /**
  * Run cds build on a project

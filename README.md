@@ -136,7 +136,7 @@ The following changes are applied by `cds add data-inspector`:
 
 - **XSUAA** (when a `xs-security.json` file exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. See [Authorization](#authorization).
 - **MTA** (when a `mta.yaml` file exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. See [MTA Deployment](#mta-deployment).
-  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-js-data-inspector-ui`.
+  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-data-inspector-ui`.
   - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
 - **Cloud Portal Service** (when detected in a `mta.yaml` file and a `portal-site/CommonDataModel.json` file exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json` file, and creates an i18n properties file for translatable titles. See [Cloud Portal Service Configuration](#cloud-portal-service-configuration).
 
@@ -158,11 +158,11 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 
 `@cap-js/data-inspector` ships a CDS build plugin that runs during your `cds build`. The plugin:
 
-1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-js-data-inspector-ui` directory.
+1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-data-inspector-ui` directory.
 2. **Patches the SAPUI5 app's `xs-app.json` file** with your Node.js OData server destination name when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [Custom Destination Name](#custom-destination-name).
 3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [sap.cloud.service Configuration](#sapcloudservice-configuration).
 
-The resulting `gen/cap-js-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
+The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
 
 ##### Custom Destination Name
 
@@ -222,14 +222,14 @@ The generated `ui5.yaml` includes a dev proxy that forwards OData requests to yo
 
 > Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` file automatically. Make sure to review the produced changes before committing.
 
-The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-js-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
+The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
 
 1. Add an `html5` module as follows:
 
 ```yaml
 - name: capjsdatainspectorapp
   type: html5
-  path: gen/cap-js-data-inspector-ui
+  path: gen/cap-data-inspector-ui
   build-parameters:
     build-result: dist
     builder: custom
@@ -260,10 +260,10 @@ The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plug
 
 #### @sap/html5-app-deployer
 
-For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your `gen/cap-js-data-inspector-ui` directory to include when creating your `html5-app-deployer` image.
+For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your `gen/cap-data-inspector-ui` directory to include when creating your `html5-app-deployer` image.
 
-1. Run `cds build` to produce the patched data-inspector plugin's SAPUI5 app in your project's `gen/cap-js-data-inspector-ui` directory.
-2. Build the SAPUI5 app for production: `cd gen/cap-js-data-inspector-ui && npm install && npm run build:cf`.
+1. Run `cds build` to produce the patched data-inspector plugin's SAPUI5 app in your project's `gen/cap-data-inspector-ui` directory.
+2. Build the SAPUI5 app for production: `cd gen/cap-data-inspector-ui && npm install && npm run build:cf`.
 3. Include the resulting `dist/` contents (specifically `datainspectorapp.zip`) in your `html5-app-deployer` image alongside your other SAPUI5 apps.
 
 The exact steps depend on your deployment pipeline. For details, refer to [Deploy Content Using HTML5 Application Deployer](https://help.sap.com/docs/btp/sap-business-technology-platform/deploy-content-using-html5-application-deployer).
