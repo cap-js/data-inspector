@@ -2,5 +2,12 @@
   "name": "data-inspector-test",
   "dependencies": {
     "@cap-js/data-inspector": "file:.."
+  },
+  "cds": {
+    "protocols": {
+      "odata": {
+        "path": "/test"
+      }
+    }
   }
 }
