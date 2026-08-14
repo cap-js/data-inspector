@@ -323,22 +323,22 @@ describe("CDS Build Plugin", () => {
       expect(backend!.url).to.equal("http://localhost:8080");
     });
 
-    it("should use explicit localServerUrl and odataBasePath from config", async () => {
+    it("should use explicit odataBasePath from config", async () => {
       const project = await createTestProject(tempUtil);
       makeJavaProject(project);
-      setCdsrc(project, { odataBasePath: "/custom-path", localServerUrl: "http://localhost:9090" });
+      setCdsrc(project, { odataBasePath: "/custom-path" });
       runCdsBuild(project);
 
       // manifest.json: custom base path
       const manifest = readBuildManifest(project);
       expect(getMainServiceUri(manifest)).to.equal("/custom-path/data-inspector/");
 
-      // ui5.yaml: custom server URL and path
+      // ui5.yaml: path follows odataBasePath, url defaults to Java :8080
       const ui5Doc = readBuildUi5Yaml(project);
       const backend = getUi5BackendProxy(ui5Doc);
       expect(backend).to.exist;
       expect(backend!.path).to.equal("/custom-path");
-      expect(backend!.url).to.equal("http://localhost:9090");
+      expect(backend!.url).to.equal("http://localhost:8080");
     });
   });
 

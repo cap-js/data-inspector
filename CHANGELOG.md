@@ -9,7 +9,7 @@
 ### Added
 
 - **CAP Java host support:** the `cds build` task now detects Java projects and patches the generated UI with the correct OData base path, `xs-app.json` route, and `ui5.yaml` dev proxy — so the plugin works out of the box with CAP Java apps.
-- New config options: `cds.data-inspector.odataBasePath` (custom OData endpoint path for Java hosts) and `cds.data-inspector.localServerUrl` (local dev server URL for `ui5 serve`).
+- New config option: `cds.data-inspector.odataBasePath` (custom OData endpoint path, for CAP Java hosts only).
 
 ### Changed
 

@@ -96,16 +96,12 @@ export const DEFAULT_NODE_SERVER_URL = "http://localhost:4004";
 export const DEFAULT_JAVA_SERVER_URL = "http://localhost:8080";
 
 /**
- * Resolves the local CAP server URL that the UI's `ui5 serve` dev proxy should
- * forward OData requests to.
+ * Returns the default local CAP server URL for the ui5.yaml dev proxy.
+ * Java hosts default to :8080, Node.js hosts to :4004.
  *
- * Resolution order:
- *   1. `cds.env["data-inspector"].localServerUrl`  (explicit override)
- *   2. Java hosts → {@link DEFAULT_JAVA_SERVER_URL} (`http://localhost:8080`)
- *   3. Node.js hosts → {@link DEFAULT_NODE_SERVER_URL} (`http://localhost:4004`)
+ * If your server runs on a non-standard port, edit the generated
+ * `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
  */
 export function resolveLocalServerUrl(): string {
-  const configured = cds.env["data-inspector"]?.localServerUrl;
-  if (configured) return String(configured);
   return isJavaProject() ? DEFAULT_JAVA_SERVER_URL : DEFAULT_NODE_SERVER_URL;
 }
