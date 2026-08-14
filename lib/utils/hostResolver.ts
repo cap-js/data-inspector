@@ -51,23 +51,28 @@ export function normalizeBasePath(basePath: string | null | undefined): string {
 /**
  * Resolves the effective OData V4 base path for the host project.
  *
- * Resolution order:
+ * For **CAP Node.js** hosts the base path is always `/odata/v4` — the plugin's
+ * service uses an absolute `@path` annotation, so the endpoint is fixed
+ * regardless of any configuration. `odataBasePath` is ignored for Node.js.
+ *
+ * For **CAP Java** hosts:
  *   1. `cds.env["data-inspector"].odataBasePath`  (explicit override)
- *   2. For Java hosts: `cds.env.odataV4?.endpoint?.path` (the CAP Java setting
+ *   2. `cds.env.odataV4?.endpoint?.path` (the CAP Java setting
  *      `cds.odata-v4.endpoint.path`, surfaced camel-cased in cds.env)
  *   3. {@link DEFAULT_ODATA_V4_BASE_PATH}  (`/odata/v4`)
- *
- * For Node.js hosts the default is returned unless explicitly overridden — the
- * plugin's service is served at `/odata/v4/data-inspector/` there.
  */
 export function resolveODataV4BasePath(): string {
+  // Node.js: the service @path is absolute → base path is always the default.
+  if (!isJavaProject()) {
+    return DEFAULT_ODATA_V4_BASE_PATH;
+  }
+
+  // Java: check explicit config first, then auto-detect from cds.env.
   const configured = cds.env["data-inspector"]?.odataBasePath;
   if (configured) return normalizeBasePath(configured);
 
-  if (isJavaProject()) {
-    const javaPath = cds.env.odataV4?.endpoint?.path;
-    if (javaPath) return normalizeBasePath(javaPath);
-  }
+  const javaPath = cds.env.odataV4?.endpoint?.path;
+  if (javaPath) return normalizeBasePath(javaPath);
 
   return DEFAULT_ODATA_V4_BASE_PATH;
 }
