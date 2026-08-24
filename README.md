@@ -419,15 +419,9 @@ To quickly test and experience the plugin directly without a dependent project i
    3. `cd ..`
 5. Start the CAP server: `npm run dev`
 
-   This serves the Data Inspector OData service at `http://localhost:4004/odata/v4/data-inspector/`.
+   This serves the Data Inspector UI at `http://localhost:4004/data-inspector-ui/` and the OData service at `http://localhost:4004/odata/v4/data-inspector/`.
 
-6. In a second terminal, start the SAPUI5 app: `npm run dev:ui`
-
-   This runs `ui5 serve` for `app/data-inspector-ui` and opens it in a web
-   browser. Its OData requests are proxied to the CAP server on port 4004 (see
-   `app/data-inspector-ui/ui5.yaml`).
-
-7. Use the following credentials:
+6. Use the following credentials:
 
    Username: `alice`
 
