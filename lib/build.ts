@@ -50,6 +50,20 @@ const log = cds.log("data-inspector");
 
 const DEFAULT_SRV_DESTINATION = "srv-api";
 
+/**
+ * Default approuter authenticationType for the data-inspector routes.
+ * Kept as "xsuaa" for backward compatibility.
+ */
+const DEFAULT_AUTH_TYPE = "xsuaa";
+
+/**
+ * Authentication types that the build task is allowed to WRITE into the
+ * generated xs-app.json. "none" is intentionally excluded: disabling
+ * authentication on the data-inspector routes would expose data without a
+ * login, so it can only be set by manually editing the produced file.
+ */
+const VALID_PATCH_AUTH_TYPES = ["xsuaa", "ias"];
+
 module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   static hasTask() {
     return true;
@@ -114,6 +128,13 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     if (cloudService) {
       await this.patchManifestCloudService(cloudService);
       log.debug(`Patched manifest.json sap.cloud.service to '${cloudService}'`);
+    }
+
+    // Patch xs-app.json authenticationType
+    const authType = await this.resolveAuthenticationType();
+    if (authType !== DEFAULT_AUTH_TYPE) {
+      await this.patchXsAppAuthType(authType);
+      log.debug(`Patched xs-app.json authenticationType to '${authType}'`);
     }
   }
 
@@ -189,6 +210,98 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     for (const route of xsApp.routes || []) {
       if (route.destination) {
         route.destination = destination;
+      }
+    }
+
+    fs.writeFileSync(xsAppPath, JSON.stringify(xsApp, null, 2));
+  }
+
+  /**
+   * Determines the approuter authenticationType for the data-inspector routes.
+   *
+   * Resolution order:
+   *   1. cds.env["data-inspector"].authenticationType  (explicit config)
+   *   2. Auto-detected from an existing UI5 app's xs-app.json OData route
+   *   3. "xsuaa"  (default, for backward compatibility)
+   *
+   * Guardrail: the returned value is always "xsuaa" or "ias" — never "none".
+   *   - An explicit "none" (or any unsupported value) is rejected with a
+   *     warning and falls back to "xsuaa".
+   *   - An auto-detected "none" is silently ignored (falls back to "xsuaa"),
+   * To disable authentication ("none"), edit the generated xs-app.json
+   * manually after the build.
+   */
+  private async resolveAuthenticationType(): Promise<string> {
+    const configured = cds.env["data-inspector"]?.authenticationType;
+    if (configured) {
+      if (VALID_PATCH_AUTH_TYPES.includes(configured)) {
+        return configured;
+      }
+      if (configured === "none") {
+        log.warn(
+          "authenticationType 'none' is not allowed for the data-inspector approuter routes; " +
+            "falling back to 'xsuaa'. To disable authentication, edit the generated " +
+            "gen/cap-data-inspector-ui/xs-app.json manually after the build."
+        );
+      } else {
+        log.warn(
+          `Unsupported data-inspector authenticationType '${configured}'; ` +
+            `expected one of ${VALID_PATCH_AUTH_TYPES.join(", ")}. Falling back to '${DEFAULT_AUTH_TYPE}'.`
+        );
+      }
+      return DEFAULT_AUTH_TYPE;
+    }
+
+    // Auto-detect from existing app/*/xs-app.json OData route.
+    const appDirPath = join(cds.root, "app");
+    if (exists(appDirPath)) {
+      try {
+        const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isDirectory()) continue;
+          const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
+          if (!exists(xsAppPath)) continue;
+          try {
+            const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
+            const odataRoute = xsApp.routes?.find(
+              // xs-app.json routes have dynamic structure
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (r: any) =>
+                r.authenticationType && (r.source?.includes("odata") || r.source?.includes("api"))
+            );
+            const detected = odataRoute?.authenticationType;
+            if (detected) {
+              if (VALID_PATCH_AUTH_TYPES.includes(detected)) return detected;
+            }
+          } catch {
+            // skip unreadable file
+          }
+        }
+      } catch {
+        // skip inaccessible directory
+      }
+    }
+
+    return DEFAULT_AUTH_TYPE;
+  }
+
+  /**
+   * Sets the authenticationType on every route of the build output's
+   * xs-app.json that already declares one (both the OData route and the
+   * html5-apps-repo route). Only "xsuaa" or "ias" are ever written here.
+   */
+  private async patchXsAppAuthType(authType: string): Promise<void> {
+    const xsAppPath = join(this.task.dest, "xs-app.json");
+    if (!exists(xsAppPath)) {
+      log.debug("xs-app.json not found in build output, cannot patch authenticationType");
+      return;
+    }
+
+    const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
+
+    for (const route of xsApp.routes || []) {
+      if (route.authenticationType) {
+        route.authenticationType = authType;
       }
     }
 

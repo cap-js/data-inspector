@@ -4,12 +4,17 @@
 - The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Version 1.1.0 - 2026-08-14
+## Version 1.1.0 - 2026-08-31
 
 ### Added
 
 - **CAP Java host support:** the `cds build` task now detects Java projects and patches the generated UI with the correct OData base path, `xs-app.json` route, and `ui5.yaml` dev proxy — so the plugin works out of the box with CAP Java apps.
 - New config option: `cds.data-inspector.odataBasePath` (custom OData endpoint path, for CAP Java hosts only).
+- New config option: `cds.data-inspector.authenticationType` (`xsuaa` | `ias`) to control the approuter `authenticationType` written into the generated `xs-app.json`. When not set, it is auto-detected from an existing `app/*/xs-app.json` and otherwise defaults to `xsuaa`.
+
+### Fixed
+
+- The generated `xs-app.json` no longer hardcodes `authenticationType: "xsuaa"`, so projects using SAP Cloud Identity Services (IAS) can now produce `ias`.
 
 ### Changed
 

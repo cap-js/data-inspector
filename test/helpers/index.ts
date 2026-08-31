@@ -10,6 +10,7 @@ export {
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
+  createHtml5AppWithAuthType,
   createHtml5AppWithCloudService,
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,

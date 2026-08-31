@@ -159,7 +159,9 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 `@cap-js/data-inspector` ships a CDS build plugin that runs during your `cds build`. The plugin:
 
 1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-data-inspector-ui` directory.
-2. **Patches the SAPUI5 app's `xs-app.json` file** with your Node.js OData server destination name when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [Custom Destination Name](#custom-destination-name).
+2. **Patches the SAPUI5 app's `xs-app.json` file** with values resolved from `cds.env` or auto-detected from an existing SAPUI5 app in your project:
+   - OData server destination name. For more information, see [Custom Destination Name](#custom-destination-name).
+   - Approuter `authenticationType` (`xsuaa` or `ias`). For more information, see [Authentication Type](#authentication-type).
 3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [sap.cloud.service Configuration](#sapcloudservice-configuration).
 
 The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
@@ -203,6 +205,28 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 2. **Auto-detection** — The plugin scans your existing `app/*/webapp/manifest.json` file for an existing `sap.cloud.service` value and uses it.
 
 3. **Skipped** — If neither source provides a value, `sap.cloud.service` is not added in the SAPUI5 app's `manifest.json` file.
+
+##### Authentication Type
+
+The routes in the SAPUI5 app's `xs-app.json` file declare an approuter `authenticationType`. The default is `xsuaa`. If your project authenticates through SAP Cloud Identity Services (IAS), set this to `ias`. The [`cds build`](#cds-build-plugin) plugin resolves the value automatically in this order:
+
+1. **Explicit configuration** — Set `cds.data-inspector.authenticationType` in your `.cdsrc.json` file or `package.json` file:
+
+   ```json
+   {
+     "cds": {
+       "data-inspector": {
+         "authenticationType": "ias"
+       }
+     }
+   }
+   ```
+
+2. **Auto-detection** — The plugin scans your existing `app/*/xs-app.json` file for an OData route and uses its `authenticationType` value.
+
+3. **Default** — This falls back to `xsuaa`.
+
+The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authentication at the approuter) is **never** written automatically: an explicit `none` is rejected with a warning and falls back to `xsuaa`, and an auto-detected `none` is ignored. To disable authentication, edit the generated `gen/cap-data-inspector-ui/xs-app.json` file manually after running `cds build`.
 
 ##### Local Server URL (ui5 serve proxy)
 

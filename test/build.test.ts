@@ -23,6 +23,7 @@ import {
   TempUtil,
   createTestProject,
   createHtml5AppWithDestination,
+  createHtml5AppWithAuthType,
   createHtml5AppWithCloudService,
   cdsBin,
 } from "./helpers";
@@ -58,6 +59,15 @@ function readBuildManifest(projectFolder: string): any {
 function getODataDestination(xsApp: any): string | undefined {
   const route = xsApp.routes?.find((r: any) => r.destination && r.source?.includes("odata"));
   return route?.destination;
+}
+
+/**
+ * Get the authenticationType of every route that declares one.
+ */
+function getAppRouterAuthTypes(xsApp: any): (string | undefined)[] {
+  return (xsApp.routes || [])
+    .filter((r: any) => r.authenticationType)
+    .map((r: any) => r.authenticationType);
 }
 
 /**
@@ -176,6 +186,102 @@ describe("CDS Build Plugin", () => {
 
       const xsApp = readBuildXsApp(project);
       expect(getODataDestination(xsApp)).to.equal("bookshop-srv");
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  //  authenticationType patching
+  // -----------------------------------------------------------------------
+
+  describe("authenticationType default", () => {
+    it("should keep xsuaa on all routes when no config and no existing app", async () => {
+      const project = await createTestProject(tempUtil);
+
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      // Both routes (OData + html5-apps-repo) stay xsuaa.
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+    });
+  });
+
+  describe("authenticationType from cds.env", () => {
+    it("should patch all routes to ias when set via .cdsrc.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setCdsrc(project, { authenticationType: "ias" });
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+    });
+
+    it("should patch all routes to ias when set via package.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setPackageJsonConfig(project, { authenticationType: "ias" });
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+    });
+
+    it("should prefer cds.env authenticationType over auto-detected value", async () => {
+      const project = await createTestProject(tempUtil);
+
+      // Existing app declares xsuaa, but explicit config asks for ias.
+      createHtml5AppWithAuthType(project, "xsuaa");
+      setCdsrc(project, { authenticationType: "ias" });
+
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+    });
+  });
+
+  describe("authenticationType auto-detection from existing UI5 apps", () => {
+    it("should auto-detect ias from existing UI5 app xs-app.json", async () => {
+      const project = await createTestProject(tempUtil);
+
+      createHtml5AppWithAuthType(project, "ias");
+
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+    });
+  });
+
+  describe("authenticationType guardrail (never 'none')", () => {
+    it("should fall back to xsuaa when 'none' is explicitly configured", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setCdsrc(project, { authenticationType: "none" });
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+    });
+
+    it("should fall back to xsuaa when 'none' is auto-detected from an existing app", async () => {
+      const project = await createTestProject(tempUtil);
+
+      createHtml5AppWithAuthType(project, "none");
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+    });
+
+    it("should fall back to xsuaa for an unsupported authenticationType value", async () => {
+      const project = await createTestProject(tempUtil);
+
+      setCdsrc(project, { authenticationType: "bogus" });
+      runCdsBuild(project);
+
+      const xsApp = readBuildXsApp(project);
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
   });
 
@@ -350,7 +456,11 @@ describe("CDS Build Plugin", () => {
     it("should produce same result when build is run multiple times", async () => {
       const project = await createTestProject(tempUtil);
 
-      setCdsrc(project, { destination: "idempotent-srv", cloudService: "idempotent.svc" });
+      setCdsrc(project, {
+        destination: "idempotent-srv",
+        cloudService: "idempotent.svc",
+        authenticationType: "ias",
+      });
 
       runCdsBuild(project);
       const firstRunXsApp = readBuildXsApp(project);
@@ -362,6 +472,8 @@ describe("CDS Build Plugin", () => {
 
       expect(getODataDestination(firstRunXsApp)).to.equal("idempotent-srv");
       expect(getODataDestination(secondRunXsApp)).to.equal("idempotent-srv");
+      expect(getAppRouterAuthTypes(firstRunXsApp)).to.deep.equal(["ias", "ias"]);
+      expect(getAppRouterAuthTypes(secondRunXsApp)).to.deep.equal(["ias", "ias"]);
       expect(firstRunXsApp).to.deep.equal(secondRunXsApp);
 
       expect(firstRunManifest["sap.cloud"].service).to.equal("idempotent.svc");
