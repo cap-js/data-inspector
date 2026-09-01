@@ -80,7 +80,6 @@ The SAPUI5 app is **not** served by the CAP server (see [Accessing the UI Locall
 
 Select only the required columns and add filters to limit the data that is displayed.
 
-
 ### Accessing the UI Locally
 
 The SAPUI5 app is not run directly from the plugin package. Instead, `cds build`
@@ -118,7 +117,6 @@ folder:
 > `gen/cap-data-inspector-ui` picks up your changes. If your CAP server runs on a
 > non-default port, adjust the proxy target as described in
 > [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
-
 
 ### Excluding Entities and Elements
 
