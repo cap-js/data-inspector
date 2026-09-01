@@ -18,7 +18,6 @@ import {
 const logger = cds.log("data-inspector");
 
 export class EntityDefinitionReader {
-  private _srvPrefixesCache: string[] = undefined;
   /**
    * Implements GET handler for DataInspectorService.EntityDefinition.
    * @param req Request object
