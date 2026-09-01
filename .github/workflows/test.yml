@@ -37,8 +37,11 @@ jobs:
           npm pkg set devDependencies.@sap/cds-dk="${{ matrix.cds-version }}"
           npm pkg set devDependencies.@cap-js/sqlite="${{ matrix.sqlite-version }}"
       - run: npm install --no-package-lock
-      - run: npx cds v
+      # Put the locally-installed binaries on PATH so bare `cds` resolves to
+      # node_modules/.bin/cds (@sap/cds-dk). Avoids `npx` or global install.
+      - run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+      - run: cds v
       - run: npm run build
       - name: Deploy test SQLite database
-        run: cd test && npx cds deploy -2 sqlite:db/testservice.db
+        run: cd test && cds deploy -2 sqlite:db/testservice.db
       - run: npm run test
