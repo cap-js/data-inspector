@@ -24,23 +24,11 @@ Start your CAP server with
 cds watch
 ```
 
-The Data Inspector OData service is served under `/odata/v4/data-inspector/`.
-The SAPUI5 app is **not** served by the CAP server; run it locally as a separate
-process against your running server (see [Accessing the UI Locally](#accessing-the-ui-locally)),
-or deploy it to the HTML5 Application Repository for BTP (see [Setup for BTP](#setup-for-btp)).
-When asked for a user, use `alice` without password.
+The Data Inspector OData service is served under `/odata/v4/data-inspector/`. When asked for a user, use `alice` without password.
 
 > **Note:** The `alice` user is for local testing only. For production deployments, always configure proper authentication via XSUAA as described later in the document.
 
-### Accessing the UI Locally
-
-The SAPUI5 app source ships with this package under `app/data-inspector-ui`. For
-local development, run it as its own process against your running CAP server
-(`http://localhost:4004`):
-
-From the UI app folder, run `npm install && npm start`. This starts `ui5 serve`,
-which opens the app in a browser and proxies OData requests to the CAP server
-(configured in `ui5.yaml`).
+The SAPUI5 app is **not** served by the CAP server (see [Accessing the UI Locally](#accessing-the-ui-locally)).
 
 ## Features
 
@@ -90,6 +78,46 @@ which opens the app in a browser and proxies OData requests to the CAP server
 **Recommendation**:
 
 Select only the required columns and add filters to limit the data that is displayed.
+
+
+### Accessing the UI Locally
+
+The SAPUI5 app is not run directly from the plugin package. Instead, `cds build`
+produces a ready-to-run copy of it in your project under
+`gen/cap-data-inspector-ui`, pre-configured to talk to your running CAP server
+(see [CDS Build Plugin](#cds-build-plugin)). Run the UI from that generated
+folder:
+
+1. **Ensure your CAP server is started** (in one terminal), so the OData service is available
+   at `http://localhost:4004`:
+
+   ```sh
+   cds watch
+   ```
+
+2. **Produce the UI** with the CDS build (in another terminal). This copies and
+   configures the UI5 app into `gen/cap-data-inspector-ui`:
+
+   ```sh
+   cds build
+   ```
+
+3. **Run the UI** from the generated folder. This starts `ui5 serve`, opens the
+   app in a browser, and proxies OData requests to your CAP server (configured
+   in the generated `ui5.yaml`):
+
+   ```sh
+   cd gen/cap-data-inspector-ui
+   npm install
+   npm start
+   ```
+
+> **Note:** Re-run `cds build` whenever you change the plugin configuration
+> (e.g. `cds.data-inspector.*` settings), so the regenerated
+> `gen/cap-data-inspector-ui` picks up your changes. If your CAP server runs on a
+> non-default port, adjust the proxy target as described in
+> [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
+
 
 ### Excluding Entities and Elements
 
