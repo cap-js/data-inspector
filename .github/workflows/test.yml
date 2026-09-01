@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
-        cds-version: [latest]
+        node-version: [20.x, 22.x, 24.x]
+        cds-version: [9.x, 10.x]
     steps:
       - uses: actions/checkout@v6
       - name: Use Node.js ${{ matrix.node-version }}
