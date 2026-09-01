@@ -232,54 +232,56 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * manually after the build.
    */
   private async resolveAuthenticationType(): Promise<string> {
+    // Check explicit config
     const configured = cds.env["data-inspector"]?.authenticationType;
+    if (VALID_PATCH_AUTH_TYPES.includes(configured)) {
+      return configured;
+    }
+    if (configured === "none") {
+      log.warn(
+        "authenticationType 'none' is not allowed for the data-inspector approuter routes; " +
+          "falling back to 'xsuaa'. To disable authentication, edit the generated " +
+          "gen/cap-data-inspector-ui/xs-app.json manually after the build."
+      );
+      return DEFAULT_AUTH_TYPE;
+    }
     if (configured) {
-      if (VALID_PATCH_AUTH_TYPES.includes(configured)) {
-        return configured;
-      }
-      if (configured === "none") {
-        log.warn(
-          "authenticationType 'none' is not allowed for the data-inspector approuter routes; " +
-            "falling back to 'xsuaa'. To disable authentication, edit the generated " +
-            "gen/cap-data-inspector-ui/xs-app.json manually after the build."
-        );
-      } else {
-        log.warn(
-          `Unsupported data-inspector authenticationType '${configured}'; ` +
-            `expected one of ${VALID_PATCH_AUTH_TYPES.join(", ")}. Falling back to '${DEFAULT_AUTH_TYPE}'.`
-        );
-      }
+      log.warn(
+        `Unsupported data-inspector authenticationType '${configured}'; ` +
+          `expected one of ${VALID_PATCH_AUTH_TYPES.join(", ")}. Falling back to '${DEFAULT_AUTH_TYPE}'.`
+      );
       return DEFAULT_AUTH_TYPE;
     }
 
     // Auto-detect from existing app/*/xs-app.json OData route.
     const appDirPath = join(cds.root, "app");
-    if (exists(appDirPath)) {
-      try {
-        const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
-        for (const entry of entries) {
-          if (!entry.isDirectory()) continue;
-          const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
-          if (!exists(xsAppPath)) continue;
-          try {
-            const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
-            const odataRoute = xsApp.routes?.find(
-              // xs-app.json routes have dynamic structure
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (r: any) =>
-                r.authenticationType && (r.source?.includes("odata") || r.source?.includes("api"))
-            );
-            const detected = odataRoute?.authenticationType;
-            if (detected) {
-              if (VALID_PATCH_AUTH_TYPES.includes(detected)) return detected;
-            }
-          } catch {
-            // skip unreadable file
+    if (!exists(appDirPath)) {
+      return DEFAULT_AUTH_TYPE;
+    }
+
+    try {
+      const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
+        if (!exists(xsAppPath)) continue;
+        try {
+          const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
+          const odataRoute = xsApp.routes?.find(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (r: any) =>
+              r.authenticationType && (r.source?.includes("odata") || r.source?.includes("api"))
+          );
+          const detected = odataRoute?.authenticationType;
+          if (VALID_PATCH_AUTH_TYPES.includes(detected)) {
+            return detected;
           }
+        } catch {
+          // skip unreadable file
         }
-      } catch {
-        // skip inaccessible directory
       }
+    } catch {
+      // skip inaccessible directory
     }
 
     return DEFAULT_AUTH_TYPE;
@@ -415,7 +417,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     }
 
     const normalized = normalizeBasePath(basePath);
-    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
     const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
 
@@ -454,7 +456,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     // Use the first path segment of the base path as the proxy prefix
     // (e.g. "/odata/v4" → "/odata", "/api" → "/api").
     const normalized = normalizeBasePath(basePath);
-    const proxyPath = "/" + normalized.split("/").filter(Boolean)[0];
+    const proxyPath = "/" + normalized.split("/").find(Boolean);
 
     try {
       const doc = YAML.parse(fs.readFileSync(ui5YamlPath, "utf8"));

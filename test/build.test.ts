@@ -8,6 +8,9 @@
  *   - xs-app.json destination:  resolved from cds.env, auto-detected
  *     from an existing UI5 app's xs-app.json, or defaults to "srv-api".
  *
+ *   - xs-app.json authenticationType:  resolved from cds.env, auto-detected
+ *     from an existing UI5 app's xs-app.json, or defaults to "xsuaa".
+ *
  *   - manifest.json sap.cloud.service:  resolved from cds.env or
  *     auto-detected from an existing UI5 app's manifest.json.  When
  *     neither source provides a value the patch is skipped silently.
@@ -196,9 +199,7 @@ describe("CDS Build Plugin", () => {
   describe("authenticationType default", () => {
     it("should keep xsuaa on all routes when no config and no existing app", async () => {
       const project = await createTestProject(tempUtil);
-
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       // Both routes (OData + html5-apps-repo) stay xsuaa.
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
@@ -208,33 +209,26 @@ describe("CDS Build Plugin", () => {
   describe("authenticationType from cds.env", () => {
     it("should patch all routes to ias when set via .cdsrc.json", async () => {
       const project = await createTestProject(tempUtil);
-
       setCdsrc(project, { authenticationType: "ias" });
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
     });
 
     it("should patch all routes to ias when set via package.json", async () => {
       const project = await createTestProject(tempUtil);
-
       setPackageJsonConfig(project, { authenticationType: "ias" });
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
     });
 
     it("should prefer cds.env authenticationType over auto-detected value", async () => {
       const project = await createTestProject(tempUtil);
-
       // Existing app declares xsuaa, but explicit config asks for ias.
       createHtml5AppWithAuthType(project, "xsuaa");
       setCdsrc(project, { authenticationType: "ias" });
-
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
     });
@@ -243,11 +237,8 @@ describe("CDS Build Plugin", () => {
   describe("authenticationType auto-detection from existing UI5 apps", () => {
     it("should auto-detect ias from existing UI5 app xs-app.json", async () => {
       const project = await createTestProject(tempUtil);
-
       createHtml5AppWithAuthType(project, "ias");
-
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
     });
@@ -256,30 +247,24 @@ describe("CDS Build Plugin", () => {
   describe("authenticationType guardrail (never 'none')", () => {
     it("should fall back to xsuaa when 'none' is explicitly configured", async () => {
       const project = await createTestProject(tempUtil);
-
       setCdsrc(project, { authenticationType: "none" });
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
 
     it("should fall back to xsuaa when 'none' is auto-detected from an existing app", async () => {
       const project = await createTestProject(tempUtil);
-
       createHtml5AppWithAuthType(project, "none");
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
 
     it("should fall back to xsuaa for an unsupported authenticationType value", async () => {
       const project = await createTestProject(tempUtil);
-
       setCdsrc(project, { authenticationType: "bogus" });
       runCdsBuild(project);
-
       const xsApp = readBuildXsApp(project);
       expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
