@@ -18,13 +18,14 @@ npm install @cap-js/data-inspector
 
 ### Run
 
-Start your CAP server with
+Run it with
 
 ```sh
 cds watch
 ```
 
-The Data Inspector OData service is served under `/odata/v4/data-inspector/`. When asked for a user, use `alice` without password.
+- The Data Inspector OData service is served at `http://localhost:4004/odata/v4/data-inspector/`.
+- When asked for a user, use `alice` without password.
 
 > **Note:** The `alice` user is for local testing only. For production deployments, always configure proper authentication via XSUAA as described later in the document.
 
