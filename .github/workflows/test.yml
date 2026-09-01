@@ -24,8 +24,9 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
-      - run: npm i
+      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }} # global CLI for cds v/deploy/build
+      - run: npm ci # full local deps from lockfile
+      - run: npm i --no-save @sap/cds@${{ matrix.cds-version }} # align LOCAL runtime cds to matrix
       - run: cds v
       - run: npm run build
       - name: Deploy test SQLite database
