@@ -198,75 +198,75 @@ describe("CDS Build Plugin", () => {
 
   describe("authenticationType default", () => {
     it("should keep xsuaa on all routes when no config and no existing app", async () => {
-      const project = await createTestProject(tempUtil);
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
+      const projectAuthDefault = await createTestProject(tempUtil);
+      runCdsBuild(projectAuthDefault);
+      const xsAppAuthDefault = readBuildXsApp(projectAuthDefault);
       // Both routes (OData + html5-apps-repo) stay xsuaa.
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+      expect(getAppRouterAuthTypes(xsAppAuthDefault)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
   });
 
   describe("authenticationType from cds.env", () => {
     it("should patch all routes to ias when set via .cdsrc.json", async () => {
-      const project = await createTestProject(tempUtil);
-      setCdsrc(project, { authenticationType: "ias" });
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+      const projectAuthCdsrc = await createTestProject(tempUtil);
+      setCdsrc(projectAuthCdsrc, { authenticationType: "ias" });
+      runCdsBuild(projectAuthCdsrc);
+      const xsAppAuthCdsrc = readBuildXsApp(projectAuthCdsrc);
+      expect(getAppRouterAuthTypes(xsAppAuthCdsrc)).to.deep.equal(["ias", "ias"]);
     });
 
     it("should patch all routes to ias when set via package.json", async () => {
-      const project = await createTestProject(tempUtil);
-      setPackageJsonConfig(project, { authenticationType: "ias" });
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+      const projectAuthPkg = await createTestProject(tempUtil);
+      setPackageJsonConfig(projectAuthPkg, { authenticationType: "ias" });
+      runCdsBuild(projectAuthPkg);
+      const xsAppAuthPkg = readBuildXsApp(projectAuthPkg);
+      expect(getAppRouterAuthTypes(xsAppAuthPkg)).to.deep.equal(["ias", "ias"]);
     });
 
     it("should prefer cds.env authenticationType over auto-detected value", async () => {
-      const project = await createTestProject(tempUtil);
+      const projectAuthPrefer = await createTestProject(tempUtil);
       // Existing app declares xsuaa, but explicit config asks for ias.
-      createHtml5AppWithAuthType(project, "xsuaa");
-      setCdsrc(project, { authenticationType: "ias" });
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+      createHtml5AppWithAuthType(projectAuthPrefer, "xsuaa");
+      setCdsrc(projectAuthPrefer, { authenticationType: "ias" });
+      runCdsBuild(projectAuthPrefer);
+      const xsAppAuthPrefer = readBuildXsApp(projectAuthPrefer);
+      expect(getAppRouterAuthTypes(xsAppAuthPrefer)).to.deep.equal(["ias", "ias"]);
     });
   });
 
   describe("authenticationType auto-detection from existing UI5 apps", () => {
     it("should auto-detect ias from existing UI5 app xs-app.json", async () => {
-      const project = await createTestProject(tempUtil);
-      createHtml5AppWithAuthType(project, "ias");
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+      const projectAuthDetect = await createTestProject(tempUtil);
+      createHtml5AppWithAuthType(projectAuthDetect, "ias");
+      runCdsBuild(projectAuthDetect);
+      const xsAppAuthDetect = readBuildXsApp(projectAuthDetect);
+      expect(getAppRouterAuthTypes(xsAppAuthDetect)).to.deep.equal(["ias", "ias"]);
     });
   });
 
   describe("authenticationType guardrail (never 'none')", () => {
     it("should fall back to xsuaa when 'none' is explicitly configured", async () => {
-      const project = await createTestProject(tempUtil);
-      setCdsrc(project, { authenticationType: "none" });
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+      const projectAuthNoneCfg = await createTestProject(tempUtil);
+      setCdsrc(projectAuthNoneCfg, { authenticationType: "none" });
+      runCdsBuild(projectAuthNoneCfg);
+      const xsAppAuthNoneCfg = readBuildXsApp(projectAuthNoneCfg);
+      expect(getAppRouterAuthTypes(xsAppAuthNoneCfg)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
 
     it("should fall back to xsuaa when 'none' is auto-detected from an existing app", async () => {
-      const project = await createTestProject(tempUtil);
-      createHtml5AppWithAuthType(project, "none");
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+      const projectAuthNoneDetect = await createTestProject(tempUtil);
+      createHtml5AppWithAuthType(projectAuthNoneDetect, "none");
+      runCdsBuild(projectAuthNoneDetect);
+      const xsAppAuthNoneDetect = readBuildXsApp(projectAuthNoneDetect);
+      expect(getAppRouterAuthTypes(xsAppAuthNoneDetect)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
 
     it("should fall back to xsuaa for an unsupported authenticationType value", async () => {
-      const project = await createTestProject(tempUtil);
-      setCdsrc(project, { authenticationType: "bogus" });
-      runCdsBuild(project);
-      const xsApp = readBuildXsApp(project);
-      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["xsuaa", "xsuaa"]);
+      const projectAuthBogus = await createTestProject(tempUtil);
+      setCdsrc(projectAuthBogus, { authenticationType: "bogus" });
+      runCdsBuild(projectAuthBogus);
+      const xsAppAuthBogus = readBuildXsApp(projectAuthBogus);
+      expect(getAppRouterAuthTypes(xsAppAuthBogus)).to.deep.equal(["xsuaa", "xsuaa"]);
     });
   });
 
@@ -375,61 +375,61 @@ describe("CDS Build Plugin", () => {
     }
 
     it("should keep defaults for a Node.js project (no base-path patch, proxy at :4004)", async () => {
-      const project = await createTestProject(tempUtil);
-      runCdsBuild(project);
+      const projectBaseNode = await createTestProject(tempUtil);
+      runCdsBuild(projectBaseNode);
 
       // manifest.json: mainService.uri stays at the default
-      const manifest = readBuildManifest(project);
-      expect(getMainServiceUri(manifest)).to.equal("/odata/v4/data-inspector/");
+      const manifestBaseNode = readBuildManifest(projectBaseNode);
+      expect(getMainServiceUri(manifestBaseNode)).to.equal("/odata/v4/data-inspector/");
 
       // ui5.yaml: proxy stays at Node.js defaults
-      const ui5Doc = readBuildUi5Yaml(project);
-      const backend = getUi5BackendProxy(ui5Doc);
-      expect(backend).to.exist;
-      expect(backend!.path).to.equal("/odata");
-      expect(backend!.url).to.equal("http://localhost:4004");
+      const ui5DocBaseNode = readBuildUi5Yaml(projectBaseNode);
+      const backendBaseNode = getUi5BackendProxy(ui5DocBaseNode);
+      expect(backendBaseNode).to.exist;
+      expect(backendBaseNode!.path).to.equal("/odata");
+      expect(backendBaseNode!.url).to.equal("http://localhost:4004");
     });
 
     it("should patch all artifacts for a Java project with odataBasePath", async () => {
-      const project = await createTestProject(tempUtil);
-      makeJavaProject(project);
-      setCdsrc(project, { odataBasePath: "/api" });
-      runCdsBuild(project);
+      const projectBaseApi = await createTestProject(tempUtil);
+      makeJavaProject(projectBaseApi);
+      setCdsrc(projectBaseApi, { odataBasePath: "/api" });
+      runCdsBuild(projectBaseApi);
 
       // manifest.json: mainService.uri patched
-      const manifest = readBuildManifest(project);
-      expect(getMainServiceUri(manifest)).to.equal("/api/data-inspector/");
+      const manifestBaseApi = readBuildManifest(projectBaseApi);
+      expect(getMainServiceUri(manifestBaseApi)).to.equal("/api/data-inspector/");
 
       // xs-app.json: OData route rewritten to /api
-      const xsApp = readBuildXsApp(project);
-      const source = getODataRouteSource(xsApp);
-      expect(source).to.include("/api");
-      expect(source).to.not.include("/odata");
+      const xsAppBaseApi = readBuildXsApp(projectBaseApi);
+      const sourceBaseApi = getODataRouteSource(xsAppBaseApi);
+      expect(sourceBaseApi).to.include("/api");
+      expect(sourceBaseApi).to.not.include("/odata");
 
       // ui5.yaml: proxy defaults to Java :8080, path to /api
-      const ui5Doc = readBuildUi5Yaml(project);
-      const backend = getUi5BackendProxy(ui5Doc);
-      expect(backend).to.exist;
-      expect(backend!.path).to.equal("/api");
-      expect(backend!.url).to.equal("http://localhost:8080");
+      const ui5DocBaseApi = readBuildUi5Yaml(projectBaseApi);
+      const backendBaseApi = getUi5BackendProxy(ui5DocBaseApi);
+      expect(backendBaseApi).to.exist;
+      expect(backendBaseApi!.path).to.equal("/api");
+      expect(backendBaseApi!.url).to.equal("http://localhost:8080");
     });
 
     it("should use explicit odataBasePath from config", async () => {
-      const project = await createTestProject(tempUtil);
-      makeJavaProject(project);
-      setCdsrc(project, { odataBasePath: "/custom-path" });
-      runCdsBuild(project);
+      const projectBaseCustom = await createTestProject(tempUtil);
+      makeJavaProject(projectBaseCustom);
+      setCdsrc(projectBaseCustom, { odataBasePath: "/custom-path" });
+      runCdsBuild(projectBaseCustom);
 
       // manifest.json: custom base path
-      const manifest = readBuildManifest(project);
-      expect(getMainServiceUri(manifest)).to.equal("/custom-path/data-inspector/");
+      const manifestBaseCustom = readBuildManifest(projectBaseCustom);
+      expect(getMainServiceUri(manifestBaseCustom)).to.equal("/custom-path/data-inspector/");
 
       // ui5.yaml: path follows odataBasePath, url defaults to Java :8080
-      const ui5Doc = readBuildUi5Yaml(project);
-      const backend = getUi5BackendProxy(ui5Doc);
-      expect(backend).to.exist;
-      expect(backend!.path).to.equal("/custom-path");
-      expect(backend!.url).to.equal("http://localhost:8080");
+      const ui5DocBaseCustom = readBuildUi5Yaml(projectBaseCustom);
+      const backendBaseCustom = getUi5BackendProxy(ui5DocBaseCustom);
+      expect(backendBaseCustom).to.exist;
+      expect(backendBaseCustom!.path).to.equal("/custom-path");
+      expect(backendBaseCustom!.url).to.equal("http://localhost:8080");
     });
   });
 
