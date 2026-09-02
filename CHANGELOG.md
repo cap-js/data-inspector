@@ -18,10 +18,11 @@
 
 ### Changed
 
-- The UI is no longer served by the CAP server (neither locally nor in the cloud). Run the UI locally with `ui5 serve` from the generated `gen/cap-data-inspector-ui` folder; deploy via HTML5 Application Repository for BTP.
+- The UI is no longer served by the CAP server (served for local use case earlier). Run the UI locally with `ui5 serve` from the generated `gen/cap-data-inspector-ui` folder; deploy via HTML5 Application Repository for BTP.
 - The Data Inspector service now uses an absolute `@path` annotation. For Node.js hosts the OData endpoint is always `/odata/v4/data-inspector/` (fixed, not configurable). The `odataBasePath` config option applies to **CAP Java hosts only**, where the base path can be customized (e.g. `/api`).
 - **Build output folder renamed:** `gen/cap-js-data-inspector-ui` → `gen/cap-data-inspector-ui`. Update any references in your `mta.yaml` html5 module path or scripts that point to the old folder name.
-- **`yaml` moved from dependency to peerDependency.** The `yaml` package is needed only at build time (`cds build` / `cds add`), not at app runtime. Consumers must have `yaml` installed in their project (it is typically already present via `@sap/cds-dk`).
+- **MTA module renamed:** `capjsdatainspectorapp` → `capdatainspectorapp`. After re-running `cds add data-inspector`, remove the old `capjsdatainspectorapp` module and its artifact entry from your `mta.yaml` in case they already exist.
+- **`yaml` moved from dependency to peerDependency.** The `yaml` package is needed only at build time (`cds build` / `cds add`) (it is typically already present via `@sap/cds-dk`).
 
 ## Version 1.0.5 - 2026-06-25
 
