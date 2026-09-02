@@ -1,6 +1,6 @@
 {
   "name": "@cap-js/data-inspector",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "CAP Node.js plugin to view data content of CDS entities defined in a CAP Node.js application.",
   "author": "SAP SE (https://www.sap.com)",
   "repository": "https://github.com/cap-js/data-inspector.git",
@@ -11,26 +11,24 @@
     "prettier:check": "npx prettier --check .",
     "dev": "cds watch test/ --include .. --open data-inspector-ui",
     "prebuild": "rimraf gen && rimraf @cds-models",
-    "build": "npm run generate-types && tsc && npm run copy:cds && npm run copy:package.json",
+    "build": "npm run generate-types && tsc",
     "generate-types": "npx @cap-js/cds-typer \"*\"",
+    "postbuild": "npm run copy:ui && npm run copy:cds && npm run copy:package.json && npm run copy:i18n && npm run copy:templates && npm run copy:readme && npm run copy:cds-models",
     "copy:cds": "node -e \"require('fs').copyFileSync('srv/DataInspectorService.cds', 'gen/srv/DataInspectorService.cds')\" && node -e \"require('fs').copyFileSync('srv/DataInspectorServiceAnnotations.cds', 'gen/srv/DataInspectorServiceAnnotations.cds')\" && node -e \"require('fs').copyFileSync('srv/index.cds', 'gen/srv/index.cds')\" && node -e \"require('fs').copyFileSync('index.cds', 'gen/index.cds')\"",
     "copy:package.json": "node -e \"require('fs').copyFileSync('package.json', 'gen/package.json')\"",
     "copy:i18n": "node -e \"require('fs').cpSync('_i18n', 'gen/_i18n', { recursive: true })\"",
     "copy:templates": "node -e \"require('fs').cpSync('templates', 'gen/templates/', { recursive: true })\"",
     "copy:readme": "node -e \"require('fs').copyFileSync('README.md', 'gen/README.md')\"",
-    "postbuild": "npm run copy:ui && npm run copy:i18n && npm run copy:templates && npm run copy:readme",
+    "copy:cds-models": "node -e \"require('fs').cpSync('@cds-models', 'gen/@cds-models', { recursive: true })\"",
     "copy:ui": "node -e \"require('fs').cpSync('app/data-inspector-ui', 'gen/app/data-inspector-ui', { recursive: true })\"",
     "tar": "npm run build && cd gen && npm pack",
-    "watch-data-inspector-ui": "cds watch --open data-inspector-ui/webapp/index.html?sap-ui-xx-viewCache=false",
     "test": "cross-env CDS_TYPESCRIPT=true mocha",
     "coverage": "cross-env CDS_TYPESCRIPT=true c8 mocha"
   },
-  "dependencies": {
-    "yaml": "2.9.0"
-  },
   "peerDependencies": {
     "@cap-js/audit-logging": ">=1",
-    "@sap/cds": ">=9"
+    "@sap/cds": ">=9",
+    "yaml": "^2"
   },
   "peerDependenciesMeta": {
     "@cap-js/audit-logging": {
@@ -38,26 +36,27 @@
     }
   },
   "devDependencies": {
-    "@cap-js/audit-logging": "1.2.0",
-    "@cap-js/cds-test": "0.4.1",
-    "@cap-js/cds-typer": "0.38.0",
-    "@cap-js/cds-types": "0.16.0",
-    "@cap-js/sqlite": "2.2.0",
-    "@sap/cds-dk": "9.9.2",
+    "@cap-js/audit-logging": "1.2.2",
+    "@cap-js/cds-test": "1.0.2",
+    "@cap-js/cds-typer": "0.41.0",
+    "@cap-js/cds-types": "0.19.0",
+    "@cap-js/sqlite": "3.0.2",
+    "@sap/cds-dk": "10.0.7",
     "@types/mocha": "10.0.10",
-    "@types/node": "24.12.0",
-    "c8": "11.0.0",
+    "@types/node": "24.13.3",
+    "c8": "12.0.0",
     "chai": "6.2.2",
     "cross-env": "10.1.0",
-    "eslint": "10.2.0",
+    "eslint": "10.9.1",
     "eslint-config-prettier": "10.1.8",
-    "mocha": "11.7.5",
-    "prettier": "3.8.1",
+    "mocha": "11.8.0",
+    "prettier": "3.9.6",
     "rimraf": "6.1.3",
     "ts-node": "10.9.2",
-    "tsx": "4.21.0",
+    "tsx": "4.23.12",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.58.0"
+    "typescript-eslint": "8.68.0",
+    "yaml": "2.9.0"
   },
   "files": [
     "@cds-models",

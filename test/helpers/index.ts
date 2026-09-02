@@ -10,6 +10,7 @@ export {
   createCommonDataModelWithSingleSite,
   createCommonDataModelWithMultipleSites,
   createHtml5AppWithDestination,
+  createHtml5AppWithAuthType,
   createHtml5AppWithCloudService,
   createMtaWithContentModuleNoBuildParams,
   createMtaWithContentModuleNoRequires,
@@ -21,5 +22,5 @@ export {
 export const DATA_INSPECTOR_SCOPE = "$XSAPPNAME.capDataInspectorReadonly";
 export const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 export const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
-export const DATA_INSPECTOR_MTA_MODULE_NAME = "capjsdatainspectorapp";
+export const DATA_INSPECTOR_MTA_MODULE_NAME = "capdatainspectorapp";
 export const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
