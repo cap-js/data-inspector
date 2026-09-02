@@ -481,7 +481,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       log.debug(`Patched ui5.yaml dev proxy: ${proxyPath} → ${serverUrl}`);
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
-      log.debug(`Failed to patch ui5.yaml dev proxy: ${message}`);
+      log.warn(`Failed to patch ui5.yaml dev proxy: ${message}`);
     }
   }
 };

@@ -163,8 +163,8 @@ The following changes are applied by `cds add data-inspector`:
 
 - **XSUAA** (when a `xs-security.json` file exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. See [Authorization](#authorization).
 - **MTA** (when a `mta.yaml` file exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. See [MTA Deployment](#mta-deployment).
-  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-data-inspector-ui`.
-  - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
+  - Adds `html5` module `capdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-data-inspector-ui`.
+  - Adds the `capdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
 - **Cloud Portal Service** (when detected in a `mta.yaml` file and a `portal-site/CommonDataModel.json` file exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json` file, and creates an i18n properties file for translatable titles. See [Cloud Portal Service Configuration](#cloud-portal-service-configuration).
 
 ### Authorization
@@ -268,7 +268,7 @@ The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plug
 1. Add an `html5` module as follows:
 
 ```yaml
-- name: capjsdatainspectorapp
+- name: capdatainspectorapp
   type: html5
   path: gen/cap-data-inspector-ui
   build-parameters:
@@ -293,7 +293,7 @@ The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plug
   build-parameters:
     build-result: <your module build output path>
     requires:
-      - name: capjsdatainspectorapp
+      - name: capdatainspectorapp
         artifacts:
           - datainspectorapp.zip
         target-path: <your html5 app artifact build output path>
