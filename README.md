@@ -468,9 +468,9 @@ To quickly test and experience the plugin directly without a dependent project i
    1. `cd test`
    2. `cds deploy -2 sqlite:db/testservice.db`
    3. `cd ..`
-5. Start the CAP server: `npm run dev`
+5. Run the test server: `npm run dev`
 
-   This serves the Data Inspector UI at `http://localhost:4004/data-inspector-ui/` and the OData service at `http://localhost:4004/odata/v4/data-inspector/`.
+   The SAPUI5 app is launched in a web browser.
 
 6. Use the following credentials:
 

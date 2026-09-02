@@ -9,8 +9,7 @@
   "scripts": {
     "lint": "npx eslint .",
     "prettier:check": "npx prettier --check .",
-    "dev": "cds watch test/ --include ..",
-    "dev:ui": "npm --prefix app/data-inspector-ui install && npm --prefix app/data-inspector-ui start",
+    "dev": "cds watch test/ --include .. --open data-inspector-ui",
     "prebuild": "rimraf gen && rimraf @cds-models",
     "build": "npm run generate-types && tsc",
     "generate-types": "npx @cap-js/cds-typer \"*\"",
