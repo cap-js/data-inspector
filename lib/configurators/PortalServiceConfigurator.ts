@@ -92,7 +92,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
       const cdm = await read(cdmPath);
 
       // safety net
-      if (!cdm.payload) cdm.payload = {};
+      cdm.payload ??= {};
       if (!Array.isArray(cdm.payload.catalogs)) cdm.payload.catalogs = [];
       if (!Array.isArray(cdm.payload.groups)) cdm.payload.groups = [];
 
@@ -116,31 +116,22 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         changed = true;
       }
 
-      const sites = cdm?.payload?.sites;
-      if (!sites || sites.length === 0) {
-        log.info(
-          "No sites found in CommonDataModel.json. " +
-            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
-            `to the groupsOrder array in a site.`
-        );
-      } else if (sites.length > 1) {
-        log.info(
-          `Multiple sites found in CommonDataModel.json. ` +
-            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
-            `to the groupsOrder array in your preferred site.`
-        );
-      } else {
+      const sites = cdm?.payload?.sites || [];
+      if (sites.length === 1) {
         const site = sites[0];
-        if (!site.payload) {
-          site.payload = {};
-        }
-        if (!site.payload.groupsOrder) {
-          site.payload.groupsOrder = [];
-        }
+        site.payload ??= {};
+        site.payload.groupsOrder ??= [];
         if (!site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
           site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
           changed = true;
         }
+      } else {
+        // 0 or multiple sites: the user must choose where the tile appears.
+        log.info(
+          `${sites.length === 0 ? "No" : "Multiple"} sites found in CommonDataModel.json. ` +
+            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+            `to the groupsOrder array in your preferred site.`
+        );
       }
 
       if (changed) {
