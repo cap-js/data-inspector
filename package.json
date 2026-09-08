@@ -38,10 +38,10 @@
   "devDependencies": {
     "@cap-js/audit-logging": "1.2.2",
     "@cap-js/cds-test": "1.0.2",
-    "@cap-js/cds-typer": "0.41.1",
+    "@cap-js/cds-typer": "0.41.0",
     "@cap-js/cds-types": "0.19.0",
-    "@cap-js/sqlite": "3.1.0",
-    "@sap/cds-dk": "10.1.0",
+    "@cap-js/sqlite": "3.0.2",
+    "@sap/cds-dk": "10.0.7",
     "@types/mocha": "10.0.10",
     "@types/node": "24.13.3",
     "c8": "12.0.0",
@@ -55,7 +55,7 @@
     "ts-node": "10.9.2",
     "tsx": "4.23.13",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.70.0",
+    "typescript-eslint": "8.69.0",
     "yaml": "2.9.0"
   },
   "files": [
