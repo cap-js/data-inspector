@@ -24,15 +24,20 @@ const { exists, read, write, path } = cds.utils;
 const { join } = path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
-import {
-  DATA_INSPECTOR_CATALOG_ID,
-  DATA_INSPECTOR_GROUP_ID,
-  DATA_INSPECTOR_I18N_FILE,
-  DATA_INSPECTOR_I18N_CONTENT,
-} from "../utils/constants";
 import { readMta, findPortalDeployerPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
+
+const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
+const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";
+const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
+const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
+const CDM_ENTRY_VERSION = "3.0.0";
+const DATA_INSPECTOR_I18N_FILE = "i18n/capDataInspector.properties";
+export const DATA_INSPECTOR_I18N_CONTENT = `# Translations for CAP Data Inspector FLP integration
+capDataInspectorCatalog = Data Inspector
+capDataInspectorGroup = Data Inspector
+`;
 
 export class PortalServiceConfigurator extends AddPluginConfigurator {
   /**
@@ -76,79 +81,110 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
   }
 
   /**
-   * Merges the data-inspector catalog and group into CommonDataModel.json
-   * using cds.add.merge() for idempotent array insertion, then appends
-   * the group to the site's groupsOrder when there is exactly one site.
+   * Adds the data-inspector catalog and group to CommonDataModel.json
+   * (idempotent), then appends the group to the site's groupsOrder when
+   * there is exactly one site.
    */
   private async updateCommonDataModel(): Promise<void> {
     const cdmPath = join(this.portalSitePath as string, "CommonDataModel.json");
 
     try {
-      await cds.add.merge(__dirname, "../../templates/CommonDataModel.json.hbs").into(cdmPath, {
-        additions: [
-          { in: "payload.catalogs", where: { "identification.id": DATA_INSPECTOR_CATALOG_ID } },
-          { in: "payload.groups", where: { "identification.id": DATA_INSPECTOR_GROUP_ID } },
-        ],
-      });
-      log.debug("Added data inspector catalog and group to CommonDataModel.json");
+      const cdm = await read(cdmPath);
 
-      await this.addGroupToGroupsOrder(cdmPath);
+      // safety net
+      if (!cdm.payload) cdm.payload = {};
+      if (!Array.isArray(cdm.payload.catalogs)) cdm.payload.catalogs = [];
+      if (!Array.isArray(cdm.payload.groups)) cdm.payload.groups = [];
+
+      let changed = false;
+
+      const hasCatalog = cdm.payload.catalogs.some(
+        (c: { identification?: { id?: string } }) =>
+          c?.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      if (!hasCatalog) {
+        cdm.payload.catalogs.push(this.buildCatalogEntry());
+        changed = true;
+      }
+
+      const hasGroup = cdm.payload.groups.some(
+        (g: { identification?: { id?: string } }) =>
+          g?.identification?.id === DATA_INSPECTOR_GROUP_ID
+      );
+      if (!hasGroup) {
+        cdm.payload.groups.push(this.buildGroupEntry());
+        changed = true;
+      }
+
+      const sites = cdm?.payload?.sites;
+      if (!sites || sites.length === 0) {
+        log.debug(
+          "No sites found in CommonDataModel.json. " +
+            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+            `to the groupsOrder array in a site.`
+        );
+      } else if (sites.length > 1) {
+        log.info(
+          `Multiple sites found in CommonDataModel.json. ` +
+            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+            `to the groupsOrder array in your preferred site.`
+        );
+      } else {
+        const site = sites[0];
+        if (!site.payload) {
+          site.payload = {};
+        }
+        if (!site.payload.groupsOrder) {
+          site.payload.groupsOrder = [];
+        }
+        if (!site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
+          site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await write(JSON.stringify(cdm, null, 4)).to(cdmPath);
+        log.debug("Added configuration to CommonDataModel.json");
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to update CommonDataModel.json: ${message}`);
     }
   }
 
-  /**
-   * Appends the data-inspector group to the site's groupsOrder so that
-   * the tile appears by default in the Fiori Launchpad.
-   *
-   * Only applies when there is exactly one site.  With multiple sites
-   * the user must manually choose which site(s) should display the tile.
-   */
-  private async addGroupToGroupsOrder(cdmPath: string): Promise<void> {
-    try {
-      const cdmContent = await read(cdmPath);
-      const sites = cdmContent?.payload?.sites;
+  /** Builds the catalog entry. */
+  private buildCatalogEntry(): Record<string, unknown> {
+    return {
+      _version: CDM_ENTRY_VERSION,
+      identification: {
+        id: DATA_INSPECTOR_CATALOG_ID,
+        title: "{{capDataInspectorCatalog}}",
+        entityType: "catalog",
+        i18n: DATA_INSPECTOR_I18N_FILE,
+      },
+      payload: {
+        viz: [{ appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID }],
+      },
+    };
+  }
 
-      if (!sites || sites.length === 0) {
-        log.debug("No sites found in CommonDataModel.json");
-        return;
-      }
-
-      if (sites.length > 1) {
-        log.info(
-          `Multiple sites found in CommonDataModel.json. ` +
-            `To display the Data Inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
-            `to the groupsOrder array in your preferred site.`
-        );
-        return;
-      }
-
-      const site = sites[0];
-      if (!site.payload) {
-        site.payload = {};
-      }
-      if (!site.payload.groupsOrder) {
-        site.payload.groupsOrder = [];
-      }
-
-      if (site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
-        log.debug("Data inspector group already in groupsOrder");
-        return;
-      }
-
-      site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
-      await write(JSON.stringify(cdmContent, null, 4)).to(cdmPath);
-      log.debug("Added data inspector group to groupsOrder for default visibility");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      log.error(
-        `Failed to update groupsOrder: ${message}` +
-          `To display the Data Inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
-          `to the groupsOrder array in your preferred site.`
-      );
-    }
+  /** Builds the group entry. */
+  private buildGroupEntry(): Record<string, unknown> {
+    return {
+      _version: CDM_ENTRY_VERSION,
+      identification: {
+        id: DATA_INSPECTOR_GROUP_ID,
+        title: "{{capDataInspectorGroup}}",
+        entityType: "group",
+        i18n: DATA_INSPECTOR_I18N_FILE,
+      },
+      payload: {
+        viz: [
+          { id: DATA_INSPECTOR_APP_ID, appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID },
+        ],
+      },
+    };
   }
 
   /**
