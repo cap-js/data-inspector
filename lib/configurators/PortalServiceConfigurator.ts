@@ -34,7 +34,7 @@ const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
 const CDM_ENTRY_VERSION = "3.0.0";
 const DATA_INSPECTOR_I18N_FILE = "i18n/capDataInspector.properties";
-export const DATA_INSPECTOR_I18N_CONTENT = `# Translations for CAP Data Inspector FLP integration
+const DATA_INSPECTOR_I18N_CONTENT = `# Translations for CAP Data Inspector FLP integration
 capDataInspectorCatalog = Data Inspector
 capDataInspectorGroup = Data Inspector
 `;

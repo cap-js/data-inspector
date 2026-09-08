@@ -18,7 +18,7 @@ export {
   createMtaWithWorkzone,
 } from "./fixtures";
 
-// Test constants — must match the values in lib/utils/constants.ts
+// Test constants — must match the values inlined in the configurators
 export const DATA_INSPECTOR_SCOPE = "$XSAPPNAME.capDataInspectorReadonly";
 export const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 export const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
