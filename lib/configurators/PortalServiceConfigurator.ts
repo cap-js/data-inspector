@@ -118,7 +118,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
 
       const sites = cdm?.payload?.sites;
       if (!sites || sites.length === 0) {
-        log.debug(
+        log.info(
           "No sites found in CommonDataModel.json. " +
             `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
             `to the groupsOrder array in a site.`
