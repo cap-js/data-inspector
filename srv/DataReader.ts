@@ -41,7 +41,6 @@ export class DataReader {
     if (req.params.length) {
       // Validate entityName
       const entityName = req.params[0]["entityName"];
-      // @ts-expect-error
       entity = cds.model
         .all("entity")
         .find(
@@ -141,7 +140,6 @@ export class DataReader {
      */
     const maxPageSize = entity[SELECT_MAX_PAGE_ANNOTATION] ?? MAX_PAGE_SIZE; // Respect @cds.query.limit.max if defined on the entity or the service
     const defaultPageSize = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top;
     if (
       (top && Number(top) > maxPageSize) || // case 3 above
@@ -218,7 +216,6 @@ export class DataReader {
    * @returns boolean
    */
   private _validateRecordKeys(entity: Entity, recordKey: string): boolean {
-    // @ts-expect-error
     const recordKeyElements = entity.keyElements4DataInspector;
     const entityKeys: Set<string> = new Set<string>(recordKeyElements);
 
@@ -246,7 +243,6 @@ export class DataReader {
    * @returns Entity name
    */
   private _determineEntityFromFilterParam(req: cds.Request): Entity | undefined {
-    // @ts-expect-error
     const filterString = req.req.query?.$filter;
 
     if (!filterString) {
@@ -276,7 +272,6 @@ export class DataReader {
     }
 
     const entityName: string = cqn["xpr"][2]["val"];
-    // @ts-expect-error
     const entity: Entity = cds.model
       .all("entity")
       .find(
@@ -303,7 +298,6 @@ export class DataReader {
       return [];
     }
     for (const col of req.query.SELECT.columns) {
-      // @ts-expect-error
       if (col === "*") {
         selectColumns.push("*");
       } else if (col?.ref[0] === "entityName") {
@@ -324,25 +318,20 @@ export class DataReader {
    */
   private _getRecordElements(entity: Entity): string[] {
     const recordElements: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        if (
-          !(
-            element[HIDDEN_ANNOTATION] === true || // Exclude elements marked with the annotation
-            // @ts-expect-error
-            element.type === "cds.Association" ||
-            // @ts-expect-error
-            element.type === "cds.Composition" ||
-            CDS_ELEMENTS.includes(name)
-          )
-        ) {
-          // If the entity is defined in an @odata.draft.enabled service, IsActiveEntity is a virtual key
-          // TODO: Remove the exclusion IsActiveEntity check when adding support to show draft entries
-          recordElements.push(name);
-        }
+    Object.entries(entity.elements).forEach(([name, element]: [string, Element]) => {
+      if (!(
+        element[HIDDEN_ANNOTATION] === true || // Exclude elements marked with the annotation
+        // @ts-expect-error
+        element.type === "cds.Association" ||
+        // @ts-expect-error
+        element.type === "cds.Composition" ||
+        CDS_ELEMENTS.includes(name)
+      )) {
+        // If the entity is defined in an @odata.draft.enabled service, IsActiveEntity is a virtual key
+        // TODO: Remove the exclusion IsActiveEntity check when adding support to show draft entries
+        recordElements.push(name);
       }
-    );
+    });
     return recordElements;
   }
 
@@ -356,7 +345,6 @@ export class DataReader {
    */
   private _constructRecordKey(entity: Entity, record): string {
     const keys: string[] = [];
-    // @ts-expect-error
     const keyElements = entity.keyElements4DataInspector;
     for (const key of keyElements) {
       keys.push(`${key}=${record[key]}`);
@@ -391,11 +379,9 @@ export class DataReader {
       /**
        * Handle r_select
        */
-      // @ts-expect-error
       let r_select: string = req.req.query?.r_select;
       if (isSelectOnlyKeys) {
         // Select only the key elements
-        // @ts-expect-error
         const recordKeyElements = entity.keyElements4DataInspector;
         r_select = recordKeyElements.join(",");
       } else if (r_select === undefined) {
@@ -416,7 +402,6 @@ export class DataReader {
 
         // For data source service, key elements are automatically returned by CDS even if not explicitly specified in the select statement
         // For data source db, that is not the case, so explicitly add key elements to select statement if they don't come as part of the request
-        // @ts-expect-error
         const recordKeyElements = entity.keyElements4DataInspector;
         let missingKeys: string = "";
         for (const key of recordKeyElements) {
@@ -443,9 +428,7 @@ export class DataReader {
     let r_filter: string;
     if (r_filterFromRecordKey) {
       r_filter = r_filterFromRecordKey;
-      // @ts-expect-error
     } else if (req.req.query?.r_filter) {
-      // @ts-expect-error
       r_filter = req.req.query?.r_filter;
     }
     if (r_filter) {
@@ -479,7 +462,6 @@ export class DataReader {
     /**
      * Handle r_orderby
      */
-    // @ts-expect-error
     const r_orderby: string = req.req.query?.r_orderby;
     if (r_orderby) {
       const orderbyElements = [];
@@ -500,7 +482,6 @@ export class DataReader {
           });
         }
       }
-      // @ts-expect-error
       cqn = cqn.orderBy(order);
     }
 
@@ -509,7 +490,6 @@ export class DataReader {
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
     let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
       if (Number(top) < 0) {
@@ -520,7 +500,6 @@ export class DataReader {
     }
 
     let offset: number = 0;
-    // @ts-expect-error
     const skip = req.req.query.$skip; // skip = 'offset' in CQN
     if (skip) {
       if (Number(skip) < 0) {
@@ -528,7 +507,6 @@ export class DataReader {
       }
       offset = Number(skip);
     }
-    // @ts-expect-error
     const skipToken = req.req.query.$skiptoken;
     if (skipToken) {
       if (Number(skipToken) < 0) {
@@ -561,7 +539,6 @@ export class DataReader {
     /**
      * Provide columns for SELECT; selecting only the key elements
      */
-    // @ts-expect-error
     const recordKeyElements = entity.keyElements4DataInspector;
     const elements = recordKeyElements.map((el) => el.trim());
     cqn = cqn.columns(
@@ -573,7 +550,6 @@ export class DataReader {
     /**
      * Provide WHERE condition
      */
-    // @ts-expect-error
     const r_filter: string = req.req.query?.r_filter;
     if (r_filter) {
       let normalizedExpr = `${r_filter}`;
@@ -596,7 +572,6 @@ export class DataReader {
     /**
      * Provide ORDERBY
      */
-    // @ts-expect-error
     const r_orderby: string = req.req.query?.r_orderby;
     if (r_orderby) {
       const orderbyElements = [];
@@ -605,7 +580,6 @@ export class DataReader {
         orderbyElements.push(element);
         return { ref: [element], sort: dir || "asc" };
       });
-      // @ts-expect-error
       cqn = cqn.orderBy(order);
     }
 
@@ -614,7 +588,6 @@ export class DataReader {
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
     let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
       const maxPageSize = entity[SELECT_MAX_PAGE_ANNOTATION] ?? MAX_PAGE_SIZE; // Respect @cds.query.limit.max if defined on the entity or the service
@@ -632,14 +605,11 @@ export class DataReader {
    */
   private _getRecordSensitiveElements(entity: Entity): string[] {
     const sensitiveElements: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        if (element["@PersonalData.IsPotentiallySensitive"]) {
-          sensitiveElements.push(name);
-        }
+    Object.entries(entity.elements).forEach(([name, element]: [string, Element]) => {
+      if (element["@PersonalData.IsPotentiallySensitive"]) {
+        sensitiveElements.push(name);
       }
-    );
+    });
     return sensitiveElements;
   }
 
@@ -653,7 +623,6 @@ export class DataReader {
     if (
       records.length === 0 ||
       !cds.env.requires["audit-log"] ||
-      // @ts-expect-error
       entity._service !== undefined // emit audit logs for data source db, CDS automatically emits audit logs for data source service
     ) {
       return;
@@ -664,7 +633,6 @@ export class DataReader {
       return;
     }
 
-    // @ts-expect-error
     const keyElements = entity.keyElements4DataInspector;
 
     const auditLogService: AuditLogService = await cds.connect.to("audit-log");

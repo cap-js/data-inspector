@@ -16,16 +16,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20.x, 22.x]
-        cds-version: [latest]
+        node-version: [22.x, 24.x]
+        cds-version: [9.x, 10.x]
+        include:
+          # @cap-js/sqlite majors track the cds major: sqlite 2.x → cds 9, sqlite 3.x → cds 10
+          - cds-version: 9.x
+            sqlite-version: 2.x
+          - cds-version: 10.x
+            sqlite-version: 3.x
     steps:
       - uses: actions/checkout@v6
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-      - run: npm i -g @sap/cds-dk@${{ matrix.cds-version }}
-      - run: npm i
+      # An overlay `npm i` on top of `npm ci` cannot reliably downgrade the hoisted
+      # @sap/cds (e.g. 10 -> 9), so we edit package.json and let npm resolve from scratch.
+      - run: |
+          npm pkg set devDependencies.@sap/cds="${{ matrix.cds-version }}"
+          npm pkg set devDependencies.@sap/cds-dk="${{ matrix.cds-version }}"
+          npm pkg set devDependencies.@cap-js/sqlite="${{ matrix.sqlite-version }}"
+      - run: npm install --no-package-lock
+      # Put the locally-installed binaries on PATH so bare `cds` resolves to
+      # node_modules/.bin/cds (@sap/cds-dk). Avoids `npx` or global install.
+      - run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
       - run: cds v
       - run: npm run build
       - name: Deploy test SQLite database

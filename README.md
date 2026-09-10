@@ -24,10 +24,12 @@ Run it with
 cds watch
 ```
 
-The UI is served at http://localhost:4004/data-inspector-ui/.
-When asked for a user, use `alice` without password.
+- The Data Inspector OData service is served at `http://localhost:4004/odata/v4/data-inspector/`.
+- When asked for a user, use `alice` without password.
 
 > **Note:** The `alice` user is for local testing only. For production deployments, always configure proper authentication via XSUAA as described later in the document.
+
+The SAPUI5 app is **not** served by the CAP server (see [Accessing the UI Locally](#accessing-the-ui-locally)).
 
 ## Features
 
@@ -78,6 +80,44 @@ When asked for a user, use `alice` without password.
 
 Select only the required columns and add filters to limit the data that is displayed.
 
+### Accessing the UI Locally
+
+The SAPUI5 app is not run directly from the plugin package. Instead, `cds build`
+produces a ready-to-run copy of it in your project under
+`gen/cap-data-inspector-ui`, pre-configured to talk to your running CAP server
+(see [CDS Build Plugin](#cds-build-plugin)). Run the UI from that generated
+folder:
+
+1. **Ensure your CAP server is started** (in one terminal), so the OData service is available
+   at `http://localhost:4004`:
+
+   ```sh
+   cds watch
+   ```
+
+2. **Produce the UI** with the CDS build (in another terminal). This copies and
+   configures the UI5 app into `gen/cap-data-inspector-ui`:
+
+   ```sh
+   cds build
+   ```
+
+3. **Run the UI** from the generated folder. This starts `ui5 serve`, opens the
+   app in a browser, and proxies OData requests to your CAP server (configured
+   in the generated `ui5.yaml`):
+
+   ```sh
+   cd gen/cap-data-inspector-ui
+   npm install
+   npm start
+   ```
+
+> **Note:** Re-run `cds build` whenever you change the plugin configuration
+> (e.g. `cds.data-inspector.*` settings), so the regenerated
+> `gen/cap-data-inspector-ui` picks up your changes. If your CAP server runs on a
+> non-default port, adjust the proxy target as described in
+> [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
+
 ### Excluding Entities and Elements
 
 To hide entities or elements from the Data Inspector, annotate them with `@HideFromDataInspector` in your CDS definitions.
@@ -123,8 +163,8 @@ The following changes are applied by `cds add data-inspector`:
 
 - **XSUAA** (when a `xs-security.json` file exists): Adds the `xsuaa` scope `capDataInspectorReadonly` to your `xs-security.json`. Make sure to use this scope in appropriate role collections. See [Authorization](#authorization).
 - **MTA** (when a `mta.yaml` file exists): Adds the data-inspector HTML5 module and artifact to your `mta.yaml`. See [MTA Deployment](#mta-deployment).
-  - Adds `html5` module `capjsdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-js-data-inspector-ui`.
-  - Adds the `capjsdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
+  - Adds `html5` module `capdatainspectorapp` pointing to the SAPUI5 app in `gen/cap-data-inspector-ui`.
+  - Adds the `capdatainspectorapp` artifact to the HTML5 content module (the `com.sap.application.content` module that targets your `html5-apps-repo` `app-host` resource).
 - **Cloud Portal Service** (when detected in a `mta.yaml` file and a `portal-site/CommonDataModel.json` file exists): Adds `catalog` and `group` configuration for the data-inspector tile to your `CommonDataModel.json` file, and creates an i18n properties file for translatable titles. See [Cloud Portal Service Configuration](#cloud-portal-service-configuration).
 
 ### Authorization
@@ -145,11 +185,13 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 
 `@cap-js/data-inspector` ships a CDS build plugin that runs during your `cds build`. The plugin:
 
-1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-js-data-inspector-ui` directory.
-2. **Patches the SAPUI5 app's `xs-app.json` file** with your Node.js OData server destination name when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [Custom Destination Name](#custom-destination-name).
+1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-data-inspector-ui` directory.
+2. **Patches the SAPUI5 app's `xs-app.json` file** with values resolved from `cds.env` or auto-detected from an existing SAPUI5 app in your project:
+   - OData server destination name. For more information, see [Custom Destination Name](#custom-destination-name).
+   - Approuter `authenticationType` (`xsuaa` or `ias`). For more information, see [Authentication Type](#authentication-type).
 3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [sap.cloud.service Configuration](#sapcloudservice-configuration).
 
-The resulting `gen/cap-js-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
+The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
 
 ##### Custom Destination Name
 
@@ -191,18 +233,44 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 
 3. **Skipped** — If neither source provides a value, `sap.cloud.service` is not added in the SAPUI5 app's `manifest.json` file.
 
+##### Authentication Type
+
+The routes in the SAPUI5 app's `xs-app.json` file declare an approuter `authenticationType`. The default is `xsuaa`. If your project authenticates through SAP Cloud Identity Services (IAS), set this to `ias`. The [`cds build`](#cds-build-plugin) plugin resolves the value automatically in this order:
+
+1. **Explicit configuration** — Set `cds.data-inspector.authenticationType` in your `.cdsrc.json` file or `package.json` file:
+
+   ```json
+   {
+     "cds": {
+       "data-inspector": {
+         "authenticationType": "ias"
+       }
+     }
+   }
+   ```
+
+2. **Auto-detection** — The plugin scans your existing `app/*/xs-app.json` file for an OData route and uses its `authenticationType` value.
+
+3. **Default** — This falls back to `xsuaa`.
+
+The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authentication at the approuter) is **never** written automatically: an explicit `none` is rejected with a warning and falls back to `xsuaa`, and an auto-detected `none` is ignored. To disable authentication, edit the generated `gen/cap-data-inspector-ui/xs-app.json` file manually after running `cds build`.
+
+##### Local Server URL (ui5 serve proxy)
+
+The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js) or `http://localhost:8080` (Java, detected via `pom.xml`). If your server runs on a different port, edit the `backend[0].url` in the generated `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
+
 #### MTA Deployment
 
 > Note: Running `cds add data-inspector` adds the following required configurations in your `mta.yaml` file automatically. Make sure to review the produced changes before committing.
 
-The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-js-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
+The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your project's `gen/cap-data-inspector-ui` directory must be referenced by an `html5` module in your `mta.yaml` file and included in the HTML5 content module for deployment to the `HTML5 Application Repository` service.
 
 1. Add an `html5` module as follows:
 
 ```yaml
-- name: capjsdatainspectorapp
+- name: capdatainspectorapp
   type: html5
-  path: gen/cap-js-data-inspector-ui
+  path: gen/cap-data-inspector-ui
   build-parameters:
     build-result: dist
     builder: custom
@@ -225,7 +293,7 @@ The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plug
   build-parameters:
     build-result: <your module build output path>
     requires:
-      - name: capjsdatainspectorapp
+      - name: capdatainspectorapp
         artifacts:
           - datainspectorapp.zip
         target-path: <your html5 app artifact build output path>
@@ -233,10 +301,10 @@ The data-inspector plugin's SAPUI5 app produced by [`cds build`](#cds-build-plug
 
 #### @sap/html5-app-deployer
 
-For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your `gen/cap-js-data-inspector-ui` directory to include when creating your `html5-app-deployer` image.
+For deployment with [`@sap/html5-app-deployer`](https://www.npmjs.com/package/@sap/html5-app-deployer), use the source of the SAPUI5 app produced by [`cds build`](#cds-build-plugin) in your `gen/cap-data-inspector-ui` directory to include when creating your `html5-app-deployer` image.
 
-1. Run `cds build` to produce the patched data-inspector plugin's SAPUI5 app in your project's `gen/cap-js-data-inspector-ui` directory.
-2. Build the SAPUI5 app for production: `cd gen/cap-js-data-inspector-ui && npm install && npm run build:cf`.
+1. Run `cds build` to produce the patched data-inspector plugin's SAPUI5 app in your project's `gen/cap-data-inspector-ui` directory.
+2. Build the SAPUI5 app for production: `cd gen/cap-data-inspector-ui && npm install && npm run build:cf`.
 3. Include the resulting `dist/` contents (specifically `datainspectorapp.zip`) in your `html5-app-deployer` image alongside your other SAPUI5 apps.
 
 The exact steps depend on your deployment pipeline. For details, refer to [Deploy Content Using HTML5 Application Deployer](https://help.sap.com/docs/btp/sap-business-technology-platform/deploy-content-using-html5-application-deployer).

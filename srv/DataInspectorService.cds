@@ -1,3 +1,4 @@
+@path: '/odata/v4/data-inspector' // The default path is used in the UI
 service DataInspectorService {
 
   /**

@@ -18,7 +18,6 @@ import {
 const logger = cds.log("data-inspector");
 
 export class EntityDefinitionReader {
-  private _srvPrefixesCache: string[] = undefined;
   /**
    * Implements GET handler for DataInspectorService.EntityDefinition.
    * @param req Request object
@@ -48,11 +47,9 @@ export class EntityDefinitionReader {
 
       // Process $select
       for (const col of req.query.SELECT.columns) {
-        // @ts-expect-error
         if (col === "*") {
           entityDefinition["name"] = entity.name;
           entityDefinition["title"] = entity["@title"] ?? null;
-          // @ts-expect-error
           entityDefinition["dataSource"] = entity.dataSource4DataInspector;
           entityDefinition["elements"] = this._getEntityElements(entity);
         } else if (col?.ref[0] === "name") {
@@ -60,7 +57,6 @@ export class EntityDefinitionReader {
         } else if (col?.ref[0] === "title") {
           entityDefinition["title"] = entity["@title"] ?? null;
         } else if (col?.ref[0] === "dataSource") {
-          // @ts-expect-error
           entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         } else if (col?.ref[0] === "elements") {
           entityDefinition["elements"] = this._getEntityElements(entity);
@@ -92,13 +88,8 @@ export class EntityDefinitionReader {
     const orderedEntities = filteredEntities.sort(orderByFunction);
 
     // Process pagination - $skip, $top
-    // @ts-expect-error
     const skip = req.req.query.$skip ? Number.parseInt(req.req.query.$skip) : 0;
-    // @ts-expect-error
-    const top = req.req.query.$top
-      ? // @ts-expect-error
-        Number.parseInt(req.req.query.$top)
-      : orderedEntities.length;
+    const top = req.req.query.$top ? Number.parseInt(req.req.query.$top) : orderedEntities.length;
     const pagedEntities = orderedEntities.slice(skip, skip + top);
 
     // Process $select
@@ -109,7 +100,6 @@ export class EntityDefinitionReader {
       if (selectedColumns.includes("*")) {
         entityDefinition["name"] = entity.name;
         entityDefinition["title"] = entity["@title"] ?? null;
-        // @ts-expect-error
         entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         entityDefinition["elements"] = this._getEntityElements(entity);
       } else {
@@ -120,7 +110,6 @@ export class EntityDefinitionReader {
           entityDefinition["title"] = entity["@title"] ?? null;
         }
         if (selectedColumns.includes("dataSource")) {
-          // @ts-expect-error
           entityDefinition["dataSource"] = entity.dataSource4DataInspector;
         }
         if (selectedColumns.includes("elements")) {
@@ -145,7 +134,6 @@ export class EntityDefinitionReader {
    * @returns A callback function for the filter function
    */
   private _determineFilter(req: cds.Request) {
-    // @ts-expect-error
     const filterString = req.req.query?.$filter;
     if (!filterString) {
       return (entity: Entity) =>
@@ -197,7 +185,6 @@ export class EntityDefinitionReader {
           );
         if (column === "dataSource")
           return (
-            // @ts-expect-error
             entity.dataSource4DataInspector.includes(value) &&
             entity[HIDDEN_ANNOTATION] !== true &&
             !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
@@ -233,7 +220,6 @@ export class EntityDefinitionReader {
           );
         if (column === "dataSource")
           return (
-            // @ts-expect-error
             entity.dataSource4DataInspector.includes(value) &&
             entity[HIDDEN_ANNOTATION] !== true &&
             !entity["name"].endsWith(DRAFT_ENTITIES_SUFFIX) &&
@@ -256,7 +242,6 @@ export class EntityDefinitionReader {
       const nameValue = cqn["xpr"][4]["args"][1]["val"];
       const filterFunction = (entity: Entity) => {
         return (
-          // @ts-expect-error
           entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
@@ -280,7 +265,6 @@ export class EntityDefinitionReader {
       const nameValue = cqn["xpr"][0]["args"][1]["val"];
       const filterFunction = (entity: Entity) => {
         return (
-          // @ts-expect-error
           entity.dataSource4DataInspector.includes(dataSourceValue) &&
           entity["name"].toLowerCase().includes(nameValue.toLowerCase()) &&
           entity[HIDDEN_ANNOTATION] !== true &&
@@ -309,7 +293,6 @@ export class EntityDefinitionReader {
   private _determineSelectedColumns(req: cds.Request): string[] {
     const selectColumns: string[] = [];
     for (const col of req.query.SELECT.columns) {
-      // @ts-expect-error
       if (col === "*") {
         selectColumns.push("*");
       } else if (col?.ref[0] === "name") {
@@ -331,7 +314,6 @@ export class EntityDefinitionReader {
    * @returns A callback function for the sort function
    */
   private _determineOrderBy(req: cds.Request) {
-    // @ts-expect-error
     const orderByString = req.req.query?.$orderby;
     if (!orderByString) {
       // sort by name ascending by default
@@ -352,13 +334,9 @@ export class EntityDefinitionReader {
     const sortingOrder = req.query.SELECT.orderBy[0]["sort"];
 
     if (sortingOrder === "asc" || sortingOrder === undefined) {
-      return (e1: Entity, e2: Entity) =>
-        // @ts-expect-error
-        e1[sortingColumn].localeCompare(e2[sortingColumn]);
+      return (e1: Entity, e2: Entity) => e1[sortingColumn].localeCompare(e2[sortingColumn]);
     } else if (sortingOrder === "desc") {
-      return (e1: Entity, e2: Entity) =>
-        // @ts-expect-error
-        e2[sortingColumn].localeCompare(e1[sortingColumn]);
+      return (e1: Entity, e2: Entity) => e2[sortingColumn].localeCompare(e1[sortingColumn]);
     }
   }
 

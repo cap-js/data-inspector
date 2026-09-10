@@ -19,6 +19,11 @@ server:
       afterMiddleware: compression
       configuration:
         ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        # Forward OData requests to the locally running CAP server so the UI can
+        # be developed standalone via `ui5 serve` (see the project README).
+        backend:
+          - path: /odata
+            url: http://localhost:4004
         ui5:
           path:
             - /resources

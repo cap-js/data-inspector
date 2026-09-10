@@ -168,8 +168,20 @@ sap.ui.define(
             // Build array of row objects containing only the selected columns
 
             let aNewItems = aResults.map(function (item) {
-              let oRecord = item.record || {},
-                oRow = {};
+              // The 'record' field is a LargeString @IsJSON. Depending on the CAP
+              // runtime it arrives either as an object (Node.js) or as a JSON string
+              // (Java, whose OData serializer treats @IsJSON as a plain String). Parse
+              // the string form so column binding works uniformly on both runtimes.
+              let oRecord = item.record || {};
+              if (typeof oRecord === "string") {
+                try {
+                  oRecord = JSON.parse(oRecord);
+                } catch (e) {
+                  console.error("Failed to parse record JSON string:", e);
+                  oRecord = {};
+                }
+              }
+              let oRow = {};
               aSelectedColumns.forEach(function (col) {
                 oRow[col] = oRecord[col];
               });
