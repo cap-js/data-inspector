@@ -112,11 +112,10 @@ folder:
    npm start
    ```
 
-> **Note:** Re-run `cds build` whenever you change the plugin configuration
-> (e.g. `cds.data-inspector.*` settings), so the regenerated
-> `gen/cap-data-inspector-ui` picks up your changes. If your CAP server runs on a
-> non-default port, adjust the proxy target as described in
-> [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
+
+> **Note:** If your CAP server runs on a non-default port, adjust the proxy target as described in [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
+
+> **Note:** Re-run `cds build` whenever you change the plugin configuration (e.g. `cds.data-inspector.*` settings), so the regenerated `gen/cap-data-inspector-ui` picks up your changes.
 
 ### Excluding Entities and Elements
 
