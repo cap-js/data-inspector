@@ -183,13 +183,13 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 
 #### CDS Build Plugin
 
-`@cap-js/data-inspector` ships a CDS build plugin that runs during your `cds build`. The plugin:
+`@cap-js/data-inspector` ships a CDS build plugin that runs during `cds build`. It copies the bundled SAPUI5 app into `gen/cap-data-inspector-ui` and configures it for your project:
 
-1. **Copies** the SAPUI5 app source from the plugin package into your project's `gen/cap-data-inspector-ui` directory.
-2. **Patches the SAPUI5 app's `xs-app.json` file** with values resolved from `cds.env` or auto-detected from an existing SAPUI5 app in your project:
-   - OData server destination name. For more information, see [Custom Destination Name](#custom-destination-name).
-   - Approuter `authenticationType` (`xsuaa` or `ias`). For more information, see [Authentication Type](#authentication-type).
-3. **Patches the SAPUI5 app's `manifest.json` file** with `sap.cloud.service` when a value is available from `cds.env` or auto-detected from an existing SAPUI5 app in your project. For more information, see [sap.cloud.service Configuration](#sapcloudservice-configuration).
+- **OData service URL** — patched into `manifest.json` and `xs-app.json`. For Node.js hosts the base path is always `/odata/v4`.
+- **OData destination** — patched into `xs-app.json`. Resolved from `cds.data-inspector.destination`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `srv-api`. See [Custom Destination Name](#custom-destination-name).
+- **Authentication type** — patched into `xs-app.json`. Resolved from `cds.data-inspector.authenticationType`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `xsuaa`. See [Authentication Type](#authentication-type).
+- **`sap.cloud.service`** — patched into `manifest.json` when available. Resolved from `cds.data-inspector.cloudService` or auto-detected from an existing `app/*/webapp/manifest.json`. See [sap.cloud.service Configuration](#sapcloudservice-configuration).
+- **Dev proxy** — `ui5.yaml` is configured to forward OData requests to your running CAP server (`http://localhost:4004` for Node.js). See [Local Server URL](#local-server-url-ui5-serve-proxy).
 
 The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
 
@@ -257,7 +257,7 @@ The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authen
 
 ##### Local Server URL (ui5 serve proxy)
 
-The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js) or `http://localhost:8080` (Java, detected via `pom.xml`). If your server runs on a different port, edit the `backend[0].url` in the generated `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
+The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js). If your server runs on a different port, edit the `backend[0].url` in the generated `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
 
 #### MTA Deployment
 

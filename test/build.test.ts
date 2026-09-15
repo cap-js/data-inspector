@@ -350,6 +350,20 @@ describe("CDS Build Plugin", () => {
     }
 
     /**
+     * Set the OData V4 endpoint path in .cdsrc.json using the standard CAP Java config key
+     * (`cds.odata-v4.endpoint.path`), surfaced in cds.env as `odataV4.endpoint.path`.
+     */
+    function setODataV4EndpointPath(projectFolder: string, odataPath: string): void {
+      const cdsrcPath = join(projectFolder, ".cdsrc.json");
+      let cdsrc: any = {};
+      if (fs.existsSync(cdsrcPath)) {
+        cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+      }
+      cdsrc.odataV4 = { endpoint: { path: odataPath } };
+      fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+    }
+
+    /**
      * Read ui5.yaml from the build output
      */
     function readBuildUi5Yaml(projectFolder: string): any {
@@ -390,10 +404,26 @@ describe("CDS Build Plugin", () => {
       expect(backendBaseNode!.url).to.equal("http://localhost:4004");
     });
 
-    it("should patch all artifacts for a Java project with odataBasePath", async () => {
+    it("should use default /odata/v4 for a Java project with no endpoint path configured", async () => {
+      const projectBaseJavaDefault = await createTestProject(tempUtil);
+      makeJavaProject(projectBaseJavaDefault);
+      runCdsBuild(projectBaseJavaDefault);
+
+      // manifest.json: mainService.uri stays at the default
+      const manifestBaseJavaDefault = readBuildManifest(projectBaseJavaDefault);
+      expect(getMainServiceUri(manifestBaseJavaDefault)).to.equal("/odata/v4/data-inspector/");
+
+      // ui5.yaml: proxy defaults to Java :8080
+      const ui5DocBaseJavaDefault = readBuildUi5Yaml(projectBaseJavaDefault);
+      const backendBaseJavaDefault = getUi5BackendProxy(ui5DocBaseJavaDefault);
+      expect(backendBaseJavaDefault).to.exist;
+      expect(backendBaseJavaDefault!.url).to.equal("http://localhost:8080");
+    });
+
+    it("should patch all artifacts for a Java project with cds.odata-v4.endpoint.path=/api", async () => {
       const projectBaseApi = await createTestProject(tempUtil);
       makeJavaProject(projectBaseApi);
-      setCdsrc(projectBaseApi, { odataBasePath: "/api" });
+      setODataV4EndpointPath(projectBaseApi, "/api");
       runCdsBuild(projectBaseApi);
 
       // manifest.json: mainService.uri patched
@@ -412,24 +442,6 @@ describe("CDS Build Plugin", () => {
       expect(backendBaseApi).to.exist;
       expect(backendBaseApi!.path).to.equal("/api");
       expect(backendBaseApi!.url).to.equal("http://localhost:8080");
-    });
-
-    it("should use explicit odataBasePath from config", async () => {
-      const projectBaseCustom = await createTestProject(tempUtil);
-      makeJavaProject(projectBaseCustom);
-      setCdsrc(projectBaseCustom, { odataBasePath: "/custom-path" });
-      runCdsBuild(projectBaseCustom);
-
-      // manifest.json: custom base path
-      const manifestBaseCustom = readBuildManifest(projectBaseCustom);
-      expect(getMainServiceUri(manifestBaseCustom)).to.equal("/custom-path/data-inspector/");
-
-      // ui5.yaml: path follows odataBasePath, url defaults to Java :8080
-      const ui5DocBaseCustom = readBuildUi5Yaml(projectBaseCustom);
-      const backendBaseCustom = getUi5BackendProxy(ui5DocBaseCustom);
-      expect(backendBaseCustom).to.exist;
-      expect(backendBaseCustom!.path).to.equal("/custom-path");
-      expect(backendBaseCustom!.url).to.equal("http://localhost:8080");
     });
   });
 
