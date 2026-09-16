@@ -184,13 +184,33 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 
 `@cap-js/data-inspector` ships a CDS build plugin that runs during `cds build`. It copies the bundled SAPUI5 app into `gen/cap-data-inspector-ui` and configures it for your project:
 
-- **OData service URL** — patched into `manifest.json` and `xs-app.json`. For Node.js hosts the base path is always `/odata/v4`.
+- **OData service URL** — patched into `manifest.json` and `xs-app.json`. See [OData Service Base Path](#odata-service-base-path).
 - **OData destination** — patched into `xs-app.json`. Resolved from `cds.data-inspector.destination`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `srv-api`. See [Custom Destination Name](#custom-destination-name).
 - **Authentication type** — patched into `xs-app.json`. Resolved from `cds.data-inspector.authenticationType`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `xsuaa`. See [Authentication Type](#authentication-type).
 - **`sap.cloud.service`** — patched into `manifest.json` when available. Resolved from `cds.data-inspector.cloudService` or auto-detected from an existing `app/*/webapp/manifest.json`. See [sap.cloud.service Configuration](#sapcloudservice-configuration).
 - **Dev proxy** — `ui5.yaml` is configured to forward OData requests to your running CAP server (`http://localhost:4004` for Node.js). See [Local Server URL](#local-server-url-ui5-serve-proxy).
 
 The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
+
+##### OData Service Base Path
+
+The OData V4 base path determines where the Data Inspector OData service is expected to be served (default: `/odata/v4`). The build plugin patches this into the SAPUI5 app's `manifest.json` and `xs-app.json`. The base path is resolved in this order:
+
+1. **Explicit configuration** — Set `cds.data-inspector.odataV4BasePath` in your `.cdsrc.json` file or `package.json` file:
+
+   ```json
+   {
+     "cds": {
+       "data-inspector": {
+         "odataV4BasePath": "/my-api"
+       }
+     }
+   }
+   ```
+
+2. **CAP Node.js protocol config** — If `cds.protocols['odata-v4'].path` is configured, it is used as a fallback.
+
+3. **Default** — Falls back to `/odata/v4`.
 
 ##### Custom Destination Name
 

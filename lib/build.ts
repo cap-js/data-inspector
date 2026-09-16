@@ -8,10 +8,11 @@
  *
  *   - OData V4 base path:  The UI's manifest.json (mainService.uri) and
  *     xs-app.json OData route target the CAP server's OData V4 endpoint.
- *     For CAP Java hosts this base path may be customized (e.g. /api via
- *     cds.odata-v4.endpoint.path); for Node.js it stays /odata/v4. The
- *     effective base path is resolved (see lib/utils/hostResolver) and
- *     patched into both files.
+ *     The effective base path is resolved in order from:
+ *       1. cds.data-inspector.odataV4BasePath  (explicit override)
+ *       2. cds.protocols['odata-v4'].path       (Node.js protocol config)
+ *       3. /odata/v4                            (default)
+ *     See lib/utils/hostResolver for the resolution logic.
  *
  *   - xs-app.json destination:  The OData route destination defaults to
  *     "srv-api".  If the host project uses a different name, it is
@@ -100,10 +101,9 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
 
     await this.copy(uiAppSrc).to(this.task.dest);
 
-    // Patch the OData V4 base path into manifest.json (mainService.uri) and
-    // xs-app.json (OData route). For CAP Java hosts the base path may differ
-    // from the CAP default (e.g. /api); for Node.js it stays /odata/v4 unless
-    // explicitly overridden.
+    // Resolve and patch the OData V4 base path into manifest.json (mainService.uri)
+    // and xs-app.json (OData route). Resolution order: cds.data-inspector.odataV4BasePath
+    // → cds.protocols['odata-v4'].path → /odata/v4 (default).
     const basePath = resolveODataV4BasePath();
     if (basePath !== DEFAULT_ODATA_V4_BASE_PATH) {
       await this.patchManifestBasePath(basePath);
@@ -113,7 +113,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
 
     // Always align the local `ui5 serve` dev proxy (ui5.yaml) with the resolved
     // base path + local server URL, so `npm start` forwards the UI's OData calls
-    // to the running CAP server (e.g. /api → http://localhost:8080 for Java).
+    // to the running CAP server.
     await this.patchUi5DevProxy(basePath, resolveLocalServerUrl());
 
     // Patch xs-app.json destination when the project uses a non-default name
@@ -438,10 +438,6 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * the resolved OData base path and local CAP server URL, so running the UI
    * standalone via `ui5 serve` (`npm start`) forwards its OData requests to the
    * running server.
-   *
-   * For a CAP Java host at /api on :8080 this yields:
-   *   backend: [{ path: /api, url: http://localhost:8080 }]
-   * For CAP Node.js it stays /odata → http://localhost:4004.
    *
    * The proxy `path` is set to the base path's first segment (e.g. `/api` or
    * `/odata`) so all OData traffic under it is forwarded.

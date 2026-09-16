@@ -337,30 +337,16 @@ describe("CDS Build Plugin", () => {
   });
 
   // -----------------------------------------------------------------------
-  //  OData base path patching (Java host support)
+  //  OData base path patching
   // -----------------------------------------------------------------------
 
   describe("OData base path patching", () => {
     /**
      * Helper: make the test project look like a Java project by adding a pom.xml.
-     * The build task detects Java via the presence of pom.xml at project root.
+     * Used to verify proxy URL defaults to :8080 for Java projects.
      */
     function makeJavaProject(projectFolder: string): void {
       fs.writeFileSync(join(projectFolder, "pom.xml"), "<project></project>");
-    }
-
-    /**
-     * Set the OData V4 endpoint path in .cdsrc.json using the standard CAP Java config key
-     * (`cds.odata-v4.endpoint.path`), surfaced in cds.env as `odataV4.endpoint.path`.
-     */
-    function setODataV4EndpointPath(projectFolder: string, odataPath: string): void {
-      const cdsrcPath = join(projectFolder, ".cdsrc.json");
-      let cdsrc: any = {};
-      if (fs.existsSync(cdsrcPath)) {
-        cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
-      }
-      cdsrc.odataV4 = { endpoint: { path: odataPath } };
-      fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
     }
 
     /**
@@ -388,60 +374,80 @@ describe("CDS Build Plugin", () => {
       return proxy?.configuration?.backend?.[0];
     }
 
-    it("should keep defaults for a Node.js project (no base-path patch, proxy at :4004)", async () => {
-      const projectBaseNode = await createTestProject(tempUtil);
-      runCdsBuild(projectBaseNode);
+    it("should keep defaults when no OData base path is configured (proxy at :4004)", async () => {
+      const project = await createTestProject(tempUtil);
+      runCdsBuild(project);
 
-      // manifest.json: mainService.uri stays at the default
-      const manifestBaseNode = readBuildManifest(projectBaseNode);
-      expect(getMainServiceUri(manifestBaseNode)).to.equal("/odata/v4/data-inspector/");
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/odata/v4/data-inspector/");
 
-      // ui5.yaml: proxy stays at Node.js defaults
-      const ui5DocBaseNode = readBuildUi5Yaml(projectBaseNode);
-      const backendBaseNode = getUi5BackendProxy(ui5DocBaseNode);
-      expect(backendBaseNode).to.exist;
-      expect(backendBaseNode!.path).to.equal("/odata");
-      expect(backendBaseNode!.url).to.equal("http://localhost:4004");
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.path).to.equal("/odata");
+      expect(backend!.url).to.equal("http://localhost:4004");
     });
 
-    it("should use default /odata/v4 for a Java project with no endpoint path configured", async () => {
-      const projectBaseJavaDefault = await createTestProject(tempUtil);
-      makeJavaProject(projectBaseJavaDefault);
-      runCdsBuild(projectBaseJavaDefault);
-
-      // manifest.json: mainService.uri stays at the default
-      const manifestBaseJavaDefault = readBuildManifest(projectBaseJavaDefault);
-      expect(getMainServiceUri(manifestBaseJavaDefault)).to.equal("/odata/v4/data-inspector/");
-
-      // ui5.yaml: proxy defaults to Java :8080
-      const ui5DocBaseJavaDefault = readBuildUi5Yaml(projectBaseJavaDefault);
-      const backendBaseJavaDefault = getUi5BackendProxy(ui5DocBaseJavaDefault);
-      expect(backendBaseJavaDefault).to.exist;
-      expect(backendBaseJavaDefault!.url).to.equal("http://localhost:8080");
-    });
-
-    it("should patch all artifacts for a Java project with cds.odata-v4.endpoint.path=/api", async () => {
-      const projectBaseApi = await createTestProject(tempUtil);
-      makeJavaProject(projectBaseApi);
-      setODataV4EndpointPath(projectBaseApi, "/api");
-      runCdsBuild(projectBaseApi);
+    it("should patch all artifacts when cds.data-inspector.odataV4BasePath is set", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { odataV4BasePath: "/api" });
+      runCdsBuild(project);
 
       // manifest.json: mainService.uri patched
-      const manifestBaseApi = readBuildManifest(projectBaseApi);
-      expect(getMainServiceUri(manifestBaseApi)).to.equal("/api/data-inspector/");
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/api/data-inspector/");
 
       // xs-app.json: OData route rewritten to /api
-      const xsAppBaseApi = readBuildXsApp(projectBaseApi);
-      const sourceBaseApi = getODataRouteSource(xsAppBaseApi);
-      expect(sourceBaseApi).to.include("/api");
-      expect(sourceBaseApi).to.not.include("/odata");
+      const xsApp = readBuildXsApp(project);
+      const source = getODataRouteSource(xsApp);
+      expect(source).to.include("/api");
+      expect(source).to.not.include("/odata");
 
-      // ui5.yaml: proxy defaults to Java :8080, path to /api
-      const ui5DocBaseApi = readBuildUi5Yaml(projectBaseApi);
-      const backendBaseApi = getUi5BackendProxy(ui5DocBaseApi);
-      expect(backendBaseApi).to.exist;
-      expect(backendBaseApi!.path).to.equal("/api");
-      expect(backendBaseApi!.url).to.equal("http://localhost:8080");
+      // ui5.yaml: path patched to /api
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.path).to.equal("/api");
+      expect(backend!.url).to.equal("http://localhost:4004");
+    });
+
+    it("should patch all artifacts when cds.protocols['odata-v4'].path is set (Node.js fallback)", async () => {
+      const project = await createTestProject(tempUtil);
+      const cdsrcPath = join(project, ".cdsrc.json");
+      let cdsrc: any = {};
+      if (fs.existsSync(cdsrcPath)) cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+      cdsrc.protocols = { "odata-v4": { path: "/api" } };
+      fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/api/data-inspector/");
+    });
+
+    it("should prefer odataV4BasePath over cds.protocols['odata-v4'].path when both are set", async () => {
+      const project = await createTestProject(tempUtil);
+      // odataV4BasePath should win
+      const cdsrcPath = join(project, ".cdsrc.json");
+      let cdsrc: any = {};
+      if (fs.existsSync(cdsrcPath)) cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+      cdsrc["data-inspector"] = { odataV4BasePath: "/explicit" };
+      cdsrc.protocols = { "odata-v4": { path: "/fallback" } };
+      fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(getMainServiceUri(manifest)).to.equal("/explicit/data-inspector/");
+    });
+
+    it("should use proxy at :8080 for Java projects (pom.xml detected)", async () => {
+      const project = await createTestProject(tempUtil);
+      makeJavaProject(project);
+      runCdsBuild(project);
+
+      const ui5Doc = readBuildUi5Yaml(project);
+      const backend = getUi5BackendProxy(ui5Doc);
+      expect(backend).to.exist;
+      expect(backend!.url).to.equal("http://localhost:8080");
     });
   });
 
