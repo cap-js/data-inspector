@@ -10,9 +10,9 @@
   "main": "webapp/index.html",
   "devDependencies": {
     "@sap/ux-ui5-tooling": "1",
-    "@ui5/cli": "4.0.51",
+    "@ui5/cli": "4.0.68",
     "rimraf": "6.1.3",
-    "ui5-task-zipper": "3.6.0"
+    "ui5-task-zipper": "3.7.0"
   },
   "ui5": {
     "dependencies": [
