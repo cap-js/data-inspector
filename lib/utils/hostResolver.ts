@@ -6,19 +6,8 @@ const cds = require("@sap/cds");
 const { exists, path } = cds.utils;
 const { join } = path;
 
-/** CAP default OData V4 base path (both runtimes). */
+/** CAP default OData V4 base path. */
 export const DEFAULT_ODATA_V4_BASE_PATH = "/odata/v4";
-
-/**
- * Returns true when the host project is a CAP **Java** project.
- *
- * Detection is intentionally simple and dependency-free: a CAP Java project has
- * a `pom.xml` at its root (and typically an `srv/pom.xml`). CAP Node.js projects
- * do not.
- */
-export function isJavaProject(): boolean {
-  return exists(join(cds.root, "pom.xml")) || exists(join(cds.root, "srv", "pom.xml"));
-}
 
 /**
  * Normalizes a base path to have a leading slash and no trailing slash
@@ -53,6 +42,14 @@ export function resolveODataV4BasePath(): string {
 export function buildMainServiceUri(basePath: string): string {
   const DATA_INSPECTOR_SERVICE_PATH = "data-inspector";
   return `${normalizeBasePath(basePath)}/${DATA_INSPECTOR_SERVICE_PATH}/`;
+}
+
+/**
+ * Returns true when the host project is a CAP Java project, detected by the
+ * presence of a `pom.xml` at the project root or in `srv/`.
+ */
+function isJavaProject(): boolean {
+  return exists(join(cds.root, "pom.xml")) || exists(join(cds.root, "srv", "pom.xml"));
 }
 
 /**

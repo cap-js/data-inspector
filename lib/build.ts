@@ -8,11 +8,10 @@
  *
  *   - OData V4 base path:  The UI's manifest.json (mainService.uri) and
  *     xs-app.json OData route target the CAP server's OData V4 endpoint.
- *     The effective base path is resolved in order from:
- *       1. cds.data-inspector.odataV4BasePath  (explicit override)
- *       2. cds.protocols['odata-v4'].path       (Node.js protocol config)
- *       3. /odata/v4                            (default)
- *     See lib/utils/hostResolver for the resolution logic.
+ *     The effective base path is resolved by lib/utils/hostResolver.
+ *
+ *   - ui5.yaml dev proxy:  Forwards the standalone `ui5 serve` UI's OData
+ *     requests to the running CAP server for local development.
  *
  *   - xs-app.json destination:  The OData route destination defaults to
  *     "srv-api".  If the host project uses a different name, it is
@@ -39,7 +38,6 @@ const fs = require("fs");
 import YAML from "yaml";
 
 import {
-  isJavaProject,
   resolveODataV4BasePath,
   resolveLocalServerUrl,
   buildMainServiceUri,
@@ -101,19 +99,16 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
 
     await this.copy(uiAppSrc).to(this.task.dest);
 
-    // Resolve and patch the OData V4 base path into manifest.json (mainService.uri)
-    // and xs-app.json (OData route). Resolution order: cds.data-inspector.odataV4BasePath
-    // → cds.protocols['odata-v4'].path → /odata/v4 (default).
+    // Patch the resolved OData V4 base path into manifest.json and xs-app.json.
     const basePath = resolveODataV4BasePath();
     if (basePath !== DEFAULT_ODATA_V4_BASE_PATH) {
       await this.patchManifestBasePath(basePath);
       await this.patchXsAppBasePath(basePath);
-      log.debug(`Patched OData V4 base path to '${basePath}' (Java project: ${isJavaProject()})`);
+      log.debug(`Patched OData V4 base path to '${basePath}'`);
     }
 
-    // Always align the local `ui5 serve` dev proxy (ui5.yaml) with the resolved
-    // base path + local server URL, so `npm start` forwards the UI's OData calls
-    // to the running CAP server.
+    // Align the local `ui5 serve` dev proxy (ui5.yaml) with the resolved base
+    // path and CAP server URL, so `npm start` forwards OData calls to the server.
     await this.patchUi5DevProxy(basePath, resolveLocalServerUrl());
 
     // Patch xs-app.json destination when the project uses a non-default name
@@ -227,7 +222,8 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * Guardrail: the returned value is always "xsuaa" or "ias" — never "none".
    *   - An explicit "none" (or any unsupported value) is rejected with a
    *     warning and falls back to "xsuaa".
-   *   - An auto-detected "none" is silently ignored (falls back to "xsuaa"),
+   *   - An auto-detected "none" is silently ignored and falls back to "xsuaa".
+   *
    * To disable authentication ("none"), edit the generated xs-app.json
    * manually after the build.
    */

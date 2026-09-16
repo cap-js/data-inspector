@@ -4,7 +4,7 @@
 - The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Version 2.0.0 - 2026-09-15
+## Version 2.0.0 - 2026-09-16
 
 ### Breaking Changes
 
@@ -16,7 +16,7 @@
 ### Added
 
 - **New config option:** `cds.data-inspector.authenticationType` (`xsuaa` | `ias`) to control the approuter `authenticationType` written into the generated `xs-app.json`. When not set, it is auto-detected from an existing `app/*/xs-app.json` and otherwise defaults to `xsuaa`. The generated `xs-app.json` no longer hardcodes `authenticationType: "xsuaa"`.
-- **New config option:** `cds.data-inspector.odataV4BasePath` to set the OData V4 base path used in the generated `manifest.json` OData service URI, `xs-app.json` route, and `ui5.yaml` dev proxy. When not set, it falls back to `cds.protocols['odata-v4'].path` and then to the default `/odata/v4`. For **CAP Java** hosts, set this to match `cds.odata-v4.endpoint.path` in `application.yaml` since `cds build` runs in a Node.js context. **Note:** `cds build` support for CAP Java hosts is build-time tooling only — `@cap-js/data-inspector` is a Node.js plugin and does not run in a CAP Java application.
+- **New config option:** `cds.data-inspector.odataV4BasePath` to set the OData V4 base path used in the generated `manifest.json` OData service URI, `xs-app.json` route, and `ui5.yaml` dev proxy. When not set, it falls back to `cds.protocols['odata-v4'].path` and then to the default `/odata/v4`.
 
 ## Version 1.0.5 - 2026-06-25
 
