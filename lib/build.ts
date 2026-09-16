@@ -8,7 +8,7 @@
  *
  *   - OData V4 base path:  The UI's manifest.json (mainService.uri) and
  *     xs-app.json OData route target the CAP server's OData V4 endpoint.
- *     The effective base path is resolved by lib/utils/hostResolver.
+ *     The effective base path is resolved by lib/utils/odataBasePathHelper.
  *
  *   - ui5.yaml dev proxy:  Forwards the standalone `ui5 serve` UI's OData
  *     requests to the running CAP server for local development.
@@ -43,7 +43,7 @@ import {
   buildMainServiceUri,
   normalizeBasePath,
   DEFAULT_ODATA_V4_BASE_PATH,
-} from "./utils/hostResolver";
+} from "./utils/odataBasePathHelper";
 
 const log = cds.log("data-inspector");
 
