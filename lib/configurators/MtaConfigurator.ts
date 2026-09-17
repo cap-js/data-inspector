@@ -18,10 +18,11 @@ const cds = require("@sap/cds");
 const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
-import { DATA_INSPECTOR_MTA_MODULE_NAME } from "../utils/constants";
 import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
+
+const DATA_INSPECTOR_MTA_MODULE_NAME = "capdatainspectorapp";
 
 export class MtaConfigurator extends AddPluginConfigurator {
   get name(): string {
