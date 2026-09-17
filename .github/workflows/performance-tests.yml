@@ -1,0 +1,40 @@
+name: Performance Tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "srv/**"
+      - "lib/**"
+      - "test/performance/**"
+      - "package.json"
+  workflow_dispatch:
+
+concurrency:
+  group: performance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance tests
+        run: npm run test:performance
+        env:
+          CI: true
+          PERF_TESTS: "1"
+          PERF_BASELINE_FILE: "performance-baseline.ci.json"
+          PERF_MAX_REGRESSION: "0.3"
+          PERF_MAX_SLOPE_VARIANCE: "0.3"
