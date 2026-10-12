@@ -41,7 +41,6 @@ export class DataReader {
     if (req.params.length) {
       // Validate entityName
       const entityName = req.params[0]["entityName"];
-      // @ts-expect-error
       entity = cds.model
         .all("entity")
         .find(
@@ -58,7 +57,11 @@ export class DataReader {
       // Validate recordKey
       const recordKey = req.params[0]["recordKey"]; // 'keyElementName=value', 'keyElement1Name=value&keyElement2Name=value', etc.
       if (!this._validateRecordKeys(entity, recordKey)) {
-        req.reject(HttpStatusCode.BadRequest, `INVALID_RECORD_KEY`, [recordKey]);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_RECORD_KEY`,
+          args: [recordKey],
+        });
       }
 
       // Transform the supplied recordKey to r_filter condition for building CQN
@@ -102,13 +105,27 @@ export class DataReader {
     let records;
     try {
       records = await dataSource.run(cqn);
-    } catch (e) {
-      logger.error("Failed to select records:", cqn, e);
+    } catch (error) {
+      // First check if the error is due to invalid element name supplied in r_filter, if so return HTTP 400 with specific message; otherwise return generic HTTP 500 error
+      // Note: Following pattern of error message thrown by @sap/cds could change in a future release, in which case it needs to be updated accordingly
+      const pattern = /^"([^"]*)" not found in the elements of "([^"]*)"$/;
+      const message = error instanceof Error ? error.message : String(error);
+      const match = message.match(pattern);
+      if (match) {
+        const invalidElement = match[1]; // supplied element name that is not found in the entity
+        logger.error("Invalid element name supplied in r_filter:", invalidElement, message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_ELEMENT_IN_R_FILTER`,
+          args: [invalidElement],
+        });
+      }
 
-      req.reject(
-        HttpStatusCode.InternalServerError,
-        cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-      );
+      logger.error("Failed to select records with CQN:", JSON.stringify(cqn), message);
+      req.reject({
+        status: HttpStatusCode.InternalServerError,
+        code: `ERROR_RUNNING_DB_QUERY`,
+      });
     }
 
     /**
@@ -123,7 +140,6 @@ export class DataReader {
      */
     const maxPageSize = entity[SELECT_MAX_PAGE_ANNOTATION] ?? MAX_PAGE_SIZE; // Respect @cds.query.limit.max if defined on the entity or the service
     const defaultPageSize = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top;
     if (
       (top && Number(top) > maxPageSize) || // case 3 above
@@ -140,13 +156,12 @@ export class DataReader {
       let result;
       try {
         result = await dataSource.run(nextPageProbeCqn);
-      } catch (e) {
-        logger.error("Failed to probe next page:", nextPageProbeCqn, e);
-
-        req.reject(
-          HttpStatusCode.InternalServerError,
-          cds["i18n"].messages.at("ERROR_RUNNING_DB_QUERY")
-        );
+      } catch (error) {
+        logger.error("Failed to probe next page:", nextPageProbeCqn, error.message);
+        req.reject({
+          status: HttpStatusCode.InternalServerError,
+          code: `ERROR_RUNNING_DB_QUERY`,
+        });
       }
 
       // Provide nextLink if next page exists
@@ -201,7 +216,6 @@ export class DataReader {
    * @returns boolean
    */
   private _validateRecordKeys(entity: Entity, recordKey: string): boolean {
-    // @ts-expect-error
     const recordKeyElements = entity.keyElements4DataInspector;
     const entityKeys: Set<string> = new Set<string>(recordKeyElements);
 
@@ -229,7 +243,6 @@ export class DataReader {
    * @returns Entity name
    */
   private _determineEntityFromFilterParam(req: cds.Request): Entity | undefined {
-    // @ts-expect-error
     const filterString = req.req.query?.$filter;
 
     if (!filterString) {
@@ -259,7 +272,6 @@ export class DataReader {
     }
 
     const entityName: string = cqn["xpr"][2]["val"];
-    // @ts-expect-error
     const entity: Entity = cds.model
       .all("entity")
       .find(
@@ -286,7 +298,6 @@ export class DataReader {
       return [];
     }
     for (const col of req.query.SELECT.columns) {
-      // @ts-expect-error
       if (col === "*") {
         selectColumns.push("*");
       } else if (col?.ref[0] === "entityName") {
@@ -307,25 +318,20 @@ export class DataReader {
    */
   private _getRecordElements(entity: Entity): string[] {
     const recordElements: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        if (
-          !(
-            element[HIDDEN_ANNOTATION] === true || // Exclude elements marked with the annotation
-            // @ts-expect-error
-            element.type === "cds.Association" ||
-            // @ts-expect-error
-            element.type === "cds.Composition" ||
-            CDS_ELEMENTS.includes(name)
-          )
-        ) {
-          // If the entity is defined in an @odata.draft.enabled service, IsActiveEntity is a virtual key
-          // TODO: Remove the exclusion IsActiveEntity check when adding support to show draft entries
-          recordElements.push(name);
-        }
+    Object.entries(entity.elements).forEach(([name, element]: [string, Element]) => {
+      if (!(
+        element[HIDDEN_ANNOTATION] === true || // Exclude elements marked with the annotation
+        // @ts-expect-error
+        element.type === "cds.Association" ||
+        // @ts-expect-error
+        element.type === "cds.Composition" ||
+        CDS_ELEMENTS.includes(name)
+      )) {
+        // If the entity is defined in an @odata.draft.enabled service, IsActiveEntity is a virtual key
+        // TODO: Remove the exclusion IsActiveEntity check when adding support to show draft entries
+        recordElements.push(name);
       }
-    );
+    });
     return recordElements;
   }
 
@@ -339,7 +345,6 @@ export class DataReader {
    */
   private _constructRecordKey(entity: Entity, record): string {
     const keys: string[] = [];
-    // @ts-expect-error
     const keyElements = entity.keyElements4DataInspector;
     for (const key of keyElements) {
       keys.push(`${key}=${record[key]}`);
@@ -374,11 +379,9 @@ export class DataReader {
       /**
        * Handle r_select
        */
-      // @ts-expect-error
       let r_select: string = req.req.query?.r_select;
       if (isSelectOnlyKeys) {
         // Select only the key elements
-        // @ts-expect-error
         const recordKeyElements = entity.keyElements4DataInspector;
         r_select = recordKeyElements.join(",");
       } else if (r_select === undefined) {
@@ -389,13 +392,16 @@ export class DataReader {
         const selectedRecordElements = r_select.split(",");
         for (const elementName of selectedRecordElements) {
           if (!entityElements.includes(elementName)) {
-            req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_SELECT`, [r_select]);
+            req.reject({
+              status: HttpStatusCode.BadRequest,
+              code: `INVALID_ELEMENT_IN_R_SELECT`,
+              args: [r_select],
+            });
           }
         }
 
         // For data source service, key elements are automatically returned by CDS even if not explicitly specified in the select statement
         // For data source db, that is not the case, so explicitly add key elements to select statement if they don't come as part of the request
-        // @ts-expect-error
         const recordKeyElements = entity.keyElements4DataInspector;
         let missingKeys: string = "";
         for (const key of recordKeyElements) {
@@ -422,9 +428,7 @@ export class DataReader {
     let r_filter: string;
     if (r_filterFromRecordKey) {
       r_filter = r_filterFromRecordKey;
-      // @ts-expect-error
     } else if (req.req.query?.r_filter) {
-      // @ts-expect-error
       r_filter = req.req.query?.r_filter;
     }
     if (r_filter) {
@@ -445,21 +449,19 @@ export class DataReader {
 
         // NOTE: Validating the supplied element names for r_filter is not trivial
         // Therefore at this point this is left to be handled by the database query itself
-        // This will have a limitation of returning HTTP 500 error instead of HTTP 400 when invalid element names are supplied in r_filter
         cqn = cqn.where(expr);
       } catch (error) {
-        logger.error("Failed to parse the r_filter query parameter", r_filter, error);
-        req.reject(
-          HttpStatusCode.BadRequest,
-          cds["i18n"].messages.at("INVALID_R_FILTER_QUERY_PARAM") + ":" + error.message
-        );
+        logger.error("Failed to parse the r_filter query parameter", r_filter, error.message);
+        req.reject({
+          status: HttpStatusCode.BadRequest,
+          code: `INVALID_R_FILTER_QUERY_PARAM`,
+        });
       }
     }
 
     /**
      * Handle r_orderby
      */
-    // @ts-expect-error
     const r_orderby: string = req.req.query?.r_orderby;
     if (r_orderby) {
       const orderbyElements = [];
@@ -473,10 +475,13 @@ export class DataReader {
       // validate the supplied element names for r_orderby
       for (const element of orderbyElements) {
         if (!entityElements.includes(element)) {
-          req.reject(HttpStatusCode.BadRequest, `INVALID_ELEMENT_IN_R_ORDERBY`, [r_orderby]);
+          req.reject({
+            status: HttpStatusCode.BadRequest,
+            code: `INVALID_ELEMENT_IN_R_ORDERBY`,
+            args: [r_orderby],
+          });
         }
       }
-      // @ts-expect-error
       cqn = cqn.orderBy(order);
     }
 
@@ -485,7 +490,6 @@ export class DataReader {
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
     let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
       if (Number(top) < 0) {
@@ -496,7 +500,6 @@ export class DataReader {
     }
 
     let offset: number = 0;
-    // @ts-expect-error
     const skip = req.req.query.$skip; // skip = 'offset' in CQN
     if (skip) {
       if (Number(skip) < 0) {
@@ -504,7 +507,6 @@ export class DataReader {
       }
       offset = Number(skip);
     }
-    // @ts-expect-error
     const skipToken = req.req.query.$skiptoken;
     if (skipToken) {
       if (Number(skipToken) < 0) {
@@ -537,7 +539,6 @@ export class DataReader {
     /**
      * Provide columns for SELECT; selecting only the key elements
      */
-    // @ts-expect-error
     const recordKeyElements = entity.keyElements4DataInspector;
     const elements = recordKeyElements.map((el) => el.trim());
     cqn = cqn.columns(
@@ -549,7 +550,6 @@ export class DataReader {
     /**
      * Provide WHERE condition
      */
-    // @ts-expect-error
     const r_filter: string = req.req.query?.r_filter;
     if (r_filter) {
       let normalizedExpr = `${r_filter}`;
@@ -572,7 +572,6 @@ export class DataReader {
     /**
      * Provide ORDERBY
      */
-    // @ts-expect-error
     const r_orderby: string = req.req.query?.r_orderby;
     if (r_orderby) {
       const orderbyElements = [];
@@ -581,7 +580,6 @@ export class DataReader {
         orderbyElements.push(element);
         return { ref: [element], sort: dir || "asc" };
       });
-      // @ts-expect-error
       cqn = cqn.orderBy(order);
     }
 
@@ -590,7 +588,6 @@ export class DataReader {
      * Reliable pagination not supported - https://cap.cloud.sap/docs/guides/providing-services#reliable-pagination
      */
     let limit: number = entity[SELECT_DEFAULT_PAGE_ANNOTATION] ?? DEFAULT_PAGE_SIZE; // Respect @cds.query.limit.default if defined on the entity or the service
-    // @ts-expect-error
     const top = req.req.query.$top; // top = 'limit' or 'rows' in CQN
     if (top) {
       const maxPageSize = entity[SELECT_MAX_PAGE_ANNOTATION] ?? MAX_PAGE_SIZE; // Respect @cds.query.limit.max if defined on the entity or the service
@@ -608,14 +605,11 @@ export class DataReader {
    */
   private _getRecordSensitiveElements(entity: Entity): string[] {
     const sensitiveElements: string[] = [];
-    Object.entries(entity.elements).forEach(
-      // @ts-expect-error
-      ([name, element]: [string, Element]) => {
-        if (element["@PersonalData.IsPotentiallySensitive"]) {
-          sensitiveElements.push(name);
-        }
+    Object.entries(entity.elements).forEach(([name, element]: [string, Element]) => {
+      if (element["@PersonalData.IsPotentiallySensitive"]) {
+        sensitiveElements.push(name);
       }
-    );
+    });
     return sensitiveElements;
   }
 
@@ -629,7 +623,6 @@ export class DataReader {
     if (
       records.length === 0 ||
       !cds.env.requires["audit-log"] ||
-      // @ts-expect-error
       entity._service !== undefined // emit audit logs for data source db, CDS automatically emits audit logs for data source service
     ) {
       return;
@@ -640,13 +633,13 @@ export class DataReader {
       return;
     }
 
-    // @ts-expect-error
     const keyElements = entity.keyElements4DataInspector;
 
     const auditLogService: AuditLogService = await cds.connect.to("audit-log");
     for (const record of records) {
       const attributes: { name: string }[] = [];
       // checking if sensitive element is exposed for each record is the safest way
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for (const [elementName, _] of Object.entries(record)) {
         if (sensitiveElements.includes(elementName)) {
           attributes.push({ name: elementName });
@@ -660,6 +653,7 @@ export class DataReader {
       for (const keyElement of keyElements) {
         id[keyElement] = record[keyElement];
       }
+      // eslint-disable-next-line no-await-in-loop
       await auditLogService.log("SensitiveDataRead", {
         data_subject: {
           id: id,

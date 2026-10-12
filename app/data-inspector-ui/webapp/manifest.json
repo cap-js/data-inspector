@@ -1,5 +1,5 @@
 {
-  "_version": "1.65.0",
+  "_version": "2.6.0",
   "sap.app": {
     "id": "sap.cap.datainspector.datainspectorui",
     "type": "application",
@@ -102,8 +102,7 @@
         "type": "View",
         "viewType": "XML",
         "path": "sap.cap.datainspector.datainspectorui.view",
-        "async": true,
-        "viewPath": "sap.cap.datainspector.datainspectorui.view"
+        "async": true
       },
       "routes": [
         {

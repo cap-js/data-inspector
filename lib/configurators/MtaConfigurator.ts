@@ -18,10 +18,11 @@ const cds = require("@sap/cds");
 const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
-import { DATA_INSPECTOR_MTA_MODULE_NAME } from "../utils/constants";
 import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHelper";
 
 const log = cds.log("data-inspector");
+
+const DATA_INSPECTOR_MTA_MODULE_NAME = "capdatainspectorapp";
 
 export class MtaConfigurator extends AddPluginConfigurator {
   get name(): string {
@@ -82,6 +83,7 @@ export class MtaConfigurator extends AddPluginConfigurator {
     }
 
     const artifactExists = contentModule["build-parameters"].requires.some(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (req: any) => req.name === DATA_INSPECTOR_MTA_MODULE_NAME
     );
 
@@ -104,6 +106,8 @@ export class MtaConfigurator extends AddPluginConfigurator {
    * existing entries in the content module's build-parameters.requires.
    * Falls back to "resources/" if no existing entry provides a target-path.
    */
+  // MTA build-parameters.requires has dynamic structure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private resolveTargetPath(requires: any[]): string {
     const DEFAULT_TARGET_PATH = "resources/";
 

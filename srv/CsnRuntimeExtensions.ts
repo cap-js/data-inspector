@@ -44,15 +44,12 @@ function getKeyElements(entity: Entity): string[] {
 
   // Keys could be composite - identify all key elements
   const entityKeys: string[] = [];
-  Object.entries(entity.elements).forEach(
+  Object.entries(entity.elements).forEach(([name, element]: [string, Element]) => {
     // @ts-expect-error
-    ([name, element]: [string, Element]) => {
-      // @ts-expect-error
-      if (element.key && !CDS_ELEMENTS.includes(name)) {
-        entityKeys.push(name);
-      }
+    if (element.key && !CDS_ELEMENTS.includes(name)) {
+      entityKeys.push(name);
     }
-  );
+  });
 
   // Cache the result
   keyElementsCache.set(entity, entityKeys);
