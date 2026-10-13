@@ -4,6 +4,12 @@
 - The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Version 2.0.1 - 2026-10-13
+
+### Fixed
+
+- Enabled `relativePaths` in the `ui5-task-zipper` configuration so the built SAPUI5 app's `manifest.json` emits `dataSources.mainService.uri` as a relative URL (no leading slash). This fixes the issue where the UI could not reach the backend service when deployed via SAP Build Work Zone.
+
 ## Version 2.0.0 - 2026-09-16
 
 ### Breaking Changes
