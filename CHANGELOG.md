@@ -4,6 +4,12 @@
 - The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - This project adheres to [Semantic Versioning](https://semver.org/).
 
+## Version 2.1.0 - 2026-10-14
+
+### Added
+
+- The SAPUI5 app's `manifest.json` now declares `sap.platform.cf.oAuthScopes` with the `$XSAPPNAME.capDataInspectorReadonly` scope. In SAP Build Work Zone / Cloud Portal Service, the launchpad tile is now hidden from users who lack the `capDataInspectorReadonly` role, instead of being shown to everyone and failing on data access.
+
 ## Version 2.0.1 - 2026-10-13
 
 ### Fixed

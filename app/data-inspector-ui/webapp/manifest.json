@@ -44,6 +44,9 @@
       }
     }
   },
+  "sap.platform.cf": {
+    "oAuthScopes": ["$XSAPPNAME.capDataInspectorReadonly"]
+  },
   "sap.ui": {
     "technology": "UI5",
     "icons": {
