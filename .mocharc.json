@@ -1,5 +1,6 @@
 {
   "spec": "test/**/*.test.ts",
+  "ignore": ["test/performance/**"],
   "recursive": true,
   "timeout": 600000,
   "require": ["ts-node/register/transpile-only"],
