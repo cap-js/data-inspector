@@ -237,9 +237,11 @@ The generated SAPUI5 app is written to `gen/cap-data-inspector-ui` by default. Y
    }
    ```
 
+   The value must be a path **relative to your CAP project root** (it must not start with `/`). An invalid value (absolute path, `..` traversal, or illegal characters) is rejected with a warning and the build falls back to the CDS build target.
+
    With the example above, `cds build` produces the UI at `app/cap-data-inspector-ui` (fully patched).
 
-2. **CAP build target** — If `cds.build.target` is configured (and not `.`), it is used as the parent folder.
+2. **CDS build target** — If `cds.build.target` is configured (and not `.`), it is used as the parent folder.
 
 3. **Default** — Falls back to `gen`, producing `gen/cap-data-inspector-ui`.
 

@@ -164,6 +164,48 @@ describe("CDS Build Plugin", () => {
       expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
       expect(manifest["sap.app"].dataSources.mainService.uri).to.equal("/odata/v4/data-inspector/");
     });
+
+    it("should support nested uiBuildTargetFolder paths", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { uiBuildTargetFolder: "build/ui" });
+      runCdsBuild(project);
+
+      expect(
+        fs.existsSync(
+          join(project, "build", "ui", "cap-data-inspector-ui", "webapp", "manifest.json")
+        )
+      ).to.be.true;
+    });
+
+    it("should reject a path-traversal uiBuildTargetFolder and fall back to gen", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { uiBuildTargetFolder: "../escape" });
+      runCdsBuild(project);
+
+      expect(
+        fs.existsSync(join(project, "gen", "cap-data-inspector-ui", "webapp", "manifest.json"))
+      ).to.be.true;
+    });
+
+    it("should reject an absolute uiBuildTargetFolder and fall back to gen", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { uiBuildTargetFolder: "/abs" });
+      runCdsBuild(project);
+
+      expect(
+        fs.existsSync(join(project, "gen", "cap-data-inspector-ui", "webapp", "manifest.json"))
+      ).to.be.true;
+    });
+
+    it("should reject a uiBuildTargetFolder with illegal characters and fall back to gen", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { uiBuildTargetFolder: "a b" });
+      runCdsBuild(project);
+
+      expect(
+        fs.existsSync(join(project, "gen", "cap-data-inspector-ui", "webapp", "manifest.json"))
+      ).to.be.true;
+    });
   });
 
   // -----------------------------------------------------------------------

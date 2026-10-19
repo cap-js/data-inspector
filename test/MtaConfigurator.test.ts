@@ -125,6 +125,17 @@ describe("MtaConfigurator", () => {
     expect(diModule?.path).to.equal("app/cap-data-inspector-ui");
   });
 
+  it("should fall back to gen for the html5 module path when uiBuildTargetFolder is unsafe", async () => {
+    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project);
+    setCdsrc(project, { uiBuildTargetFolder: "../escape" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
+  });
+
   it("should fall back to resources/ when no existing requires have target-path", async () => {
     // The minimal mta fixture has no content module with requires,
     // so the configurator creates one from scratch and falls back to resources/
