@@ -29,6 +29,17 @@ function readMta(projectFolder: string): any {
   return YAML.parse(fs.readFileSync(mtaPath, "utf8"));
 }
 
+/** Write a cds.data-inspector config block to the project's .cdsrc.json */
+function setCdsrc(projectFolder: string, config: Record<string, unknown>): void {
+  const cdsrcPath = join(projectFolder, ".cdsrc.json");
+  let cdsrc: Record<string, any> = {};
+  if (fs.existsSync(cdsrcPath)) {
+    cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+  }
+  cdsrc["data-inspector"] = { ...cdsrc["data-inspector"], ...config };
+  fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+}
+
 describe("MtaConfigurator", () => {
   const tempUtil = new TempUtil();
 
@@ -91,6 +102,27 @@ describe("MtaConfigurator", () => {
     const mta = readMta(project);
     const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
     expect(diModule).to.not.be.undefined;
+  });
+
+  it("should set the html5 module path to gen/cap-data-inspector-ui by default", async () => {
+    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project);
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
+  });
+
+  it("should set the html5 module path to match uiBuildTargetFolder", async () => {
+    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project);
+    setCdsrc(project, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("app/cap-data-inspector-ui");
   });
 
   it("should fall back to resources/ when no existing requires have target-path", async () => {

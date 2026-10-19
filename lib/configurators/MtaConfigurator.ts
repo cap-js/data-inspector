@@ -19,6 +19,7 @@ const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHelper";
+import { resolveUiBuildPath } from "../utils/uiBuildPathHelper";
 
 const log = cds.log("data-inspector");
 
@@ -47,6 +48,7 @@ export class MtaConfigurator extends AddPluginConfigurator {
       await cds.add
         .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
         .into(mtaPath, {
+          with: { uiBuildPath: resolveUiBuildPath() },
           additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
         });
 

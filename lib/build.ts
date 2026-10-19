@@ -45,6 +45,7 @@ import {
   DEFAULT_ODATA_V4_BASE_PATH,
 } from "./utils/odataBasePathHelper";
 import { DEFAULT_APP_ID, resolveAppId } from "./utils/appIdHelper";
+import { resolveUiBuildParentFolder, UI_BUILD_FOLDER_NAME } from "./utils/uiBuildPathHelper";
 
 const log = cds.log("data-inspector");
 
@@ -95,20 +96,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   };
 
   init() {
-    this.task.dest = join(cds.root, this.resolveUiParentFolder(), "cap-data-inspector-ui");
-  }
-
-  /**
-   * Resolves the parent folder of the generated UI:
-   *   1. cds.data-inspector.uiBuildTargetFolder (explicit config)
-   *   2. cds.env.build.target (when not ".")
-   *   3. "gen" (default)
-   */
-  private resolveUiParentFolder(): string {
-    const configured = cds.env["data-inspector"]?.uiBuildTargetFolder;
-    if (typeof configured === "string" && configured.trim()) return configured.trim();
-    if (cds.env.build.target !== ".") return cds.env.build.target;
-    return "gen";
+    this.task.dest = join(cds.root, resolveUiBuildParentFolder(), UI_BUILD_FOLDER_NAME);
   }
 
   async build() {
