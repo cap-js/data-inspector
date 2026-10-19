@@ -47,7 +47,11 @@ describe("cds add data-inspector", () => {
 
   describe("orchestration", () => {
     it("should run all applicable configurators", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "add-all-configurators",
+      });
       createMtaWithPortal(project, "flp");
       createCommonDataModel(project, "flp");
 
@@ -71,7 +75,10 @@ describe("cds add data-inspector", () => {
     });
 
     it("should skip configurators when preconditions are not met", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        projectName: "add-skip-configurators",
+      });
 
       // No mta.yaml and no CommonDataModel.json → portal configurator is skipped.
       runCdsAddDataInspector(project);

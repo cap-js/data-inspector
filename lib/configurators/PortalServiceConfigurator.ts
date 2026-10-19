@@ -25,11 +25,10 @@ const { join } = path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import { readMta, findPortalDeployerPath } from "../utils/mtaHelper";
+import { DEFAULT_VIZ_ID, resolveAppId } from "../utils/appIdHelper";
 
 const log = cds.log("data-inspector");
 
-const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
-const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";
 const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
 const CDM_ENTRY_VERSION = "3.0.0";
@@ -90,49 +89,16 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
 
     try {
       const cdm = await read(cdmPath);
+      this.ensureCdmArrays(cdm);
 
-      // safety net
-      cdm.payload ??= {};
-      if (!Array.isArray(cdm.payload.catalogs)) cdm.payload.catalogs = [];
-      if (!Array.isArray(cdm.payload.groups)) cdm.payload.groups = [];
+      const appId = resolveAppId();
 
+      // Each reconcile step runs unconditionally (no short-circuit) and reports
+      // whether it mutated the document; we only persist when something changed.
       let changed = false;
-
-      const hasCatalog = cdm.payload.catalogs.some(
-        (c: { identification?: { id?: string } }) =>
-          c?.identification?.id === DATA_INSPECTOR_CATALOG_ID
-      );
-      if (!hasCatalog) {
-        cdm.payload.catalogs.push(this.buildCatalogEntry());
-        changed = true;
-      }
-
-      const hasGroup = cdm.payload.groups.some(
-        (g: { identification?: { id?: string } }) =>
-          g?.identification?.id === DATA_INSPECTOR_GROUP_ID
-      );
-      if (!hasGroup) {
-        cdm.payload.groups.push(this.buildGroupEntry());
-        changed = true;
-      }
-
-      const sites = cdm?.payload?.sites || [];
-      if (sites.length === 1) {
-        const site = sites[0];
-        site.payload ??= {};
-        site.payload.groupsOrder ??= [];
-        if (!site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
-          site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
-          changed = true;
-        }
-      } else {
-        // 0 or multiple sites: the user must choose where the tile appears.
-        log.info(
-          `${sites.length === 0 ? "No" : "Multiple"} sites found in CommonDataModel.json. ` +
-            `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
-            `to the groupsOrder array in your preferred site.`
-        );
-      }
+      changed = this.reconcileCatalog(cdm, appId) || changed;
+      changed = this.reconcileGroup(cdm, appId) || changed;
+      changed = this.reconcileSiteGroupsOrder(cdm) || changed;
 
       if (changed) {
         await write(JSON.stringify(cdm, null, 4)).to(cdmPath);
@@ -144,8 +110,95 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
     }
   }
 
-  /** Builds the catalog entry. */
-  private buildCatalogEntry(): Record<string, unknown> {
+  /** Ensures cdm.payload and its catalogs/groups arrays exist (safety net). */
+  // CommonDataModel.json has a dynamic structure
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private ensureCdmArrays(cdm: any): void {
+    cdm.payload ??= {};
+    if (!Array.isArray(cdm.payload.catalogs)) cdm.payload.catalogs = [];
+    if (!Array.isArray(cdm.payload.groups)) cdm.payload.groups = [];
+  }
+
+  /**
+   * Inserts the data-inspector catalog when absent, otherwise reconciles the
+   * existing viz appId so a changed cds.data-inspector.appId is reflected on
+   * re-runs. Malformed entries (no payload.viz[0]) are left untouched.
+   * Returns true when the document was mutated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private reconcileCatalog(cdm: any, appId: string): boolean {
+    const catalog = cdm.payload.catalogs.find(
+      (c: { identification?: { id?: string } }) =>
+        c?.identification?.id === DATA_INSPECTOR_CATALOG_ID
+    );
+    if (!catalog) {
+      cdm.payload.catalogs.push(this.buildCatalogEntry(appId));
+      return true;
+    }
+    const viz = catalog.payload?.viz?.[0];
+    if (viz && viz.appId !== appId) {
+      viz.appId = appId;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Inserts the data-inspector group when absent, otherwise reconciles the
+   * existing viz id/appId. The vizId (FLP intent) is always left untouched.
+   * Returns true when the document was mutated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private reconcileGroup(cdm: any, appId: string): boolean {
+    const group = cdm.payload.groups.find(
+      (g: { identification?: { id?: string } }) => g?.identification?.id === DATA_INSPECTOR_GROUP_ID
+    );
+    if (!group) {
+      cdm.payload.groups.push(this.buildGroupEntry(appId));
+      return true;
+    }
+    const viz = group.payload?.viz?.[0];
+    if (viz && (viz.appId !== appId || viz.id !== appId)) {
+      viz.id = appId;
+      viz.appId = appId;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * When the CDM has exactly one site, appends the data-inspector group to its
+   * groupsOrder (idempotent). For 0 or multiple sites, logs guidance instead.
+   * Returns true when the document was mutated.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private reconcileSiteGroupsOrder(cdm: any): boolean {
+    const sites = cdm?.payload?.sites || [];
+    if (sites.length !== 1) {
+      // 0 or multiple sites: the user must choose where the tile appears.
+      log.info(
+        `${sites.length === 0 ? "No" : "Multiple"} sites found in CommonDataModel.json. ` +
+          `To display the data-inspector tile by default, manually add "${DATA_INSPECTOR_GROUP_ID}" ` +
+          `to the groupsOrder array in your preferred site.`
+      );
+      return false;
+    }
+
+    const site = sites[0];
+    site.payload ??= {};
+    site.payload.groupsOrder ??= [];
+    if (!site.payload.groupsOrder.includes(DATA_INSPECTOR_GROUP_ID)) {
+      site.payload.groupsOrder.push(DATA_INSPECTOR_GROUP_ID);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Builds the catalog entry. `appId` matches the deployed app's `sap.app.id`;
+   * `vizId` stays at its default (the FLP intent, independent of `appId`).
+   */
+  private buildCatalogEntry(appId: string): Record<string, unknown> {
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
@@ -155,13 +208,13 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         i18n: DATA_INSPECTOR_I18N_FILE,
       },
       payload: {
-        viz: [{ appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID }],
+        viz: [{ appId, vizId: DEFAULT_VIZ_ID }],
       },
     };
   }
 
   /** Builds the group entry. */
-  private buildGroupEntry(): Record<string, unknown> {
+  private buildGroupEntry(appId: string): Record<string, unknown> {
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
@@ -171,9 +224,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         i18n: DATA_INSPECTOR_I18N_FILE,
       },
       payload: {
-        viz: [
-          { id: DATA_INSPECTOR_APP_ID, appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID },
-        ],
+        viz: [{ id: appId, appId, vizId: DEFAULT_VIZ_ID }],
       },
     };
   }
