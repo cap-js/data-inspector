@@ -32,7 +32,7 @@ function isValidUiBuildTargetFolder(folder: string): boolean {
 export function resolveUiBuildParentFolder(): string {
   const configured = cds.env["data-inspector"]?.uiBuildTargetFolder;
   if (typeof configured === "string" && configured.trim()) {
-    const normalized = configured.trim().replace(/\\/g, "/");
+    const normalized = configured.trim().replaceAll("\\", "/");
     if (isValidUiBuildTargetFolder(normalized)) return normalized;
     log.warn(
       `Invalid data-inspector uiBuildTargetFolder '${configured}'; expected a relative ` +

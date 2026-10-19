@@ -124,7 +124,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     // Rewrite the app namespace first, so later patches operate on final files.
     const appId = resolveAppId();
     if (appId !== DEFAULT_APP_ID) {
-      await this.patchAppNamespace(appId);
+      this.patchAppNamespace(appId);
       log.debug(`Patched UI5 app namespace / sap.app.id to '${appId}'`);
     }
 
@@ -168,7 +168,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * component namespace / resource root. The FLP semantic object
    * (`datainspectorui`) is left untouched as it is not part of the dotted id.
    */
-  private async patchAppNamespace(appId: string): Promise<void> {
+  private patchAppNamespace(appId: string): void {
     const search = DEFAULT_APP_ID;
     // Escape regex metacharacters (the dots) so we match the literal namespace.
     const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), "g");
@@ -315,11 +315,19 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       return DEFAULT_AUTH_TYPE;
     }
 
-    // Auto-detect from existing app/*/xs-app.json OData route.
+    // Auto-detect from an existing app/*/xs-app.json OData route.
+    const detected = await this.detectAuthTypeFromApps();
+    return detected ?? DEFAULT_AUTH_TYPE;
+  }
+
+  /**
+   * Scans app/{name}/xs-app.json for a route whose source pattern indicates
+   * OData or API traffic and returns its authenticationType when it is a
+   * supported value ("xsuaa" or "ias"). Returns null when none is found.
+   */
+  private async detectAuthTypeFromApps(): Promise<string | null> {
     const appDirPath = join(cds.root, "app");
-    if (!exists(appDirPath)) {
-      return DEFAULT_AUTH_TYPE;
-    }
+    if (!exists(appDirPath)) return null;
 
     try {
       const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
@@ -347,7 +355,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       // skip inaccessible directory
     }
 
-    return DEFAULT_AUTH_TYPE;
+    return null;
   }
 
   /**

@@ -15,8 +15,8 @@ export const DEFAULT_VIZ_ID = "datainspectorui-display";
 /** Max length of a `sap.app.id` per the SAP app-descriptor schema. */
 export const APP_ID_MAX_LENGTH = 70;
 
-// Dot-separated namespace; each segment starts with a letter, then letters/digits/underscores.
-const APP_ID_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)*$/;
+// Dot-separated namespace; each segment starts with a letter, then letters/digits/underscores (\w).
+const APP_ID_PATTERN = /^[a-zA-Z]\w*(\.[a-zA-Z]\w*)*$/;
 
 export function isValidAppId(appId: string): boolean {
   return appId.length <= APP_ID_MAX_LENGTH && APP_ID_PATTERN.test(appId);
