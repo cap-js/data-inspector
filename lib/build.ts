@@ -95,11 +95,20 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   };
 
   init() {
-    this.task.dest = join(
-      cds.root,
-      cds.env.build.target !== "." ? cds.env.build.target : "gen",
-      "cap-data-inspector-ui"
-    );
+    this.task.dest = join(cds.root, this.resolveUiParentFolder(), "cap-data-inspector-ui");
+  }
+
+  /**
+   * Resolves the parent folder of the generated UI:
+   *   1. cds.data-inspector.uiBuildTargetFolder (explicit config)
+   *   2. cds.env.build.target (when not ".")
+   *   3. "gen" (default)
+   */
+  private resolveUiParentFolder(): string {
+    const configured = cds.env["data-inspector"]?.uiBuildTargetFolder;
+    if (typeof configured === "string" && configured.trim()) return configured.trim();
+    if (cds.env.build.target !== ".") return cds.env.build.target;
+    return "gen";
   }
 
   async build() {

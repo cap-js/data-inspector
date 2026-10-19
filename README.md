@@ -188,6 +188,7 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 - **Authentication type** — patched into `xs-app.json`. Resolved from `cds.data-inspector.authenticationType`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `xsuaa`. See [Authentication Type](#authentication-type).
 - **`sap.cloud.service`** — patched into `manifest.json` when available. Resolved from `cds.data-inspector.cloudService` or auto-detected from an existing `app/*/webapp/manifest.json`. See [sap.cloud.service Configuration](#sapcloudservice-configuration).
 - **Application ID** — the SAPUI5 app namespace / `sap.app.id` is patched throughout the generated app. Resolved from `cds.data-inspector.appId`, or defaults to `sap.cap.datainspector.datainspectorui`. Required to deploy the data-inspector in multiple services on the same subaccount. See [Application ID (multi-service deployment)](#application-id-multi-service-deployment).
+- **UI build output folder** — the generated UI is written to `gen/cap-data-inspector-ui` by default. Set `cds.data-inspector.uiBuildTargetFolder` to change the parent folder (e.g. `app`). See [UI Build Output Folder](#ui-build-output-folder).
 - **Dev proxy** — `ui5.yaml` is configured to forward OData requests to your running CAP server (`http://localhost:4004` for Node.js). See [Local Server URL](#local-server-url-ui5-serve-proxy).
 
 The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
@@ -305,6 +306,30 @@ The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authen
 ##### Local Server URL (ui5 serve proxy)
 
 The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js). If your server runs on a different port, edit the `backend[0].url` in the generated `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
+
+##### UI Build Output Folder
+
+The generated SAPUI5 app is written to `gen/cap-data-inspector-ui` by default. The parent folder is resolved in this order:
+
+1. **Explicit configuration** — Set `cds.data-inspector.uiBuildTargetFolder` in your `.cdsrc.json` file or `package.json` file. This is useful when a tooling setup expects UI5 apps in a specific folder (for example your project's `app` folder):
+
+   ```json
+   {
+     "cds": {
+       "data-inspector": {
+         "uiBuildTargetFolder": "app"
+       }
+     }
+   }
+   ```
+
+   With the example above, `cds build` produces the UI at `app/cap-data-inspector-ui` (fully patched).
+
+2. **CAP build target** — If `cds.build.target` is configured (and not `.`), it is used as the parent folder.
+
+3. **Default** — Falls back to `gen`, producing `gen/cap-data-inspector-ui`.
+
+> **Note:** The default `gen` folder is git-ignored by CAP convention. If you set `uiBuildTargetFolder` to a tracked folder (e.g. `app`), the generated `cap-data-inspector-ui` folder is not git-ignored — add it to your `.gitignore` if you don't want to commit the generated UI.
 
 #### MTA Deployment
 

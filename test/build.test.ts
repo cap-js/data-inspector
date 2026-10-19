@@ -137,6 +137,36 @@ describe("CDS Build Plugin", () => {
   });
 
   // -----------------------------------------------------------------------
+  //  UI build target folder
+  // -----------------------------------------------------------------------
+
+  describe("uiBuildTargetFolder", () => {
+    it("should build into gen/cap-data-inspector-ui by default", async () => {
+      const project = await createTestProject(tempUtil);
+      runCdsBuild(project);
+
+      expect(
+        fs.existsSync(join(project, "gen", "cap-data-inspector-ui", "webapp", "manifest.json"))
+      ).to.be.true;
+    });
+
+    it("should build into the configured folder when uiBuildTargetFolder is set (e.g. app)", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { uiBuildTargetFolder: "app" });
+      runCdsBuild(project);
+
+      // UI is produced under app
+      const manifestPath = join(project, "app", "cap-data-inspector-ui", "webapp", "manifest.json");
+      expect(fs.existsSync(manifestPath)).to.be.true;
+
+      // Patches still apply in the custom location.
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+      expect(manifest["sap.app"].dataSources.mainService.uri).to.equal("/odata/v4/data-inspector/");
+    });
+  });
+
+  // -----------------------------------------------------------------------
   //  Destination patching
   // -----------------------------------------------------------------------
 
