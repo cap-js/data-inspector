@@ -131,33 +131,33 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     // Patch the resolved OData V4 base path into manifest.json and xs-app.json.
     const basePath = resolveODataV4BasePath();
     if (basePath !== DEFAULT_ODATA_V4_BASE_PATH) {
-      await this.patchManifestBasePath(basePath);
-      await this.patchXsAppBasePath(basePath);
+      this.patchManifestBasePath(basePath);
+      this.patchXsAppBasePath(basePath);
       log.debug(`Patched OData V4 base path to '${basePath}'`);
     }
 
     // Align the local `ui5 serve` dev proxy (ui5.yaml) with the resolved base
     // path and CAP server URL, so `npm start` forwards OData calls to the server.
-    await this.patchUi5DevProxy(basePath, resolveLocalServerUrl());
+    this.patchUi5DevProxy(basePath, resolveLocalServerUrl());
 
     // Patch xs-app.json destination when the project uses a non-default name
-    const destination = await this.resolveDestination();
+    const destination = this.resolveDestination();
     if (destination !== DEFAULT_SRV_DESTINATION) {
-      await this.patchXsAppDestination(destination);
+      this.patchXsAppDestination(destination);
       log.debug(`Patched xs-app.json destination to '${destination}'`);
     }
 
     // Patch manifest.json with sap.cloud.service when a value is available
-    const cloudService = await this.resolveCloudService();
+    const cloudService = this.resolveCloudService();
     if (cloudService) {
-      await this.patchManifestCloudService(cloudService);
+      this.patchManifestCloudService(cloudService);
       log.debug(`Patched manifest.json sap.cloud.service to '${cloudService}'`);
     }
 
     // Patch xs-app.json authenticationType
-    const authType = await this.resolveAuthenticationType();
+    const authType = this.resolveAuthenticationType();
     if (authType !== DEFAULT_AUTH_TYPE) {
-      await this.patchXsAppAuthType(authType);
+      this.patchXsAppAuthType(authType);
       log.debug(`Patched xs-app.json authenticationType to '${authType}'`);
     }
   }
@@ -196,7 +196,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    *   2. Auto-detected from an existing UI5 app's xs-app.json
    *   3. "srv-api"  (CAP default)
    */
-  private async resolveDestination(): Promise<string> {
+  private resolveDestination(): string {
     const configured = cds.env["data-inspector"]?.destination;
     if (configured) return configured;
 
@@ -259,7 +259,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * xs-app.json.  Since we own this file and it contains exactly one
    * route with a destination property, this is safe.
    */
-  private async patchXsAppDestination(destination: string): Promise<void> {
+  private patchXsAppDestination(destination: string): void {
     const xsAppPath = join(this.task.dest, "xs-app.json");
     if (!exists(xsAppPath)) {
       log.debug("xs-app.json not found in build output, cannot patch destination");
@@ -293,7 +293,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * To disable authentication ("none"), edit the generated xs-app.json
    * manually after the build.
    */
-  private async resolveAuthenticationType(): Promise<string> {
+  private resolveAuthenticationType(): string {
     // Check explicit config
     const configured = cds.env["data-inspector"]?.authenticationType;
     if (VALID_PATCH_AUTH_TYPES.includes(configured)) {
@@ -363,7 +363,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * xs-app.json that already declares one (both the OData route and the
    * html5-apps-repo route). Only "xsuaa" or "ias" are ever written here.
    */
-  private async patchXsAppAuthType(authType: string): Promise<void> {
+  private patchXsAppAuthType(authType: string): void {
     const xsAppPath = join(this.task.dest, "xs-app.json");
     if (!exists(xsAppPath)) {
       log.debug("xs-app.json not found in build output, cannot patch authenticationType");
@@ -389,7 +389,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    *   2. Auto-detected from an existing UI5 app's manifest.json
    *   3. null  (skipped silently)
    */
-  private async resolveCloudService(): Promise<string | null> {
+  private resolveCloudService(): string | null {
     const configured = cds.env["data-inspector"]?.cloudService;
     if (configured) return configured;
 
@@ -435,7 +435,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * Adds or overwrites the sap.cloud section in the build output's
    * manifest.json.  Required for Work Zone content discovery.
    */
-  private async patchManifestCloudService(cloudService: string): Promise<void> {
+  private patchManifestCloudService(cloudService: string): void {
     const manifestPath = join(this.task.dest, "webapp", "manifest.json");
     if (!exists(manifestPath)) {
       log.debug("manifest.json not found in build output, cannot patch sap.cloud.service");
@@ -457,7 +457,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * resolved OData V4 base path, e.g. "/odata/v4/data-inspector/" or
    * "/api/data-inspector/".
    */
-  private async patchManifestBasePath(basePath: string): Promise<void> {
+  private patchManifestBasePath(basePath: string): void {
     const manifestPath = join(this.task.dest, "webapp", "manifest.json");
     if (!exists(manifestPath)) {
       log.debug("manifest.json not found in build output, cannot patch base path");
@@ -481,7 +481,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * an "/odata/v4/*" route; when the host uses a different base path (e.g.
    * "/api") the route is rewritten to forward that prefix to the backend.
    */
-  private async patchXsAppBasePath(basePath: string): Promise<void> {
+  private patchXsAppBasePath(basePath: string): void {
     const xsAppPath = join(this.task.dest, "xs-app.json");
     if (!exists(xsAppPath)) {
       log.debug("xs-app.json not found in build output, cannot patch base path");
@@ -514,7 +514,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * The proxy `path` is set to the base path's first segment (e.g. `/api` or
    * `/odata`) so all OData traffic under it is forwarded.
    */
-  private async patchUi5DevProxy(basePath: string, serverUrl: string): Promise<void> {
+  private patchUi5DevProxy(basePath: string, serverUrl: string): void {
     const ui5YamlPath = join(this.task.dest, "ui5.yaml");
     if (!exists(ui5YamlPath)) {
       log.debug("ui5.yaml not found in build output, cannot patch dev proxy");
