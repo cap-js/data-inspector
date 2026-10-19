@@ -112,6 +112,8 @@ folder:
    npm start
    ```
 
+> **Note:** If you set `cds.data-inspector.uiBuildTargetFolder`, `cd` into that folder's `cap-data-inspector-ui` instead (e.g. `app/cap-data-inspector-ui`). See [UI Build Output Folder](#ui-build-output-folder).
+
 > **Note:** If your CAP server runs on a non-default port, adjust the proxy target as described in [Local Server URL (ui5 serve proxy)](#local-server-url-ui5-serve-proxy).
 
 > **Note:** Re-run `cds build` whenever you change the plugin configuration (e.g. `cds.data-inspector.*` settings), so the regenerated `gen/cap-data-inspector-ui` picks up your changes.
@@ -307,7 +309,7 @@ The routes in the SAPUI5 app's `xs-app.json` file declare an approuter `authenti
 
 3. **Default** — This falls back to `xsuaa`.
 
-The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authentication at the approuter) is **never** written automatically: an explicit `none` is rejected with a warning and falls back to `xsuaa`, and an auto-detected `none` is ignored. To disable authentication, edit the generated `gen/cap-data-inspector-ui/xs-app.json` file manually after running `cds build`.
+The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authentication at the approuter) is **never** written automatically: an explicit `none` is rejected with a warning and falls back to `xsuaa`, and an auto-detected `none` is ignored. To disable authentication, edit the `xs-app.json` in the generated UI folder (`gen/cap-data-inspector-ui` by default; see [UI Build Output Folder](#ui-build-output-folder)) manually after running `cds build`.
 
 ##### sap.cloud.service Configuration
 
@@ -331,7 +333,7 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 
 ##### Local Server URL (ui5 serve proxy)
 
-The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js). If your server runs on a different port, edit the `backend[0].url` in the generated `gen/cap-data-inspector-ui/ui5.yaml` after running `cds build`.
+The generated `ui5.yaml` includes a dev proxy that forwards OData requests to your running CAP server during local development (`ui5 serve`). The proxy URL defaults to `http://localhost:4004` (Node.js). If your server runs on a different port, edit the `backend[0].url` in the generated `ui5.yaml` — in the generated UI folder (`gen/cap-data-inspector-ui` by default; see [UI Build Output Folder](#ui-build-output-folder)) — after running `cds build`.
 
 #### MTA Deployment
 

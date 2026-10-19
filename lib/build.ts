@@ -45,7 +45,11 @@ import {
   DEFAULT_ODATA_V4_BASE_PATH,
 } from "./utils/odataBasePathHelper";
 import { DEFAULT_APP_ID, resolveAppId } from "./utils/appIdHelper";
-import { resolveUiBuildParentFolder, UI_BUILD_FOLDER_NAME } from "./utils/uiBuildPathHelper";
+import {
+  resolveUiBuildParentFolder,
+  resolveUiBuildPath,
+  UI_BUILD_FOLDER_NAME,
+} from "./utils/uiBuildPathHelper";
 
 const log = cds.log("data-inspector");
 
@@ -299,7 +303,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       log.warn(
         "authenticationType 'none' is not allowed for the data-inspector approuter routes; " +
           "falling back to 'xsuaa'. To disable authentication, edit the generated " +
-          "gen/cap-data-inspector-ui/xs-app.json manually after the build."
+          `${resolveUiBuildPath()}/xs-app.json manually after the build.`
       );
       return DEFAULT_AUTH_TYPE;
     }
