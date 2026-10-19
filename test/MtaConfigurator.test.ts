@@ -136,6 +136,25 @@ describe("MtaConfigurator", () => {
     expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
   });
 
+  it("should reconcile an existing html5 module path when uiBuildTargetFolder changes", async () => {
+    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project);
+
+    // First run with "app".
+    setCdsrc(project, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project);
+
+    // Second run after changing the folder.
+    setCdsrc(project, { uiBuildTargetFolder: "build/ui" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModules = mta.modules?.filter((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    // Existing module is updated in place (not duplicated).
+    expect(diModules).to.have.lengthOf(1);
+    expect(diModules[0].path).to.equal("build/ui/cap-data-inspector-ui");
+  });
+
   it("should fall back to resources/ when no existing requires have target-path", async () => {
     // The minimal mta fixture has no content module with requires,
     // so the configurator creates one from scratch and falls back to resources/

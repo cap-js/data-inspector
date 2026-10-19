@@ -54,10 +54,35 @@ export class MtaConfigurator extends AddPluginConfigurator {
 
       log.debug("Added data inspector HTML5 module to mta.yaml");
 
+      await this.reconcileModulePath();
       await this.addArtifactToContentModule();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to update mta.yaml: ${message}`);
+    }
+  }
+
+  /**
+   * Keeps the html5 module's `path` in sync with the resolved UI build folder.
+   * The merge only inserts the module when absent, so on re-runs after a changed
+   * uiBuildTargetFolder the existing module's path would otherwise be stale.
+   */
+  private async reconcileModulePath(): Promise<void> {
+    const mtaContent = await readMta();
+    if (!mtaContent) return;
+
+    const uiModule = (mtaContent.modules ?? []).find(
+      // mta.yaml modules have a dynamic structure
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME
+    );
+    if (!uiModule) return;
+
+    const expectedPath = resolveUiBuildPath();
+    if (uiModule.path !== expectedPath) {
+      uiModule.path = expectedPath;
+      await writeMta(mtaContent);
+      log.debug(`Reconciled html5 module path to '${expectedPath}'`);
     }
   }
 
