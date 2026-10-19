@@ -26,6 +26,7 @@ import {
   TempUtil,
   createTestProject,
   createHtml5AppWithDestination,
+  createHtml5AppWithDestinationAndAuth,
   createHtml5AppWithAuthType,
   createHtml5AppWithCloudService,
   cdsBin,
@@ -209,12 +210,10 @@ describe("CDS Build Plugin", () => {
 
     it("should detect the host config (not the generated folder) when building into app", async () => {
       const project = await createTestProject(tempUtil, {
-        projectName: "build-folder-selfdetect-dest",
+        projectName: "build-folder-selfdetect",
       });
-      // Host app declares a non-default destination.
-      createHtml5AppWithDestination(project, "host-srv");
-      // Host app declares ias auth on its routes.
-      createHtml5AppWithAuthType(project, "ias");
+      // Host app declares a non-default destination and ias auth in one xs-app.json.
+      createHtml5AppWithDestinationAndAuth(project, "host-srv", "ias");
       // Build the data-inspector UI into app/ (next to the host app).
       setCdsrc(project, { uiBuildTargetFolder: "app" });
       runCdsBuild(project);
