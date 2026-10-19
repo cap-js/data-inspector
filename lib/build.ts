@@ -217,10 +217,16 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   }
 
   /**
-   * Scans app/{name}/xs-app.json for a route whose source pattern
-   * indicates OData or API traffic and returns its destination value.
+   * Finds the OData/API route in a host app's xs-app.json by scanning each
+   * app/{name} directory (excluding the generated UI folder). A typical
+   * approuter OData route carries both a `destination` and an
+   * `authenticationType`, so we match on that shape. Unreadable files and an
+   * inaccessible app/ directory are skipped. Returns the first such route, or
+   * null when none exists.
    */
-  private detectDestinationFromApps(): string | null {
+  // xs-app.json routes have a dynamic shape
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private findHostAppODataRoute(): any | null {
     const appDirPath = join(cds.root, "app");
     if (!exists(appDirPath)) return null;
 
@@ -236,13 +242,13 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
         try {
           const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
           const odataRoute = xsApp.routes?.find(
-            // xs-app.json routes have dynamic structure
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (r: any) => r.destination && (r.source?.includes("odata") || r.source?.includes("api"))
+            (r: any) =>
+              r.destination &&
+              r.authenticationType &&
+              (r.source?.includes("odata") || r.source?.includes("api"))
           );
-          if (odataRoute?.destination) {
-            return odataRoute.destination;
-          }
+          if (odataRoute) return odataRoute;
         } catch {
           // skip unreadable file
         }
@@ -252,6 +258,14 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     }
 
     return null;
+  }
+
+  /**
+   * Returns the destination of the host app's OData route, or null when no
+   * such route is found. See {@link findHostAppODataRoute}.
+   */
+  private detectDestinationFromApps(): string | null {
+    return this.findHostAppODataRoute()?.destination ?? null;
   }
 
   /**
@@ -321,41 +335,13 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   }
 
   /**
-   * Scans app/{name}/xs-app.json for a route whose source pattern indicates
-   * OData or API traffic and returns its authenticationType when it is a
-   * supported value ("xsuaa" or "ias"). Returns null when none is found.
+   * Returns the host app's OData route authenticationType when it is a
+   * supported value ("xsuaa" or "ias"), otherwise null.
+   * See {@link findHostAppODataRoute}.
    */
   private detectAuthTypeFromApps(): string | null {
-    const appDirPath = join(cds.root, "app");
-    if (!exists(appDirPath)) return null;
-
-    try {
-      const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
-      for (const entry of entries) {
-        if (!entry.isDirectory()) continue;
-        if (this.isGeneratedUiDir(join(appDirPath, entry.name))) continue;
-        const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
-        if (!exists(xsAppPath)) continue;
-        try {
-          const xsApp = JSON.parse(fs.readFileSync(xsAppPath, "utf8"));
-          const odataRoute = xsApp.routes?.find(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (r: any) =>
-              r.authenticationType && (r.source?.includes("odata") || r.source?.includes("api"))
-          );
-          const detected = odataRoute?.authenticationType;
-          if (VALID_PATCH_AUTH_TYPES.includes(detected)) {
-            return detected;
-          }
-        } catch {
-          // skip unreadable file
-        }
-      }
-    } catch {
-      // skip inaccessible directory
-    }
-
-    return null;
+    const detected = this.findHostAppODataRoute()?.authenticationType;
+    return VALID_PATCH_AUTH_TYPES.includes(detected) ? detected : null;
   }
 
   /**
