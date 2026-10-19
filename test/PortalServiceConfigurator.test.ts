@@ -190,16 +190,16 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should use the configured appId for the catalog and group viz entries", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project1 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
       const customAppId = "my.company.datainspector.serviceA";
-      createMtaWithPortal(project, "flp");
-      createCommonDataModel(project, "flp");
-      setCdsrc(project, { appId: customAppId });
+      createMtaWithPortal(project1, "flp");
+      createCommonDataModel(project1, "flp");
+      setCdsrc(project1, { appId: customAppId });
 
-      runCdsAddDataInspector(project);
+      runCdsAddDataInspector(project1);
 
-      const cdm = readCommonDataModel(project, "flp");
+      const cdm = readCommonDataModel(project1, "flp");
 
       const catalog = cdm.payload.catalogs.find(
         (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
@@ -217,20 +217,20 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should reconcile the appId on existing catalog/group when appId changes", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project2 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 
-      createMtaWithPortal(project, "flp");
-      createCommonDataModel(project, "flp");
+      createMtaWithPortal(project2, "flp");
+      createCommonDataModel(project2, "flp");
 
       // First run with appId A.
-      setCdsrc(project, { appId: "my.company.datainspector.serviceA" });
-      runCdsAddDataInspector(project);
+      setCdsrc(project2, { appId: "my.company.datainspector.serviceA" });
+      runCdsAddDataInspector(project2);
 
       // Second run after changing appId to B.
-      setCdsrc(project, { appId: "my.company.datainspector.serviceB" });
-      runCdsAddDataInspector(project);
+      setCdsrc(project2, { appId: "my.company.datainspector.serviceB" });
+      runCdsAddDataInspector(project2);
 
-      const cdm = readCommonDataModel(project, "flp");
+      const cdm = readCommonDataModel(project2, "flp");
 
       // Existing entries are updated in place (no duplicates).
       const catalogs = cdm.payload.catalogs.filter(

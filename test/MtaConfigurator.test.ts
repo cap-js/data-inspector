@@ -105,50 +105,50 @@ describe("MtaConfigurator", () => {
   });
 
   it("should set the html5 module path to gen/cap-data-inspector-ui by default", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-    createMta(project);
-    runCdsAddDataInspector(project);
+    const project1 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project1);
+    runCdsAddDataInspector(project1);
 
-    const mta = readMta(project);
+    const mta = readMta(project1);
     const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
     expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
   });
 
   it("should set the html5 module path to match uiBuildTargetFolder", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-    createMta(project);
-    setCdsrc(project, { uiBuildTargetFolder: "app" });
-    runCdsAddDataInspector(project);
+    const project2 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project2);
+    setCdsrc(project2, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project2);
 
-    const mta = readMta(project);
+    const mta = readMta(project2);
     const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
     expect(diModule?.path).to.equal("app/cap-data-inspector-ui");
   });
 
   it("should fall back to gen for the html5 module path when uiBuildTargetFolder is unsafe", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-    createMta(project);
-    setCdsrc(project, { uiBuildTargetFolder: "../escape" });
-    runCdsAddDataInspector(project);
+    const project3 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project3);
+    setCdsrc(project3, { uiBuildTargetFolder: "../escape" });
+    runCdsAddDataInspector(project3);
 
-    const mta = readMta(project);
+    const mta = readMta(project3);
     const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
     expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
   });
 
   it("should reconcile an existing html5 module path when uiBuildTargetFolder changes", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
-    createMta(project);
+    const project4 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    createMta(project4);
 
     // First run with "app".
-    setCdsrc(project, { uiBuildTargetFolder: "app" });
-    runCdsAddDataInspector(project);
+    setCdsrc(project4, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project4);
 
     // Second run after changing the folder.
-    setCdsrc(project, { uiBuildTargetFolder: "build/ui" });
-    runCdsAddDataInspector(project);
+    setCdsrc(project4, { uiBuildTargetFolder: "build/ui" });
+    runCdsAddDataInspector(project4);
 
-    const mta = readMta(project);
+    const mta = readMta(project4);
     const diModules = mta.modules?.filter((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
     // Existing module is updated in place (not duplicated).
     expect(diModules).to.have.lengthOf(1);
