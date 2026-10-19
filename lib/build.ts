@@ -200,7 +200,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     const configured = cds.env["data-inspector"]?.destination;
     if (configured) return configured;
 
-    const detected = await this.detectDestinationFromApps();
+    const detected = this.detectDestinationFromApps();
     if (detected) return detected;
 
     return DEFAULT_SRV_DESTINATION;
@@ -213,14 +213,14 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * uiBuildTargetFolder points into `app` folder).
    */
   private isGeneratedUiDir(absDir: string): boolean {
-    return absDir === this.task.dest;
+    return absDir === this.task.dest || absDir === join(cds.root, "app", UI_BUILD_FOLDER_NAME);
   }
 
   /**
    * Scans app/{name}/xs-app.json for a route whose source pattern
    * indicates OData or API traffic and returns its destination value.
    */
-  private async detectDestinationFromApps(): Promise<string | null> {
+  private detectDestinationFromApps(): string | null {
     const appDirPath = join(cds.root, "app");
     if (!exists(appDirPath)) return null;
 
@@ -316,7 +316,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     }
 
     // Auto-detect from an existing app/*/xs-app.json OData route.
-    const detected = await this.detectAuthTypeFromApps();
+    const detected = this.detectAuthTypeFromApps();
     return detected ?? DEFAULT_AUTH_TYPE;
   }
 
@@ -325,7 +325,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * OData or API traffic and returns its authenticationType when it is a
    * supported value ("xsuaa" or "ias"). Returns null when none is found.
    */
-  private async detectAuthTypeFromApps(): Promise<string | null> {
+  private detectAuthTypeFromApps(): string | null {
     const appDirPath = join(cds.root, "app");
     if (!exists(appDirPath)) return null;
 
@@ -393,7 +393,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     const configured = cds.env["data-inspector"]?.cloudService;
     if (configured) return configured;
 
-    const detected = await this.detectCloudServiceFromApps();
+    const detected = this.detectCloudServiceFromApps();
     if (detected) return detected;
 
     return null;
@@ -403,7 +403,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    * Scans app/{name}/webapp/manifest.json for sap.cloud.service
    * and returns the first value found.
    */
-  private async detectCloudServiceFromApps(): Promise<string | null> {
+  private detectCloudServiceFromApps(): string | null {
     const appDirPath = join(cds.root, "app");
     if (!exists(appDirPath)) return null;
 
