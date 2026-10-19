@@ -216,6 +216,40 @@ describe("PortalServiceConfigurator", () => {
       expect(group.payload.viz[0].vizId).to.equal("datainspectorui-display");
     });
 
+    it("should reconcile the appId on existing catalog/group when appId changes", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      createMtaWithPortal(project, "flp");
+      createCommonDataModel(project, "flp");
+
+      // First run with appId A.
+      setCdsrc(project, { appId: "my.company.datainspector.serviceA" });
+      runCdsAddDataInspector(project);
+
+      // Second run after changing appId to B.
+      setCdsrc(project, { appId: "my.company.datainspector.serviceB" });
+      runCdsAddDataInspector(project);
+
+      const cdm = readCommonDataModel(project, "flp");
+
+      // Existing entries are updated in place (no duplicates).
+      const catalogs = cdm.payload.catalogs.filter(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      const groups = cdm.payload.groups.filter(
+        (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
+      );
+      expect(catalogs).to.have.lengthOf(1);
+      expect(groups).to.have.lengthOf(1);
+
+      // viz now points at the new appId; vizId (FLP intent) is unchanged.
+      expect(catalogs[0].payload.viz[0].appId).to.equal("my.company.datainspector.serviceB");
+      expect(catalogs[0].payload.viz[0].vizId).to.equal("datainspectorui-display");
+      expect(groups[0].payload.viz[0].appId).to.equal("my.company.datainspector.serviceB");
+      expect(groups[0].payload.viz[0].id).to.equal("my.company.datainspector.serviceB");
+      expect(groups[0].payload.viz[0].vizId).to.equal("datainspectorui-display");
+    });
+
     it("should not duplicate catalog and group when run multiple times", async () => {
       const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
 

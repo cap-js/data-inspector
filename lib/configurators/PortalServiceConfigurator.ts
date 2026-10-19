@@ -95,24 +95,43 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
       if (!Array.isArray(cdm.payload.catalogs)) cdm.payload.catalogs = [];
       if (!Array.isArray(cdm.payload.groups)) cdm.payload.groups = [];
 
+      const appId = resolveAppId();
       let changed = false;
 
-      const hasCatalog = cdm.payload.catalogs.some(
+      // Catalog: insert when absent, otherwise reconcile the existing viz
+      // appId so a changed cds.data-inspector.appId is reflected on re-runs.
+      // Malformed entries (no payload.viz[0]) are left untouched.
+      const catalog = cdm.payload.catalogs.find(
         (c: { identification?: { id?: string } }) =>
           c?.identification?.id === DATA_INSPECTOR_CATALOG_ID
       );
-      if (!hasCatalog) {
-        cdm.payload.catalogs.push(this.buildCatalogEntry());
+      if (!catalog) {
+        cdm.payload.catalogs.push(this.buildCatalogEntry(appId));
         changed = true;
+      } else {
+        const viz = catalog.payload?.viz?.[0];
+        if (viz && viz.appId !== appId) {
+          viz.appId = appId;
+          changed = true;
+        }
       }
 
-      const hasGroup = cdm.payload.groups.some(
+      // Group: insert when absent, otherwise reconcile the existing viz
+      // id/appId. The vizId (FLP intent) is always left untouched.
+      const group = cdm.payload.groups.find(
         (g: { identification?: { id?: string } }) =>
           g?.identification?.id === DATA_INSPECTOR_GROUP_ID
       );
-      if (!hasGroup) {
-        cdm.payload.groups.push(this.buildGroupEntry());
+      if (!group) {
+        cdm.payload.groups.push(this.buildGroupEntry(appId));
         changed = true;
+      } else {
+        const viz = group.payload?.viz?.[0];
+        if (viz && (viz.appId !== appId || viz.id !== appId)) {
+          viz.id = appId;
+          viz.appId = appId;
+          changed = true;
+        }
       }
 
       const sites = cdm?.payload?.sites || [];
@@ -147,8 +166,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
    * Builds the catalog entry. `appId` matches the deployed app's `sap.app.id`;
    * `vizId` stays at its default (the FLP intent, independent of `appId`).
    */
-  private buildCatalogEntry(): Record<string, unknown> {
-    const appId = resolveAppId();
+  private buildCatalogEntry(appId: string): Record<string, unknown> {
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
@@ -164,8 +182,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
   }
 
   /** Builds the group entry. */
-  private buildGroupEntry(): Record<string, unknown> {
-    const appId = resolveAppId();
+  private buildGroupEntry(appId: string): Record<string, unknown> {
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
