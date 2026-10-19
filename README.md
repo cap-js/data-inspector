@@ -205,7 +205,7 @@ validation error: Application metadata for application sapcapdatainspectordatain
 
 To avoid the collision, give each service's data-inspector a unique `appId`. The [`cds build`](#cds-build-plugin) plugin rewrites the namespace consistently throughout the generated app.
 
-1. **Explicit configuration** — Set `cds.data-inspector.appId` in your `.cdsrc.json` file or `package.json` file:
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.appId` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
@@ -225,9 +225,9 @@ To avoid the collision, give each service's data-inspector a unique `appId`. The
 
 ##### UI Build Output Folder
 
-The generated SAPUI5 app is written to `gen/cap-data-inspector-ui` by default. You can place it under a different parent folder by setting `cds.data-inspector.uiBuildTargetFolder` (the `cap-data-inspector-ui` subfolder name stays the same). The parent folder is resolved in this order:
+The generated SAPUI5 app is written to `gen/cap-data-inspector-ui` by default. You can place it under a different parent folder by setting `cds.data-inspector.uiBuildTargetFolder` (the `cap-data-inspector-ui` subfolder name stays the same). This is useful when a tooling setup expects UI5 apps in a specific folder (for example your project's `app` folder). The parent folder is resolved in this order:
 
-1. **Explicit configuration** — Set `cds.data-inspector.uiBuildTargetFolder` to the parent folder in your `.cdsrc.json` file or `package.json` file. This is useful when a tooling setup expects UI5 apps in a specific folder (for example your project's `app` folder):
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.uiBuildTargetFolder` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
@@ -253,7 +253,7 @@ The generated SAPUI5 app is written to `gen/cap-data-inspector-ui` by default. Y
 
 The OData V4 base path determines where the Data Inspector OData service is expected to be served (default: `/odata/v4`). The build plugin patches this into the SAPUI5 app's `manifest.json` and `xs-app.json`. The base path is resolved in this order:
 
-1. **Explicit configuration** — Set `cds.data-inspector.odataV4BasePath` in your `.cdsrc.json` file or `package.json` file:
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.odataV4BasePath` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
@@ -273,7 +273,7 @@ The OData V4 base path determines where the Data Inspector OData service is expe
 
 The default OData route destination is `srv-api`. If your project uses a different destination name, the build plugin resolves it automatically in this order:
 
-1. **Explicit configuration** — Set `cds.data-inspector.destination` in your `.cdsrc.json` file or `package.json` file:
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.destination` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
@@ -293,7 +293,7 @@ The default OData route destination is `srv-api`. If your project uses a differe
 
 The routes in the SAPUI5 app's `xs-app.json` file declare an approuter `authenticationType`. The default is `xsuaa`. If your project authenticates through SAP Cloud Identity Services (IAS), set this to `ias`. The [`cds build`](#cds-build-plugin) plugin resolves the value automatically in this order:
 
-1. **Explicit configuration** — Set `cds.data-inspector.authenticationType` in your `.cdsrc.json` file or `package.json` file:
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.authenticationType` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
@@ -315,7 +315,7 @@ The plugin only ever writes `xsuaa` or `ias`. The value `none` (disabling authen
 
 The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is required for SAP Build Work Zone. The [`cds build`](#cds-build-plugin) plugin patches this value automatically when available:
 
-1. **Explicit configuration** — Set `cds.data-inspector.cloudService` in your `.cdsrc.json` file or `package.json` file:
+1. **Explicit configuration** — In `.cdsrc.json`, set `data-inspector.cloudService` at the document root; or in `package.json`, set it under `cds.data-inspector`:
 
    ```json
    {
