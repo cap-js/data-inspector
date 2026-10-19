@@ -9,6 +9,7 @@
 ### Added
 
 - The SAPUI5 app's `manifest.json` now declares `sap.platform.cf.oAuthScopes` with the `$XSAPPNAME.capDataInspectorReadonly` scope. In SAP Build Work Zone / Cloud Portal Service, the launchpad tile is now hidden from users who lack the `capDataInspectorReadonly` role, instead of being shown to everyone and failing on data access.
+- **New config option:** `cds.data-inspector.appId` to set the SAPUI5 app namespace / `sap.app.id` of the generated app. The `cds build` plugin rewrites the namespace consistently across the generated app (`manifest.json`, `Component.js`, controllers, views, fragments, `index.html`, `ui5*.yaml`), and `cds add data-inspector` uses the same value for the Cloud Portal `CommonDataModel.json` `appId`. This enables deploying the data-inspector in multiple CAP services on the same SAP BTP subaccount without HTML5 Application Repository app-id collisions. When not set, it defaults to `sap.cap.datainspector.datainspectorui` (no change for existing projects). Fixes [#81](https://github.com/cap-js/data-inspector/issues/81).
 
 ## Version 2.0.1 - 2026-10-13
 

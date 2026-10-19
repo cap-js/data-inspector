@@ -44,10 +44,31 @@ import {
   normalizeBasePath,
   DEFAULT_ODATA_V4_BASE_PATH,
 } from "./utils/odataBasePathHelper";
+import { DEFAULT_APP_ID, resolveAppId } from "./utils/appIdHelper";
 
 const log = cds.log("data-inspector");
 
 const DEFAULT_SRV_DESTINATION = "srv-api";
+
+/** Build-output files that reference the UI5 app namespace and need rewriting. */
+const APP_ID_PATCH_FILES = [
+  "webapp/manifest.json",
+  "webapp/Component.js",
+  "webapp/index.html",
+  "webapp/test/flpSandbox.html",
+  "webapp/controller/App.controller.js",
+  "webapp/controller/columnview.controller.js",
+  "webapp/controller/dataview.controller.js",
+  "webapp/controller/listview.controller.js",
+  "webapp/view/App.view.xml",
+  "webapp/view/columnview.view.xml",
+  "webapp/view/dataview.view.xml",
+  "webapp/view/listview.view.xml",
+  "webapp/view/AdvancedFilterDialog.fragment.xml",
+  "webapp/view/ValueHelpDialog.fragment.xml",
+  "ui5.yaml",
+  "ui5-deploy.yaml",
+];
 
 /**
  * Default approuter authenticationType for the data-inspector routes.
@@ -99,6 +120,13 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
 
     await this.copy(uiAppSrc).to(this.task.dest);
 
+    // Rewrite the app namespace first, so later patches operate on final files.
+    const appId = resolveAppId();
+    if (appId !== DEFAULT_APP_ID) {
+      await this.patchAppNamespace(appId);
+      log.debug(`Patched UI5 app namespace / sap.app.id to '${appId}'`);
+    }
+
     // Patch the resolved OData V4 base path into manifest.json and xs-app.json.
     const basePath = resolveODataV4BasePath();
     if (basePath !== DEFAULT_ODATA_V4_BASE_PATH) {
@@ -130,6 +158,32 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
     if (authType !== DEFAULT_AUTH_TYPE) {
       await this.patchXsAppAuthType(authType);
       log.debug(`Patched xs-app.json authenticationType to '${authType}'`);
+    }
+  }
+
+  /**
+   * Replaces the default namespace with `appId` across all {@link APP_ID_PATCH_FILES}.
+   * A whole-namespace rewrite is required because the id is also the UI5
+   * component namespace / resource root. The FLP semantic object
+   * (`datainspectorui`) is left untouched as it is not part of the dotted id.
+   */
+  private async patchAppNamespace(appId: string): Promise<void> {
+    const search = DEFAULT_APP_ID;
+    // Escape regex metacharacters (the dots) so we match the literal namespace.
+    const pattern = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`), "g");
+
+    for (const relPath of APP_ID_PATCH_FILES) {
+      const filePath = join(this.task.dest, relPath);
+      if (!exists(filePath)) {
+        log.debug(`${relPath} not found in build output, skipping appId patch`);
+        continue;
+      }
+
+      const original = fs.readFileSync(filePath, "utf8");
+      if (!original.includes(search)) continue;
+
+      const patched = original.replace(pattern, appId);
+      fs.writeFileSync(filePath, patched);
     }
   }
 

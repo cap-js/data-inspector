@@ -25,11 +25,10 @@ const { join } = path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import { readMta, findPortalDeployerPath } from "../utils/mtaHelper";
+import { DEFAULT_VIZ_ID, resolveAppId } from "../utils/appIdHelper";
 
 const log = cds.log("data-inspector");
 
-const DATA_INSPECTOR_APP_ID = "sap.cap.datainspector.datainspectorui";
-const DATA_INSPECTOR_VIZ_ID = "datainspectorui-display";
 const DATA_INSPECTOR_CATALOG_ID = "capDataInspectorCatalogId";
 const DATA_INSPECTOR_GROUP_ID = "capDataInspectorGroupId";
 const CDM_ENTRY_VERSION = "3.0.0";
@@ -144,8 +143,12 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
     }
   }
 
-  /** Builds the catalog entry. */
+  /**
+   * Builds the catalog entry. `appId` matches the deployed app's `sap.app.id`;
+   * `vizId` stays at its default (the FLP intent, independent of `appId`).
+   */
   private buildCatalogEntry(): Record<string, unknown> {
+    const appId = resolveAppId();
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
@@ -155,13 +158,14 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         i18n: DATA_INSPECTOR_I18N_FILE,
       },
       payload: {
-        viz: [{ appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID }],
+        viz: [{ appId, vizId: DEFAULT_VIZ_ID }],
       },
     };
   }
 
   /** Builds the group entry. */
   private buildGroupEntry(): Record<string, unknown> {
+    const appId = resolveAppId();
     return {
       _version: CDM_ENTRY_VERSION,
       identification: {
@@ -171,9 +175,7 @@ export class PortalServiceConfigurator extends AddPluginConfigurator {
         i18n: DATA_INSPECTOR_I18N_FILE,
       },
       payload: {
-        viz: [
-          { id: DATA_INSPECTOR_APP_ID, appId: DATA_INSPECTOR_APP_ID, vizId: DATA_INSPECTOR_VIZ_ID },
-        ],
+        viz: [{ id: appId, appId, vizId: DEFAULT_VIZ_ID }],
       },
     };
   }

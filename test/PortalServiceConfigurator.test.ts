@@ -69,6 +69,17 @@ function readI18nFile(projectFolder: string, deployerPath: string): string {
   return fs.readFileSync(i18nPath, "utf8");
 }
 
+/** Write a cds.data-inspector config block to the project's .cdsrc.json */
+function setCdsrc(projectFolder: string, config: Record<string, unknown>): void {
+  const cdsrcPath = join(projectFolder, ".cdsrc.json");
+  let cdsrc: Record<string, any> = {};
+  if (fs.existsSync(cdsrcPath)) {
+    cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+  }
+  cdsrc["data-inspector"] = { ...cdsrc["data-inspector"], ...config };
+  fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+}
+
 describe("PortalServiceConfigurator", () => {
   const tempUtil = new TempUtil();
 
@@ -176,6 +187,33 @@ describe("PortalServiceConfigurator", () => {
 
       expect(existingCatalog).to.exist;
       expect(existingGroup).to.exist;
+    });
+
+    it("should use the configured appId for the catalog and group viz entries", async () => {
+      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+
+      const customAppId = "my.company.datainspector.serviceA";
+      createMtaWithPortal(project, "flp");
+      createCommonDataModel(project, "flp");
+      setCdsrc(project, { appId: customAppId });
+
+      runCdsAddDataInspector(project);
+
+      const cdm = readCommonDataModel(project, "flp");
+
+      const catalog = cdm.payload.catalogs.find(
+        (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
+      );
+      expect(catalog.payload.viz[0].appId).to.equal(customAppId);
+      // vizId (the FLP intent) stays on the default — it is independent of appId.
+      expect(catalog.payload.viz[0].vizId).to.equal("datainspectorui-display");
+
+      const group = cdm.payload.groups.find(
+        (g: any) => g.identification?.id === DATA_INSPECTOR_GROUP_ID
+      );
+      expect(group.payload.viz[0].appId).to.equal(customAppId);
+      expect(group.payload.viz[0].id).to.equal(customAppId);
+      expect(group.payload.viz[0].vizId).to.equal("datainspectorui-display");
     });
 
     it("should not duplicate catalog and group when run multiple times", async () => {

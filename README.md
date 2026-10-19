@@ -187,6 +187,7 @@ If your SAP Cloud Application Programming Model Node.js application uses the [`@
 - **OData destination** — patched into `xs-app.json`. Resolved from `cds.data-inspector.destination`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `srv-api`. See [Custom Destination Name](#custom-destination-name).
 - **Authentication type** — patched into `xs-app.json`. Resolved from `cds.data-inspector.authenticationType`, or auto-detected from an existing `app/*/xs-app.json`, or defaults to `xsuaa`. See [Authentication Type](#authentication-type).
 - **`sap.cloud.service`** — patched into `manifest.json` when available. Resolved from `cds.data-inspector.cloudService` or auto-detected from an existing `app/*/webapp/manifest.json`. See [sap.cloud.service Configuration](#sapcloudservice-configuration).
+- **Application ID** — the SAPUI5 app namespace / `sap.app.id` is patched throughout the generated app. Resolved from `cds.data-inspector.appId`, or defaults to `sap.cap.datainspector.datainspectorui`. Required to deploy the data-inspector in multiple services on the same subaccount. See [Application ID (multi-service deployment)](#application-id-multi-service-deployment).
 - **Dev proxy** — `ui5.yaml` is configured to forward OData requests to your running CAP server (`http://localhost:4004` for Node.js). See [Local Server URL](#local-server-url-ui5-serve-proxy).
 
 The resulting `gen/cap-data-inspector-ui` folder is the single source of truth for deployment, whether you use [MTA-based deployment](#mta-deployment) or [`@sap/html5-app-deployer`](#saphtml5-app-deployer).
@@ -250,6 +251,34 @@ The `sap.cloud.service` property in the SAPUI5 app's `manifest.json` file is req
 2. **Auto-detection** — The plugin scans your existing `app/*/webapp/manifest.json` file for an existing `sap.cloud.service` value and uses it.
 
 3. **Skipped** — If neither source provides a value, `sap.cloud.service` is not added in the SAPUI5 app's `manifest.json` file.
+
+##### Application ID (multi-service deployment)
+
+The SAPUI5 app's namespace / `sap.app.id` defaults to `sap.cap.datainspector.datainspectorui`. On deployment, the `HTML5 Application Repository` derives a unique application-metadata key from this id. If you deploy the data-inspector in **more than one CAP service on the same SAP BTP subaccount** using the default id, the `cf deploy` fails with an error such as:
+
+```text
+validation error: Application metadata for application sapcapdatainspectordatainspectorui already exists in service instance <id>
+```
+
+To avoid the collision, give each service's data-inspector a unique `appId`. The [`cds build`](#cds-build-plugin) plugin rewrites the namespace consistently throughout the generated app (`manifest.json`, `Component.js`, controllers, views, fragments, `index.html` and the `ui5*.yaml` files), so the app remains fully functional under the new id.
+
+1. **Explicit configuration** — Set `cds.data-inspector.appId` in your `.cdsrc.json` file or `package.json` file:
+
+   ```json
+   {
+     "cds": {
+       "data-inspector": {
+         "appId": "my.company.datainspector.serviceA"
+       }
+     }
+   }
+   ```
+
+   The `appId` must be a dot-separated namespace where each segment starts with a letter and contains only letters, digits, and underscores (max 70 characters), for example `my.company.datainspector`. An invalid value is rejected with a warning and the build falls back to the default id.
+
+2. **Default** — Falls back to `sap.cap.datainspector.datainspectorui`.
+
+> **Note:** When you set a custom `appId`, `cds add data-inspector` automatically uses it for the Cloud Portal `CommonDataModel.json` `appId` (see [Cloud Portal Service Configuration](#cloud-portal-service-configuration)). If you configure SAP Build Work Zone manually, use your custom `appId` for the `appId` value in your `cdm.json` too. The `vizId` (`datainspectorui-display`) is the FLP intent and stays unchanged.
 
 ##### Authentication Type
 

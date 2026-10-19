@@ -57,6 +57,15 @@ function readBuildManifest(projectFolder: string): any {
 }
 
 /**
+ * Read a raw text file from the build output (webapp-relative path).
+ */
+function readBuildFile(projectFolder: string, relPath: string): string {
+  return fs.readFileSync(join(projectFolder, BUILD_OUTPUT_DIR, relPath), "utf8");
+}
+
+const DEFAULT_APP_ID = "sap.cap.datainspector.datainspectorui";
+
+/**
  * Get the OData route destination from xs-app.json
  */
 function getODataDestination(xsApp: any): string | undefined {
@@ -452,6 +461,108 @@ describe("CDS Build Plugin", () => {
   });
 
   // -----------------------------------------------------------------------
+  //  appId (sap.app.id / UI5 namespace) patching
+  // -----------------------------------------------------------------------
+
+  describe("appId patching", () => {
+    const CUSTOM_APP_ID = "my.company.datainspector.serviceA";
+
+    it("should keep the default appId / namespace when appId is not configured", async () => {
+      const project = await createTestProject(tempUtil);
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+
+      // The component namespace and resource roots stay on the default id too.
+      const component = readBuildFile(project, "webapp/Component.js");
+      expect(component).to.include(`${DEFAULT_APP_ID}.Component`);
+
+      const indexHtml = readBuildFile(project, "webapp/index.html");
+      expect(indexHtml).to.include(DEFAULT_APP_ID);
+    });
+
+    it("should rewrite the whole namespace consistently when appId is set via .cdsrc.json", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { appId: CUSTOM_APP_ID });
+      runCdsBuild(project);
+
+      // manifest.json: sap.app.id, i18n bundleName, routing path, rootView
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(CUSTOM_APP_ID);
+      expect(manifest["sap.ui5"].models.i18n.settings.bundleName).to.equal(
+        `${CUSTOM_APP_ID}.i18n.i18n`
+      );
+      expect(manifest["sap.ui5"].routing.config.path).to.equal(`${CUSTOM_APP_ID}.view`);
+      expect(manifest["sap.ui5"].rootView.viewName).to.equal(`${CUSTOM_APP_ID}.view.App`);
+
+      // The FLP semantic object / inbound is independent of the namespace and
+      // must remain unchanged so the tile intent keeps working.
+      expect(manifest["sap.app"].crossNavigation.inbounds).to.have.property(
+        "datainspectorui-display"
+      );
+      expect(
+        manifest["sap.app"].crossNavigation.inbounds["datainspectorui-display"].semanticObject
+      ).to.equal("datainspectorui");
+
+      // Component.js, views, controllers, index.html and the yamls are rewritten.
+      const filesToCheck = [
+        "webapp/Component.js",
+        "webapp/index.html",
+        "webapp/controller/App.controller.js",
+        "webapp/controller/dataview.controller.js",
+        "webapp/view/App.view.xml",
+        "ui5.yaml",
+        "ui5-deploy.yaml",
+      ];
+      for (const rel of filesToCheck) {
+        const content = readBuildFile(project, rel);
+        expect(content, `${rel} should reference the custom appId`).to.include(CUSTOM_APP_ID);
+        expect(content, `${rel} should not reference the default appId`).to.not.include(
+          DEFAULT_APP_ID
+        );
+      }
+    });
+
+    it("should rewrite the namespace when appId is set via package.json cds section", async () => {
+      const project = await createTestProject(tempUtil);
+      setPackageJsonConfig(project, { appId: CUSTOM_APP_ID });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(CUSTOM_APP_ID);
+    });
+
+    it("should fall back to the default appId when the configured value is invalid (leading digit)", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { appId: "1bad.namespace" });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+    });
+
+    it("should fall back to the default appId when the configured value contains illegal characters", async () => {
+      const project = await createTestProject(tempUtil);
+      setCdsrc(project, { appId: "has space.id" });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+    });
+
+    it("should fall back to the default appId when the configured value exceeds the max length", async () => {
+      const project = await createTestProject(tempUtil);
+      const tooLong = "a." + "x".repeat(69); // 71 chars
+      setCdsrc(project, { appId: tooLong });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+    });
+  });
+
+  // -----------------------------------------------------------------------
   //  Idempotency
   // -----------------------------------------------------------------------
 
@@ -463,6 +574,7 @@ describe("CDS Build Plugin", () => {
         destination: "idempotent-srv",
         cloudService: "idempotent.svc",
         authenticationType: "ias",
+        appId: "idempotent.datainspector.app",
       });
 
       runCdsBuild(project);
@@ -481,6 +593,8 @@ describe("CDS Build Plugin", () => {
 
       expect(firstRunManifest["sap.cloud"].service).to.equal("idempotent.svc");
       expect(secondRunManifest["sap.cloud"].service).to.equal("idempotent.svc");
+      expect(firstRunManifest["sap.app"].id).to.equal("idempotent.datainspector.app");
+      expect(secondRunManifest["sap.app"].id).to.equal("idempotent.datainspector.app");
       expect(firstRunManifest).to.deep.equal(secondRunManifest);
     });
   });
