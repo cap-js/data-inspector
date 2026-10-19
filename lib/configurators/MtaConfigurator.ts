@@ -5,17 +5,21 @@
  * Portal Service or Workzone is used.
  *
  * Responsibilities:
- *   - Adds the data-inspector HTML5 module via cds.add.merge()
+ *   - Inserts (or updates) the data-inspector HTML5 module
  *   - Adds the module's ZIP artifact to the HTML5 content module's
  *     build-parameters.requires so it is included in the deployed
  *     HTML5 Application Repository content
+ *
+ * The module is upserted directly (read → modify → write) rather than via
+ * cds.add.merge(), because the merge's dedup behavior varies across cds-dk
+ * versions and could insert a duplicate module on re-runs. The direct upsert
+ * is deterministic: it always yields exactly one module with the correct path.
  *
  * The content module is located by mtaHelper.findContentModule() which
  * matches the com.sap.application.content module that targets the
  * html5-apps-repo app-host resource (see mtaHelper.ts for details).
  */
 const cds = require("@sap/cds");
-const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHelper";
@@ -45,16 +49,7 @@ export class MtaConfigurator extends AddPluginConfigurator {
     if (!mtaPath) return;
 
     try {
-      await cds.add
-        .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
-        .into(mtaPath, {
-          with: { uiBuildPath: resolveUiBuildPath() },
-          additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
-        });
-
-      log.debug("Added data inspector HTML5 module to mta.yaml");
-
-      await this.reconcileModulePath();
+      await this.upsertHtml5Module();
       await this.addArtifactToContentModule();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -63,27 +58,56 @@ export class MtaConfigurator extends AddPluginConfigurator {
   }
 
   /**
-   * Keeps the html5 module's `path` in sync with the resolved UI build folder.
-   * The merge only inserts the module when absent, so on re-runs after a changed
-   * uiBuildTargetFolder the existing module's path would otherwise be stale.
+   * Inserts the data-inspector html5 module, or updates the existing one's
+   * `path` to the resolved UI build folder.
+   * If multiple entries somehow exist, the first is kept (preserving user edits)
+   * and the duplicates are removed.
    */
-  private async reconcileModulePath(): Promise<void> {
-    const mtaContent = await readMta();
-    if (!mtaContent) return;
+  private async upsertHtml5Module(): Promise<void> {
+    const mta = await readMta();
+    if (!mta) return;
 
-    const uiModule = (mtaContent.modules ?? []).find(
+    mta.modules ??= [];
+    const expectedPath = resolveUiBuildPath();
+
+    const existing = mta.modules.filter(
       // mta.yaml modules have a dynamic structure
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME
     );
-    if (!uiModule) return;
 
-    const expectedPath = resolveUiBuildPath();
-    if (uiModule.path !== expectedPath) {
-      uiModule.path = expectedPath;
-      await writeMta(mtaContent);
-      log.debug(`Reconciled html5 module path to '${expectedPath}'`);
+    if (existing.length === 0) {
+      mta.modules.push(this.buildHtml5Module(expectedPath));
+      log.debug(`Added html5 module to mta.yaml (path '${expectedPath}')`);
+    } else {
+      // Keep the first (preserves user edits), set its path, drop any duplicates.
+      const [keep] = existing;
+      keep.path = expectedPath;
+      if (existing.length > 1) {
+        mta.modules = mta.modules.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (m: any) => m.name !== DATA_INSPECTOR_MTA_MODULE_NAME || m === keep
+        );
+      }
+      log.debug(`Reconciled html5 module in mta.yaml (path '${expectedPath}')`);
     }
+
+    await writeMta(mta);
+  }
+
+  /** Builds the data-inspector html5 module entry. */
+  private buildHtml5Module(uiBuildPath: string): Record<string, unknown> {
+    return {
+      name: DATA_INSPECTOR_MTA_MODULE_NAME,
+      type: "html5",
+      path: uiBuildPath,
+      "build-parameters": {
+        "build-result": "dist",
+        builder: "custom",
+        commands: ["npm install", "npm run build:cf"],
+        "supported-platforms": [],
+      },
+    };
   }
 
   /**
