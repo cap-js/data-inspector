@@ -203,6 +203,16 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
   }
 
   /**
+   * True when `absDir` is this task's generated UI folder. Used to exclude the
+   * freshly-copied UI from host-app scans (it would otherwise mask the host's
+   * real destination/authenticationType with the plugin's own defaults when
+   * uiBuildTargetFolder points into `app` folder).
+   */
+  private isGeneratedUiDir(absDir: string): boolean {
+    return absDir === this.task.dest;
+  }
+
+  /**
    * Scans app/{name}/xs-app.json for a route whose source pattern
    * indicates OData or API traffic and returns its destination value.
    */
@@ -214,6 +224,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
+        if (this.isGeneratedUiDir(join(appDirPath, entry.name))) continue;
 
         const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
         if (!exists(xsAppPath)) continue;
@@ -310,6 +321,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
+        if (this.isGeneratedUiDir(join(appDirPath, entry.name))) continue;
         const xsAppPath = join(appDirPath, entry.name, "xs-app.json");
         if (!exists(xsAppPath)) continue;
         try {
@@ -387,6 +399,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
       const entries = fs.readdirSync(appDirPath, { withFileTypes: true });
       for (const entry of entries) {
         if (!entry.isDirectory()) continue;
+        if (this.isGeneratedUiDir(join(appDirPath, entry.name))) continue;
 
         const manifestPath = join(appDirPath, entry.name, "webapp", "manifest.json");
         if (!exists(manifestPath)) continue;

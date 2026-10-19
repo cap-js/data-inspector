@@ -206,6 +206,27 @@ describe("CDS Build Plugin", () => {
         fs.existsSync(join(project, "gen", "cap-data-inspector-ui", "webapp", "manifest.json"))
       ).to.be.true;
     });
+
+    it("should detect the host config (not the generated folder) when building into app", async () => {
+      const project = await createTestProject(tempUtil, {
+        projectName: "build-folder-selfdetect-dest",
+      });
+      // Host app declares a non-default destination.
+      createHtml5AppWithDestination(project, "host-srv");
+      // Host app declares ias auth on its routes.
+      createHtml5AppWithAuthType(project, "ias");
+      // Build the data-inspector UI into app/ (next to the host app).
+      setCdsrc(project, { uiBuildTargetFolder: "app" });
+      runCdsBuild(project);
+
+      // The generated xs-app.json must pick up the HOST app's destination and auth type, not
+      // the plugin default (srv-api and xsuaa) from its own freshly-copied file.
+      const xsApp = JSON.parse(
+        fs.readFileSync(join(project, "app", "cap-data-inspector-ui", "xs-app.json"), "utf8")
+      );
+      expect(getODataDestination(xsApp)).to.equal("host-srv");
+      expect(getAppRouterAuthTypes(xsApp)).to.deep.equal(["ias", "ias"]);
+    });
   });
 
   // -----------------------------------------------------------------------
