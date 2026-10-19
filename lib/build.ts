@@ -226,7 +226,7 @@ module.exports = class DataInspectorBuildPlugin extends cds.build.Plugin {
    */
   // xs-app.json routes have a dynamic shape
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private findHostAppODataRoute(): any | null {
+  private findHostAppODataRoute(): any {
     const appDirPath = join(cds.root, "app");
     if (!exists(appDirPath)) return null;
 
