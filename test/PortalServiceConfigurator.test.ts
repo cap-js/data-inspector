@@ -93,7 +93,10 @@ describe("PortalServiceConfigurator", () => {
 
   describe("detection", () => {
     it("should not configure portal when mta.yaml does not exist", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        projectName: "portal-no-mta",
+      });
 
       // CommonDataModel.json alone is not enough — mta.yaml with a portal
       // deployer module is required for detection.
@@ -109,7 +112,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not configure portal when CommonDataModel.json does not exist", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-no-cdm",
+      });
 
       // mta.yaml references the portal resource but CommonDataModel.json is missing.
       createMtaWithPortal(project, "flp");
@@ -120,7 +127,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not configure portal when mta.yaml has no portal service", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-no-service",
+      });
 
       // mta.yaml has no portal resource → deployer path cannot be resolved.
       createMta(project);
@@ -142,7 +153,11 @@ describe("PortalServiceConfigurator", () => {
 
   describe("CommonDataModel.json modification", () => {
     it("should add catalog and group when portal service is configured", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-add-catalog-group",
+      });
 
       createMtaWithPortal(project, "random-path");
       createCommonDataModel(project, "random-path");
@@ -190,16 +205,20 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should use the configured appId for the catalog and group viz entries", async () => {
-      const project1 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-appid-custom",
+      });
 
       const customAppId = "my.company.datainspector.serviceA";
-      createMtaWithPortal(project1, "flp");
-      createCommonDataModel(project1, "flp");
-      setCdsrc(project1, { appId: customAppId });
+      createMtaWithPortal(project, "flp");
+      createCommonDataModel(project, "flp");
+      setCdsrc(project, { appId: customAppId });
 
-      runCdsAddDataInspector(project1);
+      runCdsAddDataInspector(project);
 
-      const cdm = readCommonDataModel(project1, "flp");
+      const cdm = readCommonDataModel(project, "flp");
 
       const catalog = cdm.payload.catalogs.find(
         (c: any) => c.identification?.id === DATA_INSPECTOR_CATALOG_ID
@@ -217,20 +236,24 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should reconcile the appId on existing catalog/group when appId changes", async () => {
-      const project2 = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-appid-reconcile",
+      });
 
-      createMtaWithPortal(project2, "flp");
-      createCommonDataModel(project2, "flp");
+      createMtaWithPortal(project, "flp");
+      createCommonDataModel(project, "flp");
 
       // First run with appId A.
-      setCdsrc(project2, { appId: "my.company.datainspector.serviceA" });
-      runCdsAddDataInspector(project2);
+      setCdsrc(project, { appId: "my.company.datainspector.serviceA" });
+      runCdsAddDataInspector(project);
 
       // Second run after changing appId to B.
-      setCdsrc(project2, { appId: "my.company.datainspector.serviceB" });
-      runCdsAddDataInspector(project2);
+      setCdsrc(project, { appId: "my.company.datainspector.serviceB" });
+      runCdsAddDataInspector(project);
 
-      const cdm = readCommonDataModel(project2, "flp");
+      const cdm = readCommonDataModel(project, "flp");
 
       // Existing entries are updated in place (no duplicates).
       const catalogs = cdm.payload.catalogs.filter(
@@ -251,7 +274,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not duplicate catalog and group when run multiple times", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-no-duplicate",
+      });
 
       createMtaWithPortal(project, "flp");
       createCommonDataModel(project, "flp");
@@ -278,7 +305,11 @@ describe("PortalServiceConfigurator", () => {
 
   describe("CommonDataModel.json site groupsOrder configuration", () => {
     it("should add group to groupsOrder when there is exactly one site", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-single-site",
+      });
 
       createMtaWithPortal(project, "flp");
       createCommonDataModelWithSingleSite(project, "flp");
@@ -293,7 +324,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not duplicate group in groupsOrder when run multiple times", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-single-site-rerun",
+      });
 
       createMtaWithPortal(project, "flp");
       createCommonDataModelWithSingleSite(project, "flp");
@@ -311,7 +346,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not modify groupsOrder when there are multiple sites", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-multiple-sites",
+      });
 
       createMtaWithPortal(project, "flp");
       createCommonDataModelWithMultipleSites(project, "flp");
@@ -326,7 +365,11 @@ describe("PortalServiceConfigurator", () => {
     });
 
     it("should not add groupsOrder when there are no sites", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        mta: true,
+        projectName: "portal-no-sites",
+      });
 
       createMtaWithPortal(project, "flp");
       createCommonDataModel(project, "flp");

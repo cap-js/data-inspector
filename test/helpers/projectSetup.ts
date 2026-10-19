@@ -18,6 +18,12 @@ export const cdsBin = require.resolve("@sap/cds-dk/bin/cds.js");
 interface ProjectOptions {
   xsuaa?: boolean;
   mta?: boolean;
+  /**
+   * Name of the generated CAP project (the `cds init <name>` folder). Defaults
+   * to "project". Pass a unique value per test to avoid identical project
+   * scaffolding across tests.
+   */
+  projectName?: string;
 }
 
 /**
@@ -43,7 +49,8 @@ export async function createTestProject(
   options: ProjectOptions = {}
 ): Promise<string> {
   const tempFolder = await tempUtil.mkTempFolder();
-  const project = join(tempFolder, "project");
+  const projectName = options.projectName ?? "project";
+  const project = join(tempFolder, projectName);
 
   // Build cds init command
   const addOptions: string[] = [];
@@ -52,9 +59,14 @@ export async function createTestProject(
 
   const addFlag = addOptions.length > 0 ? `--add ${addOptions.join(",")}` : "";
   try {
-    execSync(`${cdsBin} init project ${addFlag} --nodejs`, { cwd: tempFolder, stdio: "pipe" });
+    execSync(`${cdsBin} init ${projectName} ${addFlag} --nodejs`, {
+      cwd: tempFolder,
+      stdio: "pipe",
+    });
   } catch (error) {
-    throw new Error(`Failed to run '${cdsBin} init project' in: ${tempFolder}`, { cause: error });
+    throw new Error(`Failed to run '${cdsBin} init ${projectName}' in: ${tempFolder}`, {
+      cause: error,
+    });
   }
 
   // Set up data-inspector plugin

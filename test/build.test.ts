@@ -122,7 +122,7 @@ describe("CDS Build Plugin", () => {
 
   describe("build output", () => {
     it("should copy UI5 app to build output directory with default destination", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-output-default" });
 
       runCdsBuild(project);
 
@@ -142,7 +142,7 @@ describe("CDS Build Plugin", () => {
 
   describe("uiBuildTargetFolder", () => {
     it("should build into gen/cap-data-inspector-ui by default", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-default" });
       runCdsBuild(project);
 
       expect(
@@ -151,7 +151,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should build into the configured folder when uiBuildTargetFolder is set (e.g. app)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-custom" });
       setCdsrc(project, { uiBuildTargetFolder: "app" });
       runCdsBuild(project);
 
@@ -166,7 +166,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should support nested uiBuildTargetFolder paths", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-nested" });
       setCdsrc(project, { uiBuildTargetFolder: "build/ui" });
       runCdsBuild(project);
 
@@ -178,7 +178,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should reject a path-traversal uiBuildTargetFolder and fall back to gen", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-traversal" });
       setCdsrc(project, { uiBuildTargetFolder: "../escape" });
       runCdsBuild(project);
 
@@ -188,7 +188,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should reject an absolute uiBuildTargetFolder and fall back to gen", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-absolute" });
       setCdsrc(project, { uiBuildTargetFolder: "/abs" });
       runCdsBuild(project);
 
@@ -198,7 +198,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should reject a uiBuildTargetFolder with illegal characters and fall back to gen", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "build-folder-illegal" });
       setCdsrc(project, { uiBuildTargetFolder: "a b" });
       runCdsBuild(project);
 
@@ -214,7 +214,7 @@ describe("CDS Build Plugin", () => {
 
   describe("destination from .cdsrc.json", () => {
     it("should patch destination when set via .cdsrc.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "dest-cdsrc" });
 
       setCdsrc(project, { destination: "my-custom-srv-api" });
       runCdsBuild(project);
@@ -224,7 +224,9 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should use .cdsrc.json destination over auto-detected destination", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, {
+        projectName: "dest-cdsrc-over-detected",
+      });
 
       createHtml5AppWithDestination(project, "auto-detected-srv");
       setCdsrc(project, { destination: "explicit-config-srv" });
@@ -238,7 +240,7 @@ describe("CDS Build Plugin", () => {
 
   describe("destination from package.json cds section", () => {
     it("should patch destination when set via package.json cds section", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "dest-pkgjson" });
 
       setPackageJsonConfig(project, { destination: "pkg-json-srv-api" });
       runCdsBuild(project);
@@ -248,7 +250,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should prefer package.json over .cdsrc.json (CAP config precedence)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "dest-pkgjson-precedence" });
 
       setPackageJsonConfig(project, { destination: "from-package-json" });
       setCdsrc(project, { destination: "from-cdsrc-json" });
@@ -262,7 +264,7 @@ describe("CDS Build Plugin", () => {
 
   describe("destination auto-detection from existing UI5 apps", () => {
     it("should auto-detect destination from existing UI5 app xs-app.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "dest-autodetect" });
 
       createHtml5AppWithDestination(project, "bookshop-srv");
 
@@ -279,7 +281,7 @@ describe("CDS Build Plugin", () => {
 
   describe("authenticationType default", () => {
     it("should keep xsuaa on all routes when no config and no existing app", async () => {
-      const projectAuthDefault = await createTestProject(tempUtil);
+      const projectAuthDefault = await createTestProject(tempUtil, { projectName: "auth-default" });
       runCdsBuild(projectAuthDefault);
       const xsAppAuthDefault = readBuildXsApp(projectAuthDefault);
       // Both routes (OData + html5-apps-repo) stay xsuaa.
@@ -289,7 +291,7 @@ describe("CDS Build Plugin", () => {
 
   describe("authenticationType from cds.env", () => {
     it("should patch all routes to ias when set via .cdsrc.json", async () => {
-      const projectAuthCdsrc = await createTestProject(tempUtil);
+      const projectAuthCdsrc = await createTestProject(tempUtil, { projectName: "auth-cdsrc" });
       setCdsrc(projectAuthCdsrc, { authenticationType: "ias" });
       runCdsBuild(projectAuthCdsrc);
       const xsAppAuthCdsrc = readBuildXsApp(projectAuthCdsrc);
@@ -297,7 +299,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should patch all routes to ias when set via package.json", async () => {
-      const projectAuthPkg = await createTestProject(tempUtil);
+      const projectAuthPkg = await createTestProject(tempUtil, { projectName: "auth-pkgjson" });
       setPackageJsonConfig(projectAuthPkg, { authenticationType: "ias" });
       runCdsBuild(projectAuthPkg);
       const xsAppAuthPkg = readBuildXsApp(projectAuthPkg);
@@ -305,7 +307,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should prefer cds.env authenticationType over auto-detected value", async () => {
-      const projectAuthPrefer = await createTestProject(tempUtil);
+      const projectAuthPrefer = await createTestProject(tempUtil, { projectName: "auth-prefer" });
       // Existing app declares xsuaa, but explicit config asks for ias.
       createHtml5AppWithAuthType(projectAuthPrefer, "xsuaa");
       setCdsrc(projectAuthPrefer, { authenticationType: "ias" });
@@ -317,7 +319,9 @@ describe("CDS Build Plugin", () => {
 
   describe("authenticationType auto-detection from existing UI5 apps", () => {
     it("should auto-detect ias from existing UI5 app xs-app.json", async () => {
-      const projectAuthDetect = await createTestProject(tempUtil);
+      const projectAuthDetect = await createTestProject(tempUtil, {
+        projectName: "auth-autodetect",
+      });
       createHtml5AppWithAuthType(projectAuthDetect, "ias");
       runCdsBuild(projectAuthDetect);
       const xsAppAuthDetect = readBuildXsApp(projectAuthDetect);
@@ -327,7 +331,9 @@ describe("CDS Build Plugin", () => {
 
   describe("authenticationType guardrail (never 'none')", () => {
     it("should fall back to xsuaa when 'none' is explicitly configured", async () => {
-      const projectAuthNoneCfg = await createTestProject(tempUtil);
+      const projectAuthNoneCfg = await createTestProject(tempUtil, {
+        projectName: "auth-none-cfg",
+      });
       setCdsrc(projectAuthNoneCfg, { authenticationType: "none" });
       runCdsBuild(projectAuthNoneCfg);
       const xsAppAuthNoneCfg = readBuildXsApp(projectAuthNoneCfg);
@@ -335,7 +341,9 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should fall back to xsuaa when 'none' is auto-detected from an existing app", async () => {
-      const projectAuthNoneDetect = await createTestProject(tempUtil);
+      const projectAuthNoneDetect = await createTestProject(tempUtil, {
+        projectName: "auth-none-detect",
+      });
       createHtml5AppWithAuthType(projectAuthNoneDetect, "none");
       runCdsBuild(projectAuthNoneDetect);
       const xsAppAuthNoneDetect = readBuildXsApp(projectAuthNoneDetect);
@@ -343,7 +351,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should fall back to xsuaa for an unsupported authenticationType value", async () => {
-      const projectAuthBogus = await createTestProject(tempUtil);
+      const projectAuthBogus = await createTestProject(tempUtil, { projectName: "auth-bogus" });
       setCdsrc(projectAuthBogus, { authenticationType: "bogus" });
       runCdsBuild(projectAuthBogus);
       const xsAppAuthBogus = readBuildXsApp(projectAuthBogus);
@@ -357,7 +365,7 @@ describe("CDS Build Plugin", () => {
 
   describe("sap.cloud.service from cds.env", () => {
     it("should patch manifest.json when cloudService is set via .cdsrc.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "cloud-cdsrc" });
 
       setCdsrc(project, { cloudService: "my.cloud.service" });
       runCdsBuild(project);
@@ -369,7 +377,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should patch manifest.json when cloudService is set via package.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "cloud-pkgjson" });
 
       setPackageJsonConfig(project, { cloudService: "pkg.cloud.service" });
       runCdsBuild(project);
@@ -379,7 +387,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should prefer cds.env cloudService over auto-detected value", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "cloud-prefer" });
 
       // Existing app has one value, cds.env has a different one.
       createHtml5AppWithCloudService(project, "auto.detected.service");
@@ -394,7 +402,7 @@ describe("CDS Build Plugin", () => {
 
   describe("sap.cloud.service auto-detection from existing UI5 apps", () => {
     it("should auto-detect cloudService from existing UI5 app manifest.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "cloud-autodetect" });
 
       createHtml5AppWithCloudService(project, "detected.cloud.svc");
 
@@ -406,7 +414,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should not patch manifest.json when no cloudService source is available", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "cloud-none" });
 
       // No cds.env config, no existing app with sap.cloud.service
       runCdsBuild(project);
@@ -456,7 +464,7 @@ describe("CDS Build Plugin", () => {
     }
 
     it("should keep defaults when no OData base path is configured (proxy at :4004)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "odata-default" });
       runCdsBuild(project);
 
       const manifest = readBuildManifest(project);
@@ -470,7 +478,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should patch all artifacts when cds.data-inspector.odataV4BasePath is set", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "odata-basepath" });
       setCdsrc(project, { odataV4BasePath: "/api" });
       runCdsBuild(project);
 
@@ -493,7 +501,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should patch all artifacts when cds.protocols['odata-v4'].path is set (Node.js fallback)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "odata-protocol-fallback" });
       const cdsrcPath = join(project, ".cdsrc.json");
       let cdsrc: any = {};
       if (fs.existsSync(cdsrcPath)) cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
@@ -506,7 +514,9 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should prefer odataV4BasePath over cds.protocols['odata-v4'].path when both are set", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, {
+        projectName: "odata-basepath-precedence",
+      });
       // odataV4BasePath should win
       const cdsrcPath = join(project, ".cdsrc.json");
       let cdsrc: any = {};
@@ -521,7 +531,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should use proxy at :8080 for Java projects (pom.xml detected)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "odata-java-proxy" });
       makeJavaProject(project);
       runCdsBuild(project);
 
@@ -540,7 +550,7 @@ describe("CDS Build Plugin", () => {
     const CUSTOM_APP_ID = "my.company.datainspector.serviceA";
 
     it("should keep the default appId / namespace when appId is not configured", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-default" });
       runCdsBuild(project);
 
       const manifest = readBuildManifest(project);
@@ -555,7 +565,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should rewrite the whole namespace consistently when appId is set via .cdsrc.json", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-cdsrc" });
       setCdsrc(project, { appId: CUSTOM_APP_ID });
       runCdsBuild(project);
 
@@ -597,7 +607,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should rewrite the namespace when appId is set via package.json cds section", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-pkgjson" });
       setPackageJsonConfig(project, { appId: CUSTOM_APP_ID });
       runCdsBuild(project);
 
@@ -606,7 +616,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should fall back to the default appId when the configured value is invalid (leading digit)", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-invalid-digit" });
       setCdsrc(project, { appId: "1bad.namespace" });
       runCdsBuild(project);
 
@@ -615,7 +625,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should fall back to the default appId when the configured value contains illegal characters", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-invalid-chars" });
       setCdsrc(project, { appId: "has space.id" });
       runCdsBuild(project);
 
@@ -624,7 +634,7 @@ describe("CDS Build Plugin", () => {
     });
 
     it("should fall back to the default appId when the configured value exceeds the max length", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "appid-too-long" });
       const tooLong = "a." + "x".repeat(69); // 71 chars
       setCdsrc(project, { appId: tooLong });
       runCdsBuild(project);
@@ -640,7 +650,7 @@ describe("CDS Build Plugin", () => {
 
   describe("idempotency", () => {
     it("should produce same result when build is run multiple times", async () => {
-      const project = await createTestProject(tempUtil);
+      const project = await createTestProject(tempUtil, { projectName: "idempotency" });
 
       setCdsrc(project, {
         destination: "idempotent-srv",
