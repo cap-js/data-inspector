@@ -211,13 +211,13 @@ To avoid the collision, give each service's data-inspector a unique `appId`. The
    {
      "cds": {
        "data-inspector": {
-         "appId": "my.company.datainspector.serviceA"
+         "appId": "my.company.datainspector.service1"
        }
      }
    }
    ```
 
-   The `appId` must be a dot-separated namespace where each segment starts with a letter and contains only letters, digits, and underscores (max 70 characters), for example `my.company.datainspector`. An invalid value is rejected with a warning and the build falls back to the default.
+   The `appId` is also written as the UI5 project name (`metadata.name`) in the generated `ui5.yaml` and `ui5-deploy.yaml` (see the [SAPUI5 project-name rules](https://ui5.github.io/cli/stable/pages/Configuration/#name)). Use a dot-separated namespace where each segment starts with a lowercase letter and contains only lowercase letters, digits, and underscores (max 70 characters). An invalid value is rejected with a warning and the build falls back to the default.
 
 2. **Default** — Falls back to `sap.cap.datainspector.datainspectorui`.
 

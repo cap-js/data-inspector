@@ -567,7 +567,7 @@ describe("CDS Build Plugin", () => {
   // -----------------------------------------------------------------------
 
   describe("appId patching", () => {
-    const CUSTOM_APP_ID = "my.company.datainspector.serviceA";
+    const CUSTOM_APP_ID = "my.company.datainspector.service1";
 
     it("should keep the default appId / namespace when appId is not configured", async () => {
       const project = await createTestProject(tempUtil, { projectName: "appid-default" });
@@ -647,6 +647,15 @@ describe("CDS Build Plugin", () => {
     it("should fall back to the default appId when the configured value contains illegal characters", async () => {
       const project = await createTestProject(tempUtil, { projectName: "appid-invalid-chars" });
       setCdsrc(project, { appId: "has space.id" });
+      runCdsBuild(project);
+
+      const manifest = readBuildManifest(project);
+      expect(manifest["sap.app"].id).to.equal(DEFAULT_APP_ID);
+    });
+
+    it("should fall back to the default appId when the configured value contains uppercase characters", async () => {
+      const project = await createTestProject(tempUtil, { projectName: "appid-invalid-uppercase" });
+      setCdsrc(project, { appId: "my.company.datainspector.serviceA" });
       runCdsBuild(project);
 
       const manifest = readBuildManifest(project);

@@ -211,7 +211,7 @@ describe("PortalServiceConfigurator", () => {
         projectName: "portal-appid-custom",
       });
 
-      const customAppId = "my.company.datainspector.serviceA";
+      const customAppId = "my.company.datainspector.service1";
       createMtaWithPortal(project, "flp");
       createCommonDataModel(project, "flp");
       setCdsrc(project, { appId: customAppId });
@@ -246,11 +246,11 @@ describe("PortalServiceConfigurator", () => {
       createCommonDataModel(project, "flp");
 
       // First run with appId A.
-      setCdsrc(project, { appId: "my.company.datainspector.serviceA" });
+      setCdsrc(project, { appId: "my.company.datainspector.service1" });
       runCdsAddDataInspector(project);
 
       // Second run after changing appId to B.
-      setCdsrc(project, { appId: "my.company.datainspector.serviceB" });
+      setCdsrc(project, { appId: "my.company.datainspector.service2" });
       runCdsAddDataInspector(project);
 
       const cdm = readCommonDataModel(project, "flp");
@@ -266,10 +266,10 @@ describe("PortalServiceConfigurator", () => {
       expect(groups).to.have.lengthOf(1);
 
       // viz now points at the new appId; vizId (FLP intent) is unchanged.
-      expect(catalogs[0].payload.viz[0].appId).to.equal("my.company.datainspector.serviceB");
+      expect(catalogs[0].payload.viz[0].appId).to.equal("my.company.datainspector.service2");
       expect(catalogs[0].payload.viz[0].vizId).to.equal("datainspectorui-display");
-      expect(groups[0].payload.viz[0].appId).to.equal("my.company.datainspector.serviceB");
-      expect(groups[0].payload.viz[0].id).to.equal("my.company.datainspector.serviceB");
+      expect(groups[0].payload.viz[0].appId).to.equal("my.company.datainspector.service2");
+      expect(groups[0].payload.viz[0].id).to.equal("my.company.datainspector.service2");
       expect(groups[0].payload.viz[0].vizId).to.equal("datainspectorui-display");
     });
 

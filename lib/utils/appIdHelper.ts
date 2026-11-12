@@ -15,8 +15,9 @@ export const DEFAULT_VIZ_ID = "datainspectorui-display";
 /** Max length of a `sap.app.id` per the SAP app-descriptor schema. */
 export const APP_ID_MAX_LENGTH = 70;
 
-// Dot-separated namespace; each segment starts with a letter, then letters/digits/underscores (\w).
-const APP_ID_PATTERN = /^[a-zA-Z]\w*(\.[a-zA-Z]\w*)*$/;
+// Lowercase dot-separated namespace (the appId is also the UI5 project name /
+// metadata.name): https://ui5.github.io/cli/stable/pages/Configuration/#name
+const APP_ID_PATTERN = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
 
 export function isValidAppId(appId: string): boolean {
   return appId.length <= APP_ID_MAX_LENGTH && APP_ID_PATTERN.test(appId);
@@ -32,8 +33,10 @@ export function resolveAppId(): string {
     const trimmed = configured.trim();
     if (isValidAppId(trimmed)) return trimmed;
     log.warn(
-      `Invalid data-inspector appId '${trimmed}'; expected a dot-separated ` +
-        `namespace (each segment starting with a letter, max ${APP_ID_MAX_LENGTH} chars). ` +
+      `Invalid data-inspector appId '${trimmed}'. It must be a lowercase dot-separated ` +
+        `namespace (each segment starting with a lowercase letter; letters, digits, and ` +
+        `underscores only; max ${APP_ID_MAX_LENGTH} chars). ` +
+        `See https://ui5.github.io/cli/stable/pages/Configuration/#name. ` +
         `Falling back to '${DEFAULT_APP_ID}'.`
     );
   }
