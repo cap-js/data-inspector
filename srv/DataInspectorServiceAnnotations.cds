@@ -1,6 +1,6 @@
 using {DataInspectorService} from './DataInspectorService';
 
-annotate DataInspectorService with @(requires: 'authenticated-user');
+annotate DataInspectorService with @(requires: 'capDataInspectorReadonly');
 
 annotate DataInspectorService.EntityDefinition with @(restrict: [{
     grant: ['READ'],

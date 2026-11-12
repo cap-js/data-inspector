@@ -427,6 +427,37 @@ export function createHtml5AppWithDestination(
 }
 
 /**
+ * Create an existing HTML5 app whose xs-app.json OData route declares BOTH a
+ * custom destination and authenticationType.
+ */
+export function createHtml5AppWithDestinationAndAuth(
+  projectFolder: string,
+  destinationName: string,
+  authType: string
+): void {
+  const appDir = join(projectFolder, "app", "test-app");
+  fs.mkdirSync(appDir, { recursive: true });
+  const xsAppContent = {
+    authenticationMethod: "route",
+    routes: [
+      {
+        source: "^/odata/v4/(.*)",
+        target: "/odata/v4/$1",
+        destination: destinationName,
+        authenticationType: authType,
+      },
+      {
+        source: "^(.*)$",
+        target: "$1",
+        service: "html5-apps-repo-rt",
+        authenticationType: authType,
+      },
+    ],
+  };
+  fs.writeFileSync(join(appDir, "xs-app.json"), JSON.stringify(xsAppContent, null, 2));
+}
+
+/**
  * Create an existing HTML5 app with a custom authenticationType on its
  * xs-app.json OData route. Used to test auto-detection of authenticationType
  * by the CDS build plugin.

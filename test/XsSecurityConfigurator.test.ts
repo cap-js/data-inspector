@@ -41,7 +41,10 @@ describe("XsSecurityConfigurator", () => {
 
   describe("scope addition", () => {
     it("should add data-inspector scope to xs-security.json", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        projectName: "xssec-add-scope",
+      });
 
       // Verify initial state
       const initialXsSecurity = readXsSecurity(project);
@@ -63,7 +66,10 @@ describe("XsSecurityConfigurator", () => {
     });
 
     it("should not duplicate scope when run multiple times", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        projectName: "xssec-no-duplicate",
+      });
 
       // Run cds add data-inspector twice
       runCdsAddDataInspector(project);
@@ -76,7 +82,10 @@ describe("XsSecurityConfigurator", () => {
     });
 
     it("should not modify existing scope with different description", async () => {
-      const project = await createTestProject(tempUtil, { xsuaa: true });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: true,
+        projectName: "xssec-keep-description",
+      });
 
       // Manually add the scope with a custom description
       const xsSecurityPath = join(project, "xs-security.json");
@@ -106,7 +115,10 @@ describe("XsSecurityConfigurator", () => {
   describe("when xs-security.json does not exist", () => {
     it("should not create xs-security.json", async () => {
       // Create project without xsuaa (no xs-security.json)
-      const project = await createTestProject(tempUtil, { xsuaa: false });
+      const project = await createTestProject(tempUtil, {
+        xsuaa: false,
+        projectName: "xssec-no-file",
+      });
 
       // Verify xs-security.json does not exist
       expect(xsSecurityExists(project)).to.be.false;
