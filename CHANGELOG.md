@@ -4,7 +4,7 @@
 - The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - This project adheres to [Semantic Versioning](https://semver.org/).
 
-## Version 2.1.0 - 2026-11-12
+## Version 2.1.0 - 2026-11-16
 
 ### Added
 
@@ -14,7 +14,7 @@
 
 ### Changed
 
-- The `DataInspectorService` now requires the `capDataInspectorReadonly` scope at the service level (previously only `authenticated-user`). Authenticated users without the scope can no longer reach the service (including its `$metadata` and service document), not just its entity reads.
+- The `DataInspectorService` now requires the `capDataInspectorReadonly` scope at the service level (previously only `authenticated-user`).
 
 ## Version 2.0.1 - 2026-10-13
 
