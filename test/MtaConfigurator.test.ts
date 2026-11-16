@@ -29,6 +29,17 @@ function readMta(projectFolder: string): any {
   return YAML.parse(fs.readFileSync(mtaPath, "utf8"));
 }
 
+/** Write a cds.data-inspector config block to the project's .cdsrc.json */
+function setCdsrc(projectFolder: string, config: Record<string, unknown>): void {
+  const cdsrcPath = join(projectFolder, ".cdsrc.json");
+  let cdsrc: Record<string, any> = {};
+  if (fs.existsSync(cdsrcPath)) {
+    cdsrc = JSON.parse(fs.readFileSync(cdsrcPath, "utf8"));
+  }
+  cdsrc["data-inspector"] = { ...cdsrc["data-inspector"], ...config };
+  fs.writeFileSync(cdsrcPath, JSON.stringify(cdsrc, null, 2));
+}
+
 describe("MtaConfigurator", () => {
   const tempUtil = new TempUtil();
 
@@ -38,7 +49,10 @@ describe("MtaConfigurator", () => {
 
   it("should skip when mta.yaml does not exist", async () => {
     // Project without mta.yaml — configurator should not run and must not create one as a side effect.
-    const project = await createTestProject(tempUtil, { xsuaa: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      projectName: "mta-no-mta",
+    });
     runCdsAddDataInspector(project);
 
     // The configurator must not have created an mta.yaml.
@@ -46,7 +60,11 @@ describe("MtaConfigurator", () => {
   });
 
   it("should add HTML5 module when mta.yaml with workzone setup exists", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-workzone",
+    });
     createMtaWithWorkzone(project);
     runCdsAddDataInspector(project);
 
@@ -65,7 +83,11 @@ describe("MtaConfigurator", () => {
   });
 
   it("should add HTML5 module when mta.yaml with portal service exists", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-portal",
+    });
     createMtaWithPortal(project, "flp");
     runCdsAddDataInspector(project);
 
@@ -84,7 +106,11 @@ describe("MtaConfigurator", () => {
   });
 
   it("should add HTML5 module when mta.yaml exists without portal or workzone", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-plain",
+    });
     createMta(project);
     runCdsAddDataInspector(project);
 
@@ -93,10 +119,81 @@ describe("MtaConfigurator", () => {
     expect(diModule).to.not.be.undefined;
   });
 
+  it("should set the html5 module path to gen/cap-data-inspector-ui by default", async () => {
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-path-default",
+    });
+    createMta(project);
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
+  });
+
+  it("should set the html5 module path to match uiBuildTargetFolder", async () => {
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-path-custom",
+    });
+    createMta(project);
+    setCdsrc(project, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("app/cap-data-inspector-ui");
+  });
+
+  it("should fall back to gen for the html5 module path when uiBuildTargetFolder is unsafe", async () => {
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-path-unsafe",
+    });
+    createMta(project);
+    setCdsrc(project, { uiBuildTargetFolder: "../escape" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModule = mta.modules?.find((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    expect(diModule?.path).to.equal("gen/cap-data-inspector-ui");
+  });
+
+  it("should reconcile an existing html5 module path when uiBuildTargetFolder changes", async () => {
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-path-reconcile",
+    });
+    createMta(project);
+
+    // First run with "app".
+    setCdsrc(project, { uiBuildTargetFolder: "app" });
+    runCdsAddDataInspector(project);
+
+    // Second run after changing the folder.
+    setCdsrc(project, { uiBuildTargetFolder: "build/ui" });
+    runCdsAddDataInspector(project);
+
+    const mta = readMta(project);
+    const diModules = mta.modules?.filter((m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME);
+    // Existing module is updated in place (not duplicated).
+    expect(diModules).to.have.lengthOf(1);
+    expect(diModules[0].path).to.equal("build/ui/cap-data-inspector-ui");
+  });
+
   it("should fall back to resources/ when no existing requires have target-path", async () => {
     // The minimal mta fixture has no content module with requires,
     // so the configurator creates one from scratch and falls back to resources/
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-no-requires",
+    });
     createMtaWithContentModuleNoRequires(project);
     runCdsAddDataInspector(project);
 
@@ -113,7 +210,11 @@ describe("MtaConfigurator", () => {
   });
 
   it("should create build-parameters and requires when content module has no build-parameters", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-no-build-params",
+    });
     createMtaWithContentModuleNoBuildParams(project);
     runCdsAddDataInspector(project);
 
@@ -136,7 +237,11 @@ describe("MtaConfigurator", () => {
   });
 
   it("should add artifact to the correct content module when multiple content modules exist", async () => {
-    const project = await createTestProject(tempUtil, { xsuaa: true, mta: true });
+    const project = await createTestProject(tempUtil, {
+      xsuaa: true,
+      mta: true,
+      projectName: "mta-multiple-content",
+    });
     createMtaWithMultipleContentModules(project);
     runCdsAddDataInspector(project);
 

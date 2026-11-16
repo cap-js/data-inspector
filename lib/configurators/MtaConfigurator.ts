@@ -5,20 +5,25 @@
  * Portal Service or Workzone is used.
  *
  * Responsibilities:
- *   - Adds the data-inspector HTML5 module via cds.add.merge()
+ *   - Inserts (or updates) the data-inspector HTML5 module
  *   - Adds the module's ZIP artifact to the HTML5 content module's
  *     build-parameters.requires so it is included in the deployed
  *     HTML5 Application Repository content
+ *
+ * The module is upserted directly (read → modify → write) rather than via
+ * cds.add.merge(), because the merge's dedup behavior varies across cds-dk
+ * versions and could insert a duplicate module on re-runs. The direct upsert
+ * is deterministic: it always yields exactly one module with the correct path.
  *
  * The content module is located by mtaHelper.findContentModule() which
  * matches the com.sap.application.content module that targets the
  * html5-apps-repo app-host resource (see mtaHelper.ts for details).
  */
 const cds = require("@sap/cds");
-const { join } = cds.utils.path;
 
 import { AddPluginConfigurator } from "./AddPluginConfigurator";
 import { readMta, writeMta, findContentModule, getMtaPath } from "../utils/mtaHelper";
+import { resolveUiBuildPath } from "../utils/uiBuildPathHelper";
 
 const log = cds.log("data-inspector");
 
@@ -44,19 +49,65 @@ export class MtaConfigurator extends AddPluginConfigurator {
     if (!mtaPath) return;
 
     try {
-      await cds.add
-        .merge(join(__dirname, "../../templates/mta-html5-module.yaml.hbs"))
-        .into(mtaPath, {
-          additions: [{ in: "modules", where: { name: DATA_INSPECTOR_MTA_MODULE_NAME } }],
-        });
-
-      log.debug("Added data inspector HTML5 module to mta.yaml");
-
+      await this.upsertHtml5Module();
       await this.addArtifactToContentModule();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       log.error(`Failed to update mta.yaml: ${message}`);
     }
+  }
+
+  /**
+   * Inserts the data-inspector html5 module, or updates the existing one's
+   * `path` to the resolved UI build folder.
+   * If multiple entries somehow exist, the first is kept (preserving user edits)
+   * and the duplicates are removed.
+   */
+  private async upsertHtml5Module(): Promise<void> {
+    const mta = await readMta();
+    if (!mta) return;
+
+    mta.modules ??= [];
+    const expectedPath = resolveUiBuildPath();
+
+    const existing = mta.modules.filter(
+      // mta.yaml modules have a dynamic structure
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (m: any) => m.name === DATA_INSPECTOR_MTA_MODULE_NAME
+    );
+
+    if (existing.length === 0) {
+      mta.modules.push(this.buildHtml5Module(expectedPath));
+      log.debug(`Added html5 module to mta.yaml (path '${expectedPath}')`);
+    } else {
+      // Keep the first (preserves user edits), set its path, drop any duplicates.
+      const [keep] = existing;
+      keep.path = expectedPath;
+      if (existing.length > 1) {
+        mta.modules = mta.modules.filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (m: any) => m.name !== DATA_INSPECTOR_MTA_MODULE_NAME || m === keep
+        );
+      }
+      log.debug(`Reconciled html5 module in mta.yaml (path '${expectedPath}')`);
+    }
+
+    await writeMta(mta);
+  }
+
+  /** Builds the data-inspector html5 module entry. */
+  private buildHtml5Module(uiBuildPath: string): Record<string, unknown> {
+    return {
+      name: DATA_INSPECTOR_MTA_MODULE_NAME,
+      type: "html5",
+      path: uiBuildPath,
+      "build-parameters": {
+        "build-result": "dist",
+        builder: "custom",
+        commands: ["npm install", "npm run build:cf"],
+        "supported-platforms": [],
+      },
+    };
   }
 
   /**
