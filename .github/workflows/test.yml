@@ -25,9 +25,9 @@ jobs:
           - cds-version: 10.x
             sqlite-version: 3.x
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
       # An overlay `npm i` on top of `npm ci` cannot reliably downgrade the hoisted
